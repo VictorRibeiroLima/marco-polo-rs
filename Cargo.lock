@@ -1698,6 +1698,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "rusoto_sqs"
+version = "0.48.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5218423da8976dfc3f14c72d602681c9cedb0cfa29eddb5c36a440eca6444131"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "futures",
+ "rusoto_core",
+ "serde_urlencoded",
+ "xml-rs",
+]
+
+[[package]]
 name = "rustc_version"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2163,13 +2177,17 @@ version = "0.1.0"
 dependencies = [
  "actix-web",
  "async-std",
+ "async-trait",
  "dotenv",
  "env_logger",
+ "futures",
  "reqwest",
  "rusoto_core",
  "rusoto_credential",
  "rusoto_s3",
+ "rusoto_sqs",
  "serde",
+ "serde_json",
  "uuid",
 ]
 

@@ -1,6 +1,6 @@
 use crate::{
     api::models::{error::AppError, result::AppResult},
-    storage::{s3::S3Client, traits::Client},
+    infra::{aws::s3::S3Client, traits::BucketClient},
 };
 
 mod state;
@@ -16,7 +16,7 @@ use state::StorageState;
 
 async fn signed_upload_url<C>(state: Data<StorageState<C>>) -> Result<impl Responder, AppError>
 where
-    C: Client,
+    C: BucketClient,
 {
     let bucket_name = &state.bucket_name;
     let result = state
@@ -27,7 +27,7 @@ where
 }
 
 pub fn init_routes(config: &mut web::ServiceConfig) {
-    let bucket_name = "batuka-static-dev".to_string();
+    let bucket_name = "batuka-static-dev/videos".to_string();
     let storage_client = S3Client::new().unwrap();
     let storage_state = StorageState::new(bucket_name, storage_client);
 

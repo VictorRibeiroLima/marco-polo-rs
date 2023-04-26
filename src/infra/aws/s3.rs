@@ -5,7 +5,7 @@ use rusoto_s3::{
     PutObjectRequest,
 };
 
-use super::traits::Client;
+use crate::infra::traits::BucketClient;
 
 pub struct S3Client {
     region: rusoto_core::Region,
@@ -21,7 +21,7 @@ impl S3Client {
     }
 }
 
-impl Client for S3Client {
+impl BucketClient for S3Client {
     fn create_signed_upload_url(
         &self,
         bucket_name: &str,

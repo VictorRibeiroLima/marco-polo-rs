@@ -9,7 +9,7 @@ impl TestClient {
     }
 }
 
-impl crate::storage::traits::Client for TestClient {
+impl crate::infra::traits::BucketClient for TestClient {
     fn create_signed_download_url(
         &self,
         bucket_name: &str,
