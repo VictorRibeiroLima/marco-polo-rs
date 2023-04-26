@@ -27,8 +27,8 @@ where
 }
 
 pub fn init_routes(config: &mut web::ServiceConfig) {
-    let bucket_name = "test-bucket".to_string();
-    let storage_client = S3Client::new();
+    let bucket_name = "batuka-static-dev".to_string();
+    let storage_client = S3Client::new().unwrap();
     let storage_state = StorageState::new(bucket_name, storage_client);
 
     let app_data = web::Data::new(storage_state);
