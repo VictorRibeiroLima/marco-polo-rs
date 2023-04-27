@@ -19,16 +19,19 @@ use crate::internals::{
  * 7 - Upload the video to Youtube
  */
 
-pub struct Worker<CS>
+pub struct Worker<CS, TC>
 where
     CS: CloudService,
+    TC: TranscriberClient,
 {
     pub cloud_service: CS,
+    pub transcriber_client: TC,
 }
 
-impl<CS> Worker<CS>
+impl<CS, TC> Worker<CS, TC>
 where
     CS: CloudService,
+    TC: TranscriberClient,
 {
     pub async fn handle_queue(&self) {
         let queue_client = self.cloud_service.queue_client();
@@ -81,8 +84,7 @@ where
         let bucket_client = self.cloud_service.bucket_client();
         let signed_url = bucket_client.create_signed_download_url(&payload.video_uri, None)?;
 
-        let transcriber_client = AssemblyAiClient::new();
-        let transcribe_id = transcriber_client.transcribe(&signed_url).await?;
+        let transcribe_id = self.transcriber_client.transcribe(&signed_url).await?;
 
         println!("{:?}", transcribe_id);
         Ok(())
