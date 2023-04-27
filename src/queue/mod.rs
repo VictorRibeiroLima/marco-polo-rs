@@ -12,6 +12,7 @@ pub fn init(pool: sqlx::PgPool) {
     let cloud_service = AwsCloudService::new(queue_url).unwrap();
     let transcriber_client = AssemblyAiClient::new();
     let worker = Worker {
+        pool,
         cloud_service,
         transcriber_client,
     };

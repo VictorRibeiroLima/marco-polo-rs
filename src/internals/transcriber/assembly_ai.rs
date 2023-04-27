@@ -3,6 +3,8 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use crate::internals::ServiceProvider;
+
 use super::traits::TranscriberClient;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -37,6 +39,12 @@ impl AssemblyAiClient {
             api_url,
             webhook_url,
         }
+    }
+}
+
+impl ServiceProvider for AssemblyAiClient {
+    fn id() -> u32 {
+        return 2;
     }
 }
 

@@ -1,10 +1,7 @@
 use crate::internals::{
     cloud::{
-        models::{
-            payload::{PayloadType, UploadPayload},
-            service::CloudService,
-        },
-        traits::{BucketClient, QueueClient, QueueMessage},
+        models::payload::{PayloadType, UploadPayload},
+        traits::{BucketClient, CloudService, QueueClient, QueueMessage},
     },
     transcriber::traits::TranscriberClient,
 };
@@ -26,6 +23,7 @@ where
 {
     pub cloud_service: CS,
     pub transcriber_client: TC,
+    pub pool: sqlx::PgPool,
 }
 
 impl<CS, TC> Worker<CS, TC>

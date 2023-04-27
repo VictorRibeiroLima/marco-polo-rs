@@ -1,6 +1,8 @@
+use crate::internals::ServiceProvider;
+
 use self::s3::S3Client;
 
-use super::models::service::CloudService;
+use super::traits::CloudService;
 
 mod payload;
 pub mod s3;
@@ -20,6 +22,12 @@ impl AwsCloudService {
             bucket_client,
             queue_client,
         });
+    }
+}
+
+impl ServiceProvider for AwsCloudService {
+    fn id() -> u32 {
+        return 1;
     }
 }
 

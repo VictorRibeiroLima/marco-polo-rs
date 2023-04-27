@@ -2,6 +2,8 @@ use std::fmt::Debug;
 
 use async_trait::async_trait;
 
+use crate::internals::ServiceProvider;
+
 use super::models::payload::PayloadType;
 
 pub trait BucketClient {
@@ -28,4 +30,11 @@ pub trait QueueMessage {
     fn get_message(&self) -> String;
     fn get_handle(&self) -> String;
     fn to_payload(&self) -> Result<PayloadType, Box<dyn std::error::Error>>;
+}
+
+pub trait CloudService: ServiceProvider {
+    type BC: BucketClient;
+    type QC: QueueClient;
+    fn bucket_client(&self) -> &Self::BC;
+    fn queue_client(&self) -> &Self::QC;
 }
