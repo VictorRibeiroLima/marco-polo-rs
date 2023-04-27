@@ -6,7 +6,7 @@ use crate::internals::{
         },
         traits::{BucketClient, QueueClient, QueueMessage},
     },
-    transcriber::{assembly_ai::AssemblyAiClient, traits::TranscriberClient},
+    transcriber::traits::TranscriberClient,
 };
 
 /**

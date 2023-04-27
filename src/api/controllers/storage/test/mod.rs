@@ -12,7 +12,7 @@ impl TestClient {
 impl crate::internals::cloud::traits::BucketClient for TestClient {
     fn create_signed_download_url(
         &self,
-        file_uri: &str,
+        _file_uri: &str,
         expires_in: Option<u16>,
     ) -> Result<String, Box<dyn std::error::Error>> {
         Ok(format!(
