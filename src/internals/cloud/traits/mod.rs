@@ -2,6 +2,8 @@ use std::fmt::Debug;
 
 use async_trait::async_trait;
 
+use super::models::payload::PayloadType;
+
 pub trait BucketClient {
     fn create_signed_upload_url(
         &self,
@@ -15,16 +17,15 @@ pub trait BucketClient {
 }
 
 #[async_trait]
-pub trait QueueClient<T>
-where
-    T: QueueMessage + Debug,
-{
-    async fn receive_message(&self) -> Result<Option<Vec<T>>, Box<dyn std::error::Error>>;
+pub trait QueueClient {
+    type M: QueueMessage + Debug;
+    async fn receive_message(&self) -> Result<Option<Vec<Self::M>>, Box<dyn std::error::Error>>;
     async fn send_message(&self) -> Result<(), Box<dyn std::error::Error>>;
-    async fn delete_message(&self, message: T) -> Result<(), Box<dyn std::error::Error>>;
+    async fn delete_message(&self, message: Self::M) -> Result<(), Box<dyn std::error::Error>>;
 }
 
 pub trait QueueMessage {
     fn get_message(&self) -> String;
     fn get_handle(&self) -> String;
+    fn to_payload(&self) -> Result<PayloadType, Box<dyn std::error::Error>>;
 }

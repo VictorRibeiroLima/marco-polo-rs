@@ -1,6 +1,12 @@
-use crate::internals::cloud::traits::{QueueClient, QueueMessage};
+use crate::internals::cloud::{
+    models::payload::PayloadType,
+    traits::{QueueClient, QueueMessage},
+};
 use async_trait::async_trait;
 use rusoto_sqs::{DeleteMessageRequest, Message, ReceiveMessageRequest, Sqs, SqsClient};
+use serde_json::Value;
+
+use super::payload::S3UploadPayload;
 
 pub struct SQSClient {
     client: SqsClient,
@@ -29,11 +35,38 @@ impl QueueMessage for Message {
             None => String::new(),
         }
     }
+
+    fn to_payload(
+        &self,
+    ) -> Result<crate::internals::cloud::models::payload::PayloadType, Box<dyn std::error::Error>>
+    {
+        let body = match &self.body {
+            Some(body) => body,
+            None => return Err("No body found".into()),
+        };
+        let v: Value = serde_json::from_str(body)?;
+        let type_field = match v["type"].as_str() {
+            Some(type_field) => type_field,
+            None => return Err("No type field".into()),
+        };
+        if v["payload"].is_null() {
+            return Err("No payload field".into());
+        }
+        let payload = v["payload"].to_string();
+        match type_field {
+            "BatukaVideoUpload" => {
+                let payload: S3UploadPayload = serde_json::from_str(&payload)?;
+                return Ok(PayloadType::BatukaVideoUpload(payload.into()));
+            }
+            _ => Err("Invalid type field".into()),
+        }
+    }
 }
 
 #[async_trait]
-impl QueueClient<Message> for SQSClient {
-    async fn receive_message(&self) -> Result<Option<Vec<Message>>, Box<dyn std::error::Error>> {
+impl QueueClient for SQSClient {
+    type M = Message;
+    async fn receive_message(&self) -> Result<Option<Vec<Self::M>>, Box<dyn std::error::Error>> {
         let request = ReceiveMessageRequest {
             queue_url: self.queue_url.clone(),
             max_number_of_messages: Some(10),
@@ -42,17 +75,14 @@ impl QueueClient<Message> for SQSClient {
         };
 
         let output = self.client.receive_message(request).await?;
-        if let Some(messages) = output.messages {
-            return Ok(Some(messages));
-        }
-        return Ok(None);
+        return Ok(output.messages);
     }
 
     async fn send_message(&self) -> Result<(), Box<dyn std::error::Error>> {
         Ok(())
     }
 
-    async fn delete_message(&self, message: Message) -> Result<(), Box<dyn std::error::Error>> {
+    async fn delete_message(&self, message: Self::M) -> Result<(), Box<dyn std::error::Error>> {
         let receipt_handle = match message.receipt_handle {
             Some(receipt_handle) => receipt_handle,
             None => {

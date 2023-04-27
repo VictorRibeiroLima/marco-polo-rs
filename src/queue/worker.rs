@@ -1,76 +1,90 @@
 use crate::internals::{
     cloud::{
-        aws::payload::PayloadType,
+        models::{
+            payload::{PayloadType, UploadPayload},
+            service::CloudService,
+        },
         traits::{BucketClient, QueueClient, QueueMessage},
     },
-    transcriber::traits::TranscriberClient,
+    transcriber::{assembly_ai::AssemblyAiClient, traits::TranscriberClient},
 };
 
-pub async fn handle_uploaded_file<QC, QM, BC>(queue_client: QC, bucket_client: BC)
+/**
+ * 1 - Generate signed URL for the file
+ * 2 - Call assemblyAI to transcribe the file
+ * 3 - Save the original transcription in the database
+ * 4 - Call DeepL to translate the transcription
+ * 5 - Save the translated transcription in the database
+ * 6 - Call FFMPEG (or something else) to generate the video with the translated transcription
+ * 7 - Upload the video to Youtube
+ */
+
+pub struct Worker<CS>
 where
-    QC: QueueClient<QM>,
-    QM: QueueMessage + std::fmt::Debug,
-    BC: BucketClient,
+    CS: CloudService,
 {
-    loop {
-        let message_result = queue_client.receive_message().await.unwrap();
-        let messages = match message_result {
-            Some(messages) => messages,
-            _ => {
-                continue;
-            }
-        };
+    pub cloud_service: CS,
+}
 
-        for message in messages {
-            let body = message.get_message();
-            if body.is_empty() {
-                continue;
-            }
+impl<CS> Worker<CS>
+where
+    CS: CloudService,
+{
+    pub async fn handle_queue(&self) {
+        let queue_client = self.cloud_service.queue_client();
 
-            let payload_type = match PayloadType::from_str(body.as_str()) {
-                Ok(payload) => payload,
-                Err(_) => {
+        loop {
+            let message_result = queue_client.receive_message().await.unwrap();
+            let messages = match message_result {
+                Some(messages) => messages,
+                _ => {
                     continue;
                 }
             };
 
-            let payload = match payload_type {
-                PayloadType::BatukaVideoUpload(payload) => payload,
-            };
+            for message in messages {
+                let payload_type = match message.to_payload() {
+                    Ok(payload) => payload,
+                    Err(_) => {
+                        continue;
+                    }
+                };
 
-            let signed_url = bucket_client
-                .create_signed_download_url(&payload.s3video_uri, None)
-                .unwrap();
+                let result = match payload_type {
+                    PayloadType::BatukaVideoUpload(payload) => self.handle_upload(payload).await,
+                };
 
-            let transcriber_client =
-                crate::internals::transcriber::assembly_ai::AssemblyAiClient::new();
-            let transcribe_id = match transcriber_client.transcribe(&signed_url).await {
-                Ok(id) => id,
-                Err(e) => {
-                    println!("{:?}", e);
-                    continue;
+                match result {
+                    Ok(_) => {}
+                    Err(e) => {
+                        println!("{:?}", e);
+                        continue;
+                    }
                 }
-            };
 
-            println!("{:?}", transcribe_id);
+                let result = queue_client.delete_message(message).await; //TODO: see what to when delete fails
 
-            /**
-             * 1 - Generate signed URL for the file
-             * 2 - Call assemblyAI to transcribe the file
-             * 3 - Save the original transcription in the database
-             * 4 - Call DeepL to translate the transcription
-             * 5 - Save the translated transcription in the database
-             * 6 - Call FFMPEG (or something else) to generate the video with the translated transcription
-             * 7 - Upload the video to Youtube
-             */
-            let delete_result = queue_client.delete_message(message).await; //TODO: see what to when delete fails
-
-            match delete_result {
-                Ok(_) => {}
-                Err(e) => {
-                    println!("{:?}", e);
+                match result {
+                    Ok(_) => {}
+                    Err(e) => {
+                        println!("{:?}", e);
+                    }
                 }
             }
         }
+    }
+
+    async fn handle_upload(
+        &self,
+        payload: UploadPayload,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let bucket_client = self.cloud_service.bucket_client();
+        let signed_url = bucket_client.create_signed_download_url(&payload.video_uri, None)?;
+
+        let transcriber_client = AssemblyAiClient::new();
+        let transcribe_id = transcriber_client.transcribe(&signed_url).await?;
+
+        println!("{:?}", transcribe_id);
+        Ok(())
     }
 }

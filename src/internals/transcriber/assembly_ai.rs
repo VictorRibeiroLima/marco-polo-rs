@@ -7,7 +7,7 @@ use super::traits::TranscriberClient;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct Root {
+struct RequestBody {
     #[serde(rename = "audio_url")]
     pub audio_url: String,
     #[serde(rename = "webhook_url")]
@@ -46,18 +46,15 @@ impl TranscriberClient for AssemblyAiClient {
         let url = format!("{}/transcript", self.api_url);
         let client = Client::new();
 
-        let req_body = Root {
+        let req_body = RequestBody {
             audio_url: media_url.to_string(),
             webhook_url: self.webhook_url.to_string(),
             webhook_auth_header_name: "Authorization".to_string(),
             webhook_auth_header_value: "Corn Incident".to_string(),
         };
 
-        println!("OI");
-        println!("{:?}", url);
         let parsed_body = serde_json::to_string(&req_body)?;
 
-        println!("OI2");
         let res = client
             .post(&url)
             .header("Authorization", self.api_key.to_string())
@@ -65,10 +62,8 @@ impl TranscriberClient for AssemblyAiClient {
             .send()
             .await?;
 
-        println!("OI3");
         let res_body = res.text().await?;
 
-        println!("{:?}", res_body);
         let res_body: Value = serde_json::from_str(&res_body)?;
 
         let transcript_id = match res_body["id"].as_str() {
