@@ -1,5 +1,9 @@
 use crate::api::models::result::AppResult;
-use actix_web::{get, web::Json, App, HttpServer, Responder};
+use actix_web::{
+    get,
+    web::{self, Json},
+    App, HttpServer, Responder,
+};
 
 mod controllers;
 mod models;
@@ -10,9 +14,17 @@ async fn hello() -> impl Responder {
     return Json(result);
 }
 
-pub async fn init() -> std::io::Result<()> {
-    HttpServer::new(|| {
+struct GlobalState {
+    pool: sqlx::PgPool,
+}
+
+pub async fn init(pool: sqlx::PgPool) -> std::io::Result<()> {
+    let state = GlobalState { pool };
+    let data = web::Data::new(state);
+
+    HttpServer::new(move || {
         App::new()
+            .app_data(data.clone())
             .service(hello)
             .configure(controllers::init_routes)
     })

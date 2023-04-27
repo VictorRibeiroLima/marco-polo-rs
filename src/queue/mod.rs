@@ -6,7 +6,7 @@ use self::worker::Worker;
 
 mod worker;
 
-pub fn init() {
+pub fn init(pool: sqlx::PgPool) {
     let rt = Runtime::new().unwrap();
     let queue_url = std::env::var("AWS_QUEUE_URL").expect("QUEUE_URL not found");
     let cloud_service = AwsCloudService::new(queue_url).unwrap();
