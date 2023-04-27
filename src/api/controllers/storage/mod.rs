@@ -1,6 +1,6 @@
 use crate::{
     api::models::{error::AppError, result::AppResult},
-    infra::{aws::s3::S3Client, traits::BucketClient},
+    internals::cloud::{aws::s3::S3Client, traits::BucketClient},
 };
 
 mod state;
@@ -18,16 +18,13 @@ async fn signed_upload_url<C>(state: Data<StorageState<C>>) -> Result<impl Respo
 where
     C: BucketClient,
 {
-    let bucket_name = &state.bucket_name;
-    let result = state
-        .storage_client
-        .create_signed_upload_url(bucket_name, 3600)?;
+    let result = state.storage_client.create_signed_upload_url(3600)?;
 
     return Ok(Json(AppResult::new(result)));
 }
 
 pub fn init_routes(config: &mut web::ServiceConfig) {
-    let bucket_name = "batuka-static-dev/videos".to_string();
+    let bucket_name = "batuka-static-dev/".to_string();
     let storage_client = S3Client::new().unwrap();
     let storage_state = StorageState::new(bucket_name, storage_client);
 

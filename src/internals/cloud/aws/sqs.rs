@@ -1,4 +1,4 @@
-use crate::infra::traits::{QueueClient, QueueMessage};
+use crate::internals::cloud::traits::{QueueClient, QueueMessage};
 use async_trait::async_trait;
 use rusoto_sqs::{DeleteMessageRequest, Message, ReceiveMessageRequest, Sqs, SqsClient};
 

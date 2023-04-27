@@ -9,27 +9,23 @@ impl TestClient {
     }
 }
 
-impl crate::infra::traits::BucketClient for TestClient {
+impl crate::internals::cloud::traits::BucketClient for TestClient {
     fn create_signed_download_url(
         &self,
-        bucket_name: &str,
-        expires_in: u16,
+        file_uri: &str,
+        expires_in: Option<u16>,
     ) -> Result<String, Box<dyn std::error::Error>> {
         Ok(format!(
-            "https://storage.googleapis.com/{}/{}",
-            bucket_name, expires_in
+            "https://storage.googleapis.com/{}",
+            expires_in.unwrap()
         ))
     }
 
     fn create_signed_upload_url(
         &self,
-        bucket_name: &str,
         expires_in: u16,
     ) -> Result<String, Box<dyn std::error::Error>> {
-        Ok(format!(
-            "https://storage.googleapis.com/{}/{}",
-            bucket_name, expires_in
-        ))
+        Ok(format!("https://storage.googleapis.com/{}", expires_in))
     }
 }
 
