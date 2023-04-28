@@ -1,8 +1,8 @@
 use dotenv;
-use sqlx::{migrate, PgPool};
 use std::thread;
 
 mod api;
+mod database;
 mod internals;
 mod queue;
 
@@ -30,14 +30,8 @@ async fn main() -> std::io::Result<()> {
     dotenv::from_filename(".env").expect("Failed to load .env file");
     check_envs();
 
-    let database_url = std::env::var("DATABASE_URL").unwrap();
-    let pool = PgPool::connect(&database_url).await.unwrap();
+    let pool = database::create_pool().await;
     let thread_pool = pool.clone();
-
-    migrate!()
-        .run(&pool)
-        .await
-        .expect("Failed to run migrations");
 
     env_logger::init();
 

@@ -1,11 +1,12 @@
 use async_std::task::block_on;
+use async_trait::async_trait;
 use rusoto_credential::{EnvironmentProvider, ProvideAwsCredentials};
 use rusoto_s3::{
     util::{PreSignedRequest, PreSignedRequestOption},
-    GetObjectRequest, PutObjectRequest,
+    GetObjectRequest, PutObjectRequest, S3,
 };
 
-use crate::internals::cloud::traits::BucketClient;
+use crate::internals::{cloud::traits::BucketClient, ServiceProvider};
 
 pub struct S3Client {
     region: rusoto_core::Region,
@@ -27,8 +28,33 @@ impl S3Client {
     }
 }
 
+impl ServiceProvider for S3Client {
+    fn id() -> i32 {
+        1
+    }
+}
+
+#[async_trait]
 impl BucketClient for S3Client {
-    fn create_signed_upload_url(
+    async fn upload_file(
+        &self,
+        file_path: &str,
+        file: Vec<u8>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let request = PutObjectRequest {
+            bucket: self.bucket_name.clone(),
+            key: file_path.to_string(),
+            body: Some(file.into()),
+            ..Default::default()
+        };
+
+        let client = rusoto_s3::S3Client::new(self.region.clone());
+        client.put_object(request).await?;
+
+        Ok(())
+    }
+
+    async fn create_signed_upload_url(
         &self,
         expiration: u16,
     ) -> Result<String, Box<dyn std::error::Error>> {
@@ -47,7 +73,7 @@ impl BucketClient for S3Client {
         return Ok(url);
     }
 
-    fn create_signed_download_url(
+    async fn create_signed_download_url(
         &self,
         file_uri: &str,
         expiration: Option<u16>,

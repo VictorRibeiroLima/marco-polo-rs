@@ -1,5 +1,8 @@
+use crate::internals::ServiceProvider;
+
 use super::*;
 use actix_web::{http::header::ContentType, test, web, App};
+use async_trait::async_trait;
 
 struct TestClient;
 
@@ -9,8 +12,23 @@ impl TestClient {
     }
 }
 
+impl ServiceProvider for TestClient {
+    fn id() -> i32 {
+        return 1;
+    }
+}
+
+#[async_trait]
 impl crate::internals::cloud::traits::BucketClient for TestClient {
-    fn create_signed_download_url(
+    async fn upload_file(
+        &self,
+        _file_path: &str,
+        _file: Vec<u8>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        Ok(())
+    }
+
+    async fn create_signed_download_url(
         &self,
         _file_uri: &str,
         expires_in: Option<u16>,
@@ -21,7 +39,7 @@ impl crate::internals::cloud::traits::BucketClient for TestClient {
         ))
     }
 
-    fn create_signed_upload_url(
+    async fn create_signed_upload_url(
         &self,
         expires_in: u16,
     ) -> Result<String, Box<dyn std::error::Error>> {
@@ -31,9 +49,8 @@ impl crate::internals::cloud::traits::BucketClient for TestClient {
 
 #[actix_web::test]
 async fn test_create_signed_upload_url() {
-    let bucket_name = "test-bucket".to_string();
     let storage_client = TestClient::new();
-    let storage_state = StorageState::new(bucket_name, storage_client);
+    let storage_state = StorageState::new(storage_client);
 
     let app_data = web::Data::new(storage_state);
 
@@ -52,5 +69,5 @@ async fn test_create_signed_upload_url() {
     let resp = test::call_service(&app, req).await;
     assert!(resp.status().is_success());
     let body: AppResult<String> = test::read_body_json(resp).await;
-    assert_eq!(body.data, "https://storage.googleapis.com/test-bucket/3600");
+    assert_eq!(body.data, "https://storage.googleapis.com/3600");
 }

@@ -26,7 +26,7 @@ impl AwsCloudService {
 }
 
 impl ServiceProvider for AwsCloudService {
-    fn id() -> u32 {
+    fn id() -> i32 {
         return 1;
     }
 }

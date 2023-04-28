@@ -43,7 +43,7 @@ impl AssemblyAiClient {
 }
 
 impl ServiceProvider for AssemblyAiClient {
-    fn id() -> u32 {
+    fn id() -> i32 {
         return 2;
     }
 }

@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::api::models::result::AppResult;
 use actix_web::{
     get,
@@ -15,16 +17,15 @@ async fn hello() -> impl Responder {
 }
 
 struct GlobalState {
-    pool: sqlx::PgPool,
+    pool: Arc<sqlx::PgPool>,
 }
 
 pub async fn init(pool: sqlx::PgPool) -> std::io::Result<()> {
-    let state = GlobalState { pool };
-    let data = web::Data::new(state);
+    let pool = Arc::new(pool);
 
     HttpServer::new(move || {
         App::new()
-            .app_data(data.clone())
+            .app_data(web::Data::new(GlobalState { pool: pool.clone() }))
             .service(hello)
             .configure(controllers::init_routes)
     })

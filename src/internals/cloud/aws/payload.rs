@@ -10,7 +10,17 @@ pub struct S3UploadPayload {
 
 impl Into<UploadPayload> for S3UploadPayload {
     fn into(self) -> UploadPayload {
+        let video_id = self
+            .s3video_uri
+            .split('/')
+            .filter(|x| uuid::Uuid::parse_str(x).is_ok())
+            .next()
+            .unwrap();
+
+        let video_id = uuid::Uuid::parse_str(video_id).unwrap();
+
         UploadPayload {
+            video_id,
             video_uri: self.s3video_uri,
         }
     }

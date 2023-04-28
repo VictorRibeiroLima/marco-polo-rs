@@ -1,19 +1,24 @@
-use crate::internals::{
-    cloud::{
-        models::payload::{PayloadType, UploadPayload},
-        traits::{BucketClient, CloudService, QueueClient, QueueMessage},
+use crate::{
+    database::{
+        models::video_storage::VideoFormat,
+        video::{
+            create_transcription, create_upload, CreateVideoTranscriptionDto, CreateVideoUploadDto,
+        },
     },
-    transcriber::traits::TranscriberClient,
+    internals::{
+        cloud::{
+            models::payload::{PayloadType, UploadPayload},
+            traits::{BucketClient, CloudService, QueueClient, QueueMessage},
+        },
+        transcriber::traits::TranscriberClient,
+    },
 };
 
 /**
- * 1 - Generate signed URL for the file
- * 2 - Call assemblyAI to transcribe the file
- * 3 - Save the original transcription in the database
- * 4 - Call DeepL to translate the transcription
- * 5 - Save the translated transcription in the database
- * 6 - Call FFMPEG (or something else) to generate the video with the translated transcription
- * 7 - Upload the video to Youtube
+ * 1 - Call DeepL to translate the transcription
+ * 2 - Save the translated transcription in the database
+ * 3 - Call FFMPEG (or something else) to generate the video with the translated transcription
+ * 4 - Upload the video to Youtube
  */
 
 pub struct Worker<CS, TC>
@@ -80,11 +85,33 @@ where
         payload: UploadPayload,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let bucket_client = self.cloud_service.bucket_client();
-        let signed_url = bucket_client.create_signed_download_url(&payload.video_uri, None)?;
+        create_upload(
+            &self.pool,
+            CreateVideoUploadDto {
+                format: VideoFormat::Mp4,
+                storage_id: CS::id(),
+                video_id: payload.video_id,
+                video_uri: &payload.video_uri,
+            },
+        )
+        .await?;
+
+        let signed_url = bucket_client
+            .create_signed_download_url(&payload.video_uri, None)
+            .await?;
 
         let transcribe_id = self.transcriber_client.transcribe(&signed_url).await?;
 
-        println!("{:?}", transcribe_id);
+        create_transcription(
+            &self.pool,
+            CreateVideoTranscriptionDto {
+                video_id: payload.video_id,
+                transcription_id: transcribe_id,
+                transcriber_id: TC::id(),
+            },
+        )
+        .await?;
+
         Ok(())
     }
 }

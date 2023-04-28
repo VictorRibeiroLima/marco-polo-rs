@@ -1,6 +1,11 @@
 {
   "cSpell.words": [
     "actix",
-    "Batuka"
+    "assemblyai",
+    "Batuka",
+    "chrono",
+    "dotenv",
+    "reqwest",
+    "sqlx"
   ]
 }

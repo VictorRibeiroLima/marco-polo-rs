@@ -38,6 +38,7 @@ pub struct AppError {
     pub message: String,
 }
 
+#[allow(dead_code)]
 impl AppError {
     pub fn new(error_type: AppErrorType, message: String) -> Self {
         return Self {
@@ -84,6 +85,35 @@ impl ResponseError for AppError {
 
 impl From<Box<dyn std::error::Error>> for AppError {
     fn from(value: Box<dyn std::error::Error>) -> Self {
+        println!("Boxed Error: {}", value);
         return Self::new(AppErrorType::InternalServerError, value.to_string());
+    }
+}
+
+impl From<serde_json::Error> for AppError {
+    fn from(value: serde_json::Error) -> Self {
+        println!("JSON Error: {}", value);
+        return Self::new(AppErrorType::InternalServerError, value.to_string());
+    }
+}
+
+impl From<reqwest::Error> for AppError {
+    fn from(value: reqwest::Error) -> Self {
+        println!("Request Error: {}", value);
+        return Self::new(AppErrorType::InternalServerError, value.to_string());
+    }
+}
+
+impl From<sqlx::Error> for AppError {
+    fn from(value: sqlx::Error) -> Self {
+        match value {
+            sqlx::Error::RowNotFound => {
+                return Self::new(AppErrorType::NotFound, value.to_string());
+            }
+            _ => {
+                println!("SQLx Error: {}", value);
+                return Self::new(AppErrorType::InternalServerError, value.to_string());
+            }
+        }
     }
 }

@@ -1,13 +1,14 @@
 -- Add up migration script here
 CREATE TABLE IF NOT EXISTS videos_transcriptions (
-    video_id uuid PRIMARY KEY,
+    video_id uuid NOT NULL,
     transcriber_id integer NOT NULL,
     transcription_id varchar(255) NOT NULL,
     storage_id integer,
     path varchar(255),
     created_at timestamp NOT NULL DEFAULT now(),
     updated_at timestamp NOT NULL DEFAULT now(),
-    deleted_at timestamp
+    deleted_at timestamp,
+    CONSTRAINT pk_videos_transcriptions PRIMARY KEY (video_id)
 );
 
 ALTER TABLE videos_transcriptions ADD CONSTRAINT fk_videos_transcriptions_video_id FOREIGN KEY (video_id) REFERENCES videos(id);

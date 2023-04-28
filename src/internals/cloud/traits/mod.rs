@@ -6,16 +6,23 @@ use crate::internals::ServiceProvider;
 
 use super::models::payload::PayloadType;
 
-pub trait BucketClient {
-    fn create_signed_upload_url(
+#[async_trait]
+pub trait BucketClient: ServiceProvider {
+    async fn create_signed_upload_url(
         &self,
         expires_in: u16,
     ) -> Result<String, Box<dyn std::error::Error>>;
-    fn create_signed_download_url(
+    async fn create_signed_download_url(
         &self,
         file_uri: &str,
         expires_in: Option<u16>,
     ) -> Result<String, Box<dyn std::error::Error>>;
+
+    async fn upload_file(
+        &self,
+        file_path: &str,
+        file: Vec<u8>,
+    ) -> Result<(), Box<dyn std::error::Error>>;
 }
 
 #[async_trait]
