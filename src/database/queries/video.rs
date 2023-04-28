@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use super::models::{video::Video, video_storage::VideoFormat};
+use crate::database::models::{video::Video, video_storage::VideoFormat};
 
 pub struct CreateVideoUploadDto<'a> {
     pub video_id: Uuid,

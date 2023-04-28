@@ -2,10 +2,7 @@ use sqlx::PgPool;
 
 use crate::{
     api::models::error::AppError,
-    database::{
-        self,
-        video::{update_transcription, UpdateVideoTranscriptionDto},
-    },
+    database::queries::{self, video::UpdateVideoTranscriptionDto},
     internals::cloud::traits::BucketClient,
 };
 
@@ -40,12 +37,12 @@ where
     let body = resp.text().await?;
     let body = body.as_bytes().to_vec();
 
-    let video = database::video::find_by_transcription_id(pool, transcription_id).await?;
+    let video = queries::video::find_by_transcription_id(pool, transcription_id).await?;
     let file_name = format!("videos/{}/transcript.srt", video.id);
 
     bucket_client.upload_file(&file_name, body).await?;
 
-    update_transcription(
+    queries::video::update_transcription(
         pool,
         UpdateVideoTranscriptionDto {
             video_id: video.id,

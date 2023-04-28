@@ -1,3 +1,137 @@
 {
-  "db": "PostgreSQL"
+  "db": "PostgreSQL",
+  "a3907c388014733f4487f723bf20307a3619a281bb75a2aa1435b8c73893bb22": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Varchar",
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n            UPDATE videos_transcriptions SET storage_id = $1, path = $2, updated_at = NOW()\n            WHERE video_id = $3;\n        "
+  },
+  "bbe92fc5b99877b8a4452f1cb40b95dafb599c0612b8083ba797eba90baa44fa": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n        INSERT INTO videos (id)\n        VALUES ($1);\n        "
+  },
+  "cfe29ed8f88ae2fafa7ccaca4f9db90deb3ebfb9d863d796863289e6b71aaf13": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Int4",
+          "Varchar",
+          {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "MP4",
+                  "AVI",
+                  "MOV"
+                ]
+              },
+              "name": "video_format"
+            }
+          }
+        ]
+      }
+    },
+    "query": "\n        INSERT INTO videos_storages (video_id, storage_id, video_path, format, stage)\n        VALUES ($1, $2, $3, $4, 'RAW');\n        "
+  },
+  "e50541be0f4d4cc075c56496a53346057758fc14d368d6ee9f03c4b0d6d9e902": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id: Uuid",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "title",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "description",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "url",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "language",
+          "ordinal": 4,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "created_at: DateTime<Utc>",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "updated_at: DateTime<Utc>",
+          "ordinal": 6,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "deleted_at: DateTime<Utc>",
+          "ordinal": 7,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "uploaded_at: DateTime<Utc>",
+          "ordinal": 8,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        true,
+        true,
+        false,
+        false,
+        false,
+        true,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        SELECT \n            v.id as \"id: Uuid\", \n            v.title,\n            v.description,\n            v.url,\n            v.language,\n            v.created_at as \"created_at: DateTime<Utc>\",\n            v.updated_at as \"updated_at: DateTime<Utc>\",\n            v.deleted_at as \"deleted_at: DateTime<Utc>\",\n            v.uploaded_at as \"uploaded_at: DateTime<Utc>\"\n        FROM \n            videos v\n        INNER JOIN \n            videos_transcriptions vt ON v.id = vt.video_id\n        WHERE \n            vt.transcription_id = $1\n    "
+  },
+  "e6c82bd3af457ed042c08baf5a8aeb9bc95cde104ca4b2137191a13d7ab2d2b9": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Varchar",
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n        INSERT INTO videos_transcriptions (video_id, transcription_id, transcriber_id)\n        VALUES ($1, $2, $3);\n        "
+  }
 }

@@ -1,8 +1,9 @@
 use crate::{
     database::{
         models::video_storage::VideoFormat,
-        video::{
-            create_transcription, create_upload, CreateVideoTranscriptionDto, CreateVideoUploadDto,
+        queries::{
+            self,
+            video::{CreateVideoTranscriptionDto, CreateVideoUploadDto},
         },
     },
     internals::{
@@ -85,7 +86,7 @@ where
         payload: UploadPayload,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let bucket_client = self.cloud_service.bucket_client();
-        create_upload(
+        queries::video::create_upload(
             &self.pool,
             CreateVideoUploadDto {
                 format: VideoFormat::Mp4,
@@ -102,7 +103,7 @@ where
 
         let transcribe_id = self.transcriber_client.transcribe(&signed_url).await?;
 
-        create_transcription(
+        queries::video::create_transcription(
             &self.pool,
             CreateVideoTranscriptionDto {
                 video_id: payload.video_id,

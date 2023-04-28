@@ -1,7 +1,7 @@
 use sqlx::{migrate, PgPool};
 
 pub mod models;
-pub mod video;
+pub mod queries;
 
 pub async fn create_pool() -> PgPool {
     let database_url = std::env::var("DATABASE_URL").unwrap();
