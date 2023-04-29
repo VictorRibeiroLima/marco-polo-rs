@@ -32,7 +32,7 @@ After that it's recommended to create a database called `video_translator` on th
 ### Migrations
 Install sqlx-cli:
 ```bash
-$ cargo install sqlx-cli --no-default-features --features postgres
+$ cargo install sqlx-cli --no-default-features --features native-tls,postgres
 ```
 
 After the database is running and the .env file is configured, you can run the migrations to create the tables on the database.
