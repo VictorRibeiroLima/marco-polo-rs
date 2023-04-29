@@ -6,7 +6,7 @@ use uuid::Uuid;
 pub struct VideosTranslation {
     pub video_id: Uuid,
     pub translator_id: i32,
-    pub translation_id: String,
+    pub translation_id: Option<String>,
     pub storage_id: Option<i32>,
     pub path: Option<String>,
     pub language: String,

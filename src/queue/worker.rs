@@ -9,6 +9,8 @@ use crate::internals::{
     translator::traits::TranslatorClient,
 };
 
+use crate::util::time_it;
+
 use super::handlers;
 
 /**
@@ -86,8 +88,13 @@ where
                                 continue;
                             }
                         }
-
-                        let result = handler.translate(sentences).await;
+                        let result;
+                        time_it!(
+                            {
+                                result = handler.translate(sentences).await;
+                            },
+                            as_millis
+                        );
 
                         result
                     }

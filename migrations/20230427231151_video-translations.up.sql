@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS videos_translations (
     video_id UUID PRIMARY KEY,
     translator_id integer NOT NULL,
-    translation_id varchar(255) NOT NULL,
+    translation_id varchar(255),
     storage_id integer,
     path varchar(255),
     language VARCHAR(255) NOT NULL DEFAULT 'pt-br',
