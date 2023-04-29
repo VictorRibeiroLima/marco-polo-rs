@@ -23,6 +23,10 @@ fn check_envs() {
     std::env::var("ASSEMBLY_AI_API_KEY").expect("ASSEMBLY_AI_API_KEY not found");
     std::env::var("ASSEMBLY_AI_BASE_URL").expect("ASSEMBLY_AI_BASE_URL not found");
     std::env::var("ASSEMBLY_AI_WEBHOOK_ENDPOINT").expect("ASSEMBLY_AI_WEBHOOK_ENDPOINT not found");
+
+    //DEEPL
+    std::env::var("DEEPL_BASE_URL").expect("DEEPL_BASE_URL not set");
+    std::env::var("DEEPL_API_KEY").expect("DEEPL_API_KEY not set");
 }
 
 #[actix_web::main]

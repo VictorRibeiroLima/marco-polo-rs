@@ -2,7 +2,7 @@ use crate::{
     database::queries,
     internals::{
         cloud::{models::payload::SrtTranscriptionPayload, traits::CloudService},
-        transcriber::traits::{TranscriberClient, TranscriptionSentence},
+        transcriber::traits::{TranscriberClient, TranscriptionSentence}, translator::{deepl::DeeplClient, traits::TranslatorClient},
     },
     queue::worker::Worker,
 };
@@ -55,9 +55,16 @@ where
         //let worker = &self.worker;
         //let transcriber_client = &worker.transcriber_client;
 
+        let translator_client = DeeplClient::new();
+
+
         for sen in sentences {
-            println!("Sentence: {}", sen.text);
+
+            let translation = translator_client.translate(&sen.text).await?;
+
+            println!("Sentence: {}", translation);
         }
         Ok(())
     }
+    
 }

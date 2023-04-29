@@ -4,9 +4,11 @@
     "assemblyai",
     "Batuka",
     "chrono",
+    "deeṕl",
     "dotenv",
     "reqwest",
     "rusoto",
     "sqlx"
-  ]
+  ],
+  "rust-analyzer.showUnlinkedFileNotification": false
 }
