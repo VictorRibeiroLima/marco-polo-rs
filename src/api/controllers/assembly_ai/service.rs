@@ -22,8 +22,6 @@ where
 
     let transcription_id = &req_body.transcript_id;
 
-    println!("transcription_id: {}", transcription_id);
-
     let url = format!("{}/transcript/{}/srt", base_url, req_body.transcript_id);
 
     let client = reqwest::Client::new();
@@ -38,7 +36,7 @@ where
     let body = body.as_bytes().to_vec();
 
     let video = queries::video::find_by_transcription_id(pool, transcription_id).await?;
-    let file_name = format!("videos/{}/transcript.srt", video.id);
+    let file_name = format!("srt_transcriptions/{}.srt", video.id);
 
     bucket_client.upload_file(&file_name, body).await?;
 

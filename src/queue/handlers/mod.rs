@@ -1,2 +1,2 @@
 pub mod transcription;
-pub mod video;
+pub mod upload;

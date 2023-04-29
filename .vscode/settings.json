@@ -6,6 +6,7 @@
     "chrono",
     "dotenv",
     "reqwest",
+    "rusoto",
     "sqlx"
   ]
 }

@@ -7,6 +7,13 @@ pub struct UploadPayload {
 }
 
 #[derive(Debug)]
+pub struct SrtTranscriptionPayload {
+    pub video_id: Uuid,
+    pub srt_uri: String,
+}
+
+#[derive(Debug)]
 pub enum PayloadType {
     BatukaVideoUpload(UploadPayload),
+    BatukaSrtTranscriptionUpload(SrtTranscriptionPayload),
 }

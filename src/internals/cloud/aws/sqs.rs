@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use rusoto_sqs::{DeleteMessageRequest, Message, ReceiveMessageRequest, Sqs, SqsClient};
 use serde_json::Value;
 
-use super::payload::S3UploadPayload;
+use super::payload::{S3SrtTranscriptionPayload, S3UploadPayload};
 
 pub struct SQSClient {
     client: SqsClient,
@@ -57,6 +57,10 @@ impl QueueMessage for Message {
             "BatukaVideoUpload" => {
                 let payload: S3UploadPayload = serde_json::from_str(&payload)?;
                 return Ok(PayloadType::BatukaVideoUpload(payload.into()));
+            }
+            "BatukaSrtTranscriptionUpload" => {
+                let payload: S3SrtTranscriptionPayload = serde_json::from_str(&payload)?;
+                return Ok(PayloadType::BatukaSrtTranscriptionUpload(payload.into()));
             }
             _ => Err("Invalid type field".into()),
         }

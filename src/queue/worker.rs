@@ -1,19 +1,14 @@
-use crate::{
-    database::{
-        models::video_storage::VideoFormat,
-        queries::{
-            self,
-            video::{CreateVideoTranscriptionDto, CreateVideoUploadDto},
-        },
+use std::sync::Arc;
+
+use crate::internals::{
+    cloud::{
+        models::payload::PayloadType,
+        traits::{CloudService, QueueClient, QueueMessage},
     },
-    internals::{
-        cloud::{
-            models::payload::{PayloadType, UploadPayload},
-            traits::{BucketClient, CloudService, QueueClient, QueueMessage},
-        },
-        transcriber::traits::TranscriberClient,
-    },
+    transcriber::traits::TranscriberClient,
 };
+
+use super::handlers;
 
 /**
  * 1 - Call DeepL to translate the transcription
@@ -29,7 +24,7 @@ where
 {
     pub cloud_service: CS,
     pub transcriber_client: TC,
-    pub pool: sqlx::PgPool,
+    pub pool: Arc<sqlx::PgPool>,
 }
 
 impl<CS, TC> Worker<CS, TC>
@@ -58,7 +53,12 @@ where
                 };
 
                 let result = match payload_type {
-                    PayloadType::BatukaVideoUpload(payload) => self.handle_upload(payload).await,
+                    PayloadType::BatukaVideoUpload(payload) => {
+                        handlers::upload::handle(&self, payload).await
+                    }
+                    PayloadType::BatukaSrtTranscriptionUpload(payload) => {
+                        handlers::transcription::handle(&self, payload).await
+                    }
                 };
 
                 match result {
@@ -79,40 +79,5 @@ where
                 }
             }
         }
-    }
-
-    async fn handle_upload(
-        &self,
-        payload: UploadPayload,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        let bucket_client = self.cloud_service.bucket_client();
-        queries::video::create_upload(
-            &self.pool,
-            CreateVideoUploadDto {
-                format: VideoFormat::Mp4,
-                storage_id: CS::id(),
-                video_id: payload.video_id,
-                video_uri: &payload.video_uri,
-            },
-        )
-        .await?;
-
-        let signed_url = bucket_client
-            .create_signed_download_url(&payload.video_uri, None)
-            .await?;
-
-        let transcribe_id = self.transcriber_client.transcribe(&signed_url).await?;
-
-        queries::video::create_transcription(
-            &self.pool,
-            CreateVideoTranscriptionDto {
-                video_id: payload.video_id,
-                transcription_id: transcribe_id,
-                transcriber_id: TC::id(),
-            },
-        )
-        .await?;
-
-        Ok(())
     }
 }

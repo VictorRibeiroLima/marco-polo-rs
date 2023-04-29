@@ -1,5 +1,5 @@
 use dotenv;
-use std::thread;
+use std::{sync::Arc, thread};
 
 mod api;
 mod database;
@@ -30,7 +30,7 @@ async fn main() -> std::io::Result<()> {
     dotenv::from_filename(".env").expect("Failed to load .env file");
     check_envs();
 
-    let pool = database::create_pool().await;
+    let pool = Arc::new(database::create_pool().await);
     let thread_pool = pool.clone();
 
     env_logger::init();

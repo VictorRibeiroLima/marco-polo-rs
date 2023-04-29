@@ -23,8 +23,6 @@ async fn webhook<C>(
 where
     C: BucketClient,
 {
-    println!("Webhook request body: {:?}", req_body);
-
     let pool = &global_state.pool;
 
     let req_body = req_body.into_inner();

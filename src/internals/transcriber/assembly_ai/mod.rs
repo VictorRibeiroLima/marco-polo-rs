@@ -1,24 +1,14 @@
 use async_trait::async_trait;
 use reqwest::Client;
-use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::internals::ServiceProvider;
 
-use super::traits::TranscriberClient;
+use self::payload::{request::TranscribeRequestBody, response::TranscribeSentencesResponse};
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct RequestBody {
-    #[serde(rename = "audio_url")]
-    pub audio_url: String,
-    #[serde(rename = "webhook_url")]
-    pub webhook_url: String,
-    #[serde(rename = "webhook_auth_header_name")]
-    pub webhook_auth_header_name: String,
-    #[serde(rename = "webhook_auth_header_value")]
-    pub webhook_auth_header_value: String,
-}
+use super::traits::{TranscriberClient, TranscriptionSentence};
+
+mod payload;
 
 pub struct AssemblyAiClient {
     api_key: String,
@@ -50,11 +40,37 @@ impl ServiceProvider for AssemblyAiClient {
 
 #[async_trait]
 impl TranscriberClient for AssemblyAiClient {
+    async fn get_transcription_sentences(
+        &self,
+        transcription_id: &str,
+    ) -> Result<Vec<TranscriptionSentence>, Box<dyn std::error::Error>> {
+        let url = format!("{}/transcript/{}/sentences", self.api_url, transcription_id);
+        let client = Client::new();
+
+        let resp = client
+            .get(&url)
+            .header("Authorization", self.api_key.to_string())
+            .send()
+            .await?;
+
+        let resp_body = resp.text().await?;
+
+        let resp_body: TranscribeSentencesResponse = serde_json::from_str(&resp_body)?;
+
+        let sentences = resp_body
+            .sentences
+            .into_iter()
+            .map(|sentence| sentence.into())
+            .collect();
+
+        return Ok(sentences);
+    }
+
     async fn transcribe(&self, media_url: &str) -> Result<String, Box<dyn std::error::Error>> {
         let url = format!("{}/transcript", self.api_url);
         let client = Client::new();
 
-        let req_body = RequestBody {
+        let req_body = TranscribeRequestBody {
             audio_url: media_url.to_string(),
             webhook_url: self.webhook_url.to_string(),
             webhook_auth_header_name: "Authorization".to_string(),

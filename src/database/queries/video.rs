@@ -11,12 +11,6 @@ pub struct CreateVideoUploadDto<'a> {
     pub format: VideoFormat,
 }
 
-pub struct CreateVideoTranscriptionDto {
-    pub video_id: Uuid,
-    pub transcription_id: String,
-    pub transcriber_id: i32,
-}
-
 pub struct UpdateVideoTranscriptionDto {
     pub video_id: Uuid,
     pub storage_id: i32,
@@ -52,25 +46,6 @@ pub async fn create_upload(
     .await?;
 
     trx.commit().await?;
-    Ok(())
-}
-
-pub async fn create_transcription(
-    pool: &PgPool,
-    dto: CreateVideoTranscriptionDto,
-) -> Result<(), sqlx::Error> {
-    sqlx::query!(
-        r#"
-        INSERT INTO videos_transcriptions (video_id, transcription_id, transcriber_id)
-        VALUES ($1, $2, $3);
-        "#,
-        dto.video_id,
-        dto.transcription_id,
-        dto.transcriber_id
-    )
-    .execute(pool)
-    .await?;
-
     Ok(())
 }
 

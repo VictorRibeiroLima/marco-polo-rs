@@ -20,9 +20,7 @@ struct GlobalState {
     pool: Arc<sqlx::PgPool>,
 }
 
-pub async fn init(pool: sqlx::PgPool) -> std::io::Result<()> {
-    let pool = Arc::new(pool);
-
+pub async fn init(pool: Arc<sqlx::PgPool>) -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(GlobalState { pool: pool.clone() }))
