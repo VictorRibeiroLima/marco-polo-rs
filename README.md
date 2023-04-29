@@ -12,7 +12,7 @@ $ sudo apt install libssl-dev
 # Env config
 
 ### Env files
-You should use the .env.example file as a template to create your own .env file.
+You should use the .example.env file as a template to create your own .env file.
 
 ### Database
 
@@ -51,6 +51,7 @@ A useful tool to expose your local server to the internet is ngrok, you can down
 
 ***Linux and Wsl installation:***
 ```bash
+$ cd ~
 $ wget https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
 $ unzip ngrok-stable-linux-amd64.zip
 $ sudo mv ngrok /usr/local/bin
