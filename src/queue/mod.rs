@@ -2,7 +2,10 @@ use std::sync::Arc;
 
 use actix_web::rt::Runtime;
 
-use crate::internals::{cloud::aws::AwsCloudService, transcriber::assembly_ai::AssemblyAiClient};
+use crate::internals::{
+    cloud::aws::AwsCloudService, transcriber::assembly_ai::AssemblyAiClient,
+    translator::deepl::DeeplClient,
+};
 
 use self::worker::Worker;
 
@@ -14,10 +17,13 @@ pub fn init(pool: Arc<sqlx::PgPool>) {
     let queue_url = std::env::var("AWS_QUEUE_URL").expect("QUEUE_URL not found");
     let cloud_service = AwsCloudService::new(queue_url).unwrap();
     let transcriber_client = AssemblyAiClient::new();
+    let translator_client: DeeplClient = DeeplClient::new();
+
     let worker = Worker {
         pool,
         cloud_service,
         transcriber_client,
+        translator_client,
     };
 
     rt.block_on(async move {

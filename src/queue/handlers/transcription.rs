@@ -2,25 +2,28 @@ use crate::{
     database::queries,
     internals::{
         cloud::{models::payload::SrtTranscriptionPayload, traits::CloudService},
-        transcriber::traits::{TranscriberClient, TranscriptionSentence}, translator::{deepl::DeeplClient, traits::TranslatorClient},
+        transcriber::traits::{TranscriberClient, TranscriptionSentence},
+        translator::{deepl::DeeplClient, traits::TranslatorClient},
     },
     queue::worker::Worker,
 };
 
-pub struct Handler<'a, CS, TC>
+pub struct Handler<'a, CS, TC, TLC>
 where
     CS: CloudService,
     TC: TranscriberClient,
+    TLC: TranslatorClient,
 {
-    worker: &'a Worker<CS, TC>,
+    worker: &'a Worker<CS, TC, TLC>,
 }
 
-impl<'a, CS, TC> Handler<'a, CS, TC>
+impl<'a, CS, TC, TLC> Handler<'a, CS, TC, TLC>
 where
     CS: CloudService,
     TC: TranscriberClient,
+    TLC: TranslatorClient,
 {
-    pub fn new(worker: &'a Worker<CS, TC>) -> Handler<'a, CS, TC> {
+    pub fn new(worker: &'a Worker<CS, TC, TLC>) -> Handler<'a, CS, TC, TLC> {
         Self { worker }
     }
 
@@ -57,14 +60,14 @@ where
 
         let translator_client = DeeplClient::new();
 
+        let mut translation_futures = vec![];
 
         for sen in sentences {
+            let translation = translator_client.translate(&sen.text);
 
-            let translation = translator_client.translate(&sen.text).await?;
-
-            println!("Sentence: {}", translation);
+            translation_futures.push(translation);
         }
+
         Ok(())
     }
-    
 }

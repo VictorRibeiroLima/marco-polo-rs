@@ -6,6 +6,7 @@ use crate::internals::{
         traits::{CloudService, QueueClient, QueueMessage},
     },
     transcriber::traits::TranscriberClient,
+    translator::traits::TranslatorClient,
 };
 
 use super::handlers;
@@ -17,20 +18,23 @@ use super::handlers;
  * 4 - Upload the video to Youtube
  */
 
-pub struct Worker<CS, TC>
+pub struct Worker<CS, TC, TLC>
 where
     CS: CloudService,
     TC: TranscriberClient,
+    TLC: TranslatorClient,
 {
     pub cloud_service: CS,
     pub transcriber_client: TC,
+    pub translator_client: TLC,
     pub pool: Arc<sqlx::PgPool>,
 }
 
-impl<CS, TC> Worker<CS, TC>
+impl<CS, TC, TLC> Worker<CS, TC, TLC>
 where
     CS: CloudService,
     TC: TranscriberClient,
+    TLC: TranslatorClient,
 {
     pub async fn handle_queue(&self) {
         let queue_client = self.cloud_service.queue_client();
@@ -57,9 +61,10 @@ where
                         handlers::upload::handle(&self, payload).await
                     }
                     PayloadType::BatukaSrtTranscriptionUpload(payload) => {
-                        let handler: handlers::transcription::Handler<CS, TC> =
-                            handlers::transcription::Handler::new(&self);
+                        let handler = handlers::transcription::Handler::new(&self);
+
                         let sentences_result = handler.get_sentences(payload).await;
+
                         let sentences = match sentences_result {
                             Ok(sentences) => sentences,
                             Err(e) => {
