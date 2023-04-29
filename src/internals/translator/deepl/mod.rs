@@ -1,10 +1,12 @@
+mod payload;
+
+use payload::DeeplResponse;
+
 use async_trait::async_trait;
 
 use crate::internals::ServiceProvider;
 
 use super::traits::TranslatorClient;
-
-use serde::{Serialize,Deserialize};
 
 pub struct DeeplClient{
     api_key: String,
@@ -58,20 +60,4 @@ impl  TranslatorClient for DeeplClient {
 
         Ok(translation)
     }
-}
-
-
-
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct DeeplResponse {
-    pub translations: Vec<Translation>,
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Translation {
-    #[serde(rename = "detected_source_language")]
-    pub detected_source_language: String,
-    pub text: String,
 }
