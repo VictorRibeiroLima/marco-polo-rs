@@ -6,11 +6,13 @@ Video translator and subtitle generator
 ### Linux and Wsl
 ```bash
 $ curl --proto '=https' --tlsv1.3 https://sh.rustup.rs -sSf | sh
+$ sudo apt install libssl-dev
 ```
+
 # Env config
 
 ### Env files
-You should use the .env.example file as a template to create your own .env file.
+You should use the .example.env file as a template to create your own .env file.
 
 ### Database
 
@@ -32,7 +34,7 @@ After that it's recommended to create a database called `video_translator` on th
 ### Migrations
 Install sqlx-cli:
 ```bash
-$ cargo install sqlx-cli --no-default-features --features postgres
+$ cargo install sqlx-cli --no-default-features --features native-tls,postgres
 ```
 
 After the database is running and the .env file is configured, you can run the migrations to create the tables on the database.
@@ -49,6 +51,7 @@ A useful tool to expose your local server to the internet is ngrok, you can down
 
 ***Linux and Wsl installation:***
 ```bash
+$ cd ~
 $ wget https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
 $ unzip ngrok-stable-linux-amd64.zip
 $ sudo mv ngrok /usr/local/bin
