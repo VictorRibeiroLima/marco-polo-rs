@@ -1,7 +1,5 @@
 mod payload;
 
-use std::borrow::Borrow;
-
 use payload::DeeplResponse;
 
 use async_trait::async_trait;
@@ -38,18 +36,15 @@ impl ServiceProvider for DeeplClient {
 
 #[async_trait]
 impl TranslatorClient for DeeplClient {
-    async fn translate<T: Borrow<String>>(
-        &self,
-        text: T,
-    ) -> Result<String, Box<dyn std::error::Error>> {
-        let text: &String = text.borrow();
+    async fn translate(&self, text: String) -> Result<String, Box<dyn std::error::Error>> {
+        let text = &*text;
         let url = &self.api_base_url;
 
         let params = [
-            ("text", text[..]),
             ("source_lang", "EN"),
             ("target_lang", "PT-BR"),
             ("split_sentences", "0"),
+            ("text", text),
         ];
         let client = reqwest::Client::new();
 

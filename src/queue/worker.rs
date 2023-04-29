@@ -9,6 +9,8 @@ use crate::internals::{
     translator::traits::TranslatorClient,
 };
 
+use crate::util::time_it;
+
 use super::handlers;
 
 /**
@@ -73,7 +75,7 @@ where
                             }
                         };
 
-                        let wait_time_in_secs = sentences.len() * 2;
+                        let wait_time_in_secs = sentences.len() / 10;
 
                         let result = queue_client
                             .change_message_visibility(&message, wait_time_in_secs)
@@ -86,8 +88,13 @@ where
                                 continue;
                             }
                         }
-
-                        let result = handler.translate(sentences).await;
+                        let result;
+                        time_it!(
+                            {
+                                result = handler.translate(sentences).await;
+                            },
+                            as_millis
+                        );
 
                         result
                     }

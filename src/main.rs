@@ -5,6 +5,7 @@ mod api;
 mod database;
 mod internals;
 mod queue;
+mod util;
 
 fn check_envs() {
     //DATABASE

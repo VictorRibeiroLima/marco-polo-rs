@@ -1,9 +1,11 @@
+use futures::future::join_all;
+
 use crate::{
     database::queries,
     internals::{
         cloud::{models::payload::SrtTranscriptionPayload, traits::CloudService},
         transcriber::traits::{TranscriberClient, TranscriptionSentence},
-        translator::{deepl::DeeplClient, traits::TranslatorClient},
+        translator::traits::TranslatorClient,
     },
     queue::worker::Worker,
 };
@@ -47,6 +49,11 @@ where
         Ok(sentences)
     }
 
+    /*
+    {}
+    {} --> {}
+    {}
+     */
     pub async fn translate(
         &self,
         sentences: Vec<TranscriptionSentence>,
@@ -58,16 +65,38 @@ where
         //let worker = &self.worker;
         //let transcriber_client = &worker.transcriber_client;
 
-        let translator_client = DeeplClient::new();
-
         let mut translation_futures = vec![];
 
         for sen in sentences {
-            let translation = translator_client.translate(&sen.text);
-
+            let translation = self.send_translation(sen);
             translation_futures.push(translation);
         }
 
+        let resp = join_all(translation_futures).await;
+
+        for (i, result) in resp.into_iter().enumerate() {
+            let translation = result?;
+            println!("{}: {}", i, translation.text);
+        }
         Ok(())
+    }
+
+    async fn send_translation(
+        &self,
+        payload: TranscriptionSentence,
+    ) -> Result<TranscriptionSentence, Box<dyn std::error::Error>>
+    where
+        TLC: TranslatorClient,
+    {
+        let worker = &self.worker;
+        let translator_client = &worker.translator_client;
+
+        let translation = translator_client.translate(payload.text).await?;
+        let sentence = TranscriptionSentence {
+            text: translation,
+            start_time: payload.start_time,
+            end_time: payload.end_time,
+        };
+        Ok(sentence)
     }
 }
