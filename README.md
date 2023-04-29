@@ -23,7 +23,7 @@ $ docker run --name postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postg
 You can change the password/username/port if you want. 
 
 This should create a postgres database running on port 5432.
-With the URL: `postgresql://localhost/postgres?user=postgres&password=postgres&port=5432&sslmode=disable
+With the URL: `postgresql://localhost/postgres?user=postgres&password=postgres&port=5432&sslmode=disable`
 Use this URL on the .env file.
 
 After that it's recommended to create a database called `video_translator` on the postgres database.
