@@ -9,7 +9,7 @@ $ curl --proto '=https' --tlsv1.3 https://sh.rustup.rs -sSf | sh
 ```
 # Env config
 
-### env files
+### Env files
 You should use the .env.example file as a template to create your own .env file.
 
 ### Database
@@ -29,7 +29,7 @@ Use this URL on the .env file.
 
 After that it's recommended to create a database called `video_translator` on the postgres database.
 
-### migrations
+### Migrations
 Install sqlx-cli:
 ```bash
 $ cargo install sqlx-cli --no-default-features --features postgres
