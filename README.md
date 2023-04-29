@@ -6,7 +6,9 @@ Video translator and subtitle generator
 ### Linux and Wsl
 ```bash
 $ curl --proto '=https' --tlsv1.3 https://sh.rustup.rs -sSf | sh
+$ sudo apt install libssl-dev
 ```
+
 # Env config
 
 ### Env files
