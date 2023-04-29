@@ -57,7 +57,34 @@ where
                         handlers::upload::handle(&self, payload).await
                     }
                     PayloadType::BatukaSrtTranscriptionUpload(payload) => {
-                        handlers::transcription::handle(&self, payload).await
+                        let handler: handlers::transcription::Handler<CS, TC> =
+                            handlers::transcription::Handler::new(&self);
+                        let sentences_result = handler.get_sentences(payload).await;
+                        let sentences = match sentences_result {
+                            Ok(sentences) => sentences,
+                            Err(e) => {
+                                println!("{:?}", e);
+                                continue;
+                            }
+                        };
+
+                        let wait_time_in_secs = sentences.len() * 2;
+
+                        let result = queue_client
+                            .change_message_visibility(&message, wait_time_in_secs)
+                            .await;
+
+                        match result {
+                            Ok(_) => {}
+                            Err(e) => {
+                                println!("{:?}", e);
+                                continue;
+                            }
+                        }
+
+                        let result = handler.translate(sentences).await;
+
+                        result
                     }
                 };
 

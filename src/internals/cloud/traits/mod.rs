@@ -31,6 +31,11 @@ pub trait QueueClient {
     async fn receive_message(&self) -> Result<Option<Vec<Self::M>>, Box<dyn std::error::Error>>;
     async fn send_message(&self) -> Result<(), Box<dyn std::error::Error>>;
     async fn delete_message(&self, message: Self::M) -> Result<(), Box<dyn std::error::Error>>;
+    async fn change_message_visibility(
+        &self,
+        message: &Self::M,
+        visibility_timeout: usize,
+    ) -> Result<(), Box<dyn std::error::Error>>;
 }
 
 pub trait QueueMessage {

@@ -3,7 +3,10 @@ use crate::internals::cloud::{
     traits::{QueueClient, QueueMessage},
 };
 use async_trait::async_trait;
-use rusoto_sqs::{DeleteMessageRequest, Message, ReceiveMessageRequest, Sqs, SqsClient};
+use rusoto_sqs::{
+    ChangeMessageVisibilityRequest, DeleteMessageRequest, Message, ReceiveMessageRequest, Sqs,
+    SqsClient,
+};
 use serde_json::Value;
 
 use super::payload::{S3SrtTranscriptionPayload, S3UploadPayload};
@@ -103,5 +106,27 @@ impl QueueClient for SQSClient {
             Ok(_) => Ok(()),
             Err(e) => Err(Box::new(e)),
         }
+    }
+
+    async fn change_message_visibility(
+        &self,
+        message: &Self::M,
+        visibility_timeout: usize,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let receipt_handle = match message.receipt_handle.as_ref() {
+            Some(receipt_handle) => receipt_handle.to_string(),
+            None => {
+                return Err("No receipt handle found".into());
+            }
+        };
+        let request = ChangeMessageVisibilityRequest {
+            queue_url: self.queue_url.clone(),
+            receipt_handle,
+            visibility_timeout: visibility_timeout as i64,
+            ..Default::default()
+        };
+
+        self.client.change_message_visibility(request).await?;
+        return Ok(());
     }
 }
