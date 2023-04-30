@@ -8,6 +8,7 @@ use actix_web::{
 };
 
 mod controllers;
+mod middleware;
 mod models;
 
 #[get("/")]

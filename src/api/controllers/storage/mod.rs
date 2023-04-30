@@ -1,5 +1,8 @@
 use crate::{
-    api::models::{error::AppError, result::AppResult},
+    api::{
+        middleware::authorization,
+        models::{error::AppError, result::AppResult},
+    },
     internals::cloud::{aws::s3::S3Client, traits::BucketClient},
 };
 use actix_web::{
@@ -8,7 +11,6 @@ use actix_web::{
 };
 use state::StorageState;
 
-use super::middleware::authorization;
 mod state;
 #[cfg(test)]
 mod test;

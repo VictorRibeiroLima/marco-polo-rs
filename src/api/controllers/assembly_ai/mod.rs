@@ -1,6 +1,7 @@
 use crate::{
     api::{
-        controllers::assembly_ai::models::WebhookRequestBody, models::error::AppError, GlobalState,
+        controllers::assembly_ai::models::WebhookRequestBody, middleware::authorization,
+        models::error::AppError, GlobalState,
     },
     internals::cloud::{aws::s3::S3Client, traits::BucketClient},
 };
@@ -10,8 +11,6 @@ use actix_web::{
 };
 
 use self::state::AssemblyAiState;
-
-use super::middleware::authorization;
 
 mod models;
 mod service;
