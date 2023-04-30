@@ -1,5 +1,9 @@
-# Description
-Video translator and subtitle generator
+# Marco Polo Rs
+<img style="margin: 0 auto" src="https://cdn.britannica.com/53/194553-050-88A5AC72/Marco-Polo-Italian-portrait-woodcut.jpg">
+
+# About
+The Marco Polo project is a video translator, and subtitle generator,
+capable of translating videos from more then 100 languages to more then 100 languages.
 
 # Installation
 
