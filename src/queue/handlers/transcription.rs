@@ -41,6 +41,7 @@ where
         let transcriber_client = &worker.transcriber_client;
         let bucket_client = &worker.cloud_service.bucket_client();
         let translator_id = TLC::id();
+        let bucket_id = CS::id();
 
         let transcription =
             queries::transcription::find_by_video_id(&worker.pool, &payload.video_id).await?;
@@ -51,20 +52,23 @@ where
 
         let (translation_raw, id) = self.translate(transcription_sentences).await?;
 
+        let file_path = format!("srt_translations/{}.srt", payload.video_id);
+
+        bucket_client
+            .upload_file(&file_path, translation_raw.into())
+            .await?;
+
         queries::translation::create(
             &worker.pool,
             CreateTranslationDto {
                 video_id: &payload.video_id,
                 translator_id,
                 translation_id: id,
+                storage_id: bucket_id,
+                path: &file_path,
             },
         )
         .await?;
-
-        let file_path = format!("srt_translations/{}.srt", payload.video_id);
-        bucket_client
-            .upload_file(&file_path, translation_raw.into())
-            .await?;
 
         Ok(())
     }

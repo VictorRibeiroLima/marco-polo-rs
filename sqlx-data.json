@@ -1,5 +1,67 @@
 {
   "db": "PostgreSQL",
+  "a2942ce2cc35f204ded8852e2319cb460e1715d7e4dc17d70867abfaadabe83f": {
+    "describe": {
+      "columns": [
+        {
+          "name": "video_id: Uuid",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "transcriber_id",
+          "ordinal": 1,
+          "type_info": "Int4"
+        },
+        {
+          "name": "transcription_id",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "storage_id",
+          "ordinal": 3,
+          "type_info": "Int4"
+        },
+        {
+          "name": "path",
+          "ordinal": 4,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "created_at: DateTime<Utc>",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "updated_at: DateTime<Utc>",
+          "ordinal": 6,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "deleted_at: DateTime<Utc>",
+          "ordinal": 7,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        true,
+        true,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n        SELECT\n          video_id as \"video_id: Uuid\",\n          transcriber_id,\n          transcription_id,\n          storage_id,\n          path,\n          created_at as \"created_at: DateTime<Utc>\",\n          updated_at as \"updated_at: DateTime<Utc>\",\n          deleted_at as \"deleted_at: DateTime<Utc>\"\n         FROM videos_transcriptions vt\n        WHERE video_id = $1\n        "
+  },
   "a3907c388014733f4487f723bf20307a3619a281bb75a2aa1435b8c73893bb22": {
     "describe": {
       "columns": [],
@@ -133,5 +195,21 @@
       }
     },
     "query": "\n        INSERT INTO videos_transcriptions (video_id, transcription_id, transcriber_id)\n        VALUES ($1, $2, $3);\n        "
+  },
+  "e6ea12d5ba2b752e7ae04779ecbc8f75c7604fad5b75682bbc39df2a4121ff5c": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Int4",
+          "Varchar",
+          "Int4",
+          "Varchar"
+        ]
+      }
+    },
+    "query": "\n        INSERT INTO videos_translations (video_id, translator_id, translation_id, storage_id, path)\n        VALUES ($1, $2, $3, $4, $5);\n        "
   }
 }
