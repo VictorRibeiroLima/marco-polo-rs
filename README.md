@@ -1,5 +1,5 @@
 # Marco Polo Rs
-<img style="margin: 0 auto" src="https://cdn.britannica.com/53/194553-050-88A5AC72/Marco-Polo-Italian-portrait-woodcut.jpg">
+<img style="margin: 0 auto" src="https://cdn.britannica.com/53/194553-050-88A5AC72/Marco-Polo-Italian-portrait-woodcut.jpg"  height="500">
 
 # About
 The Marco Polo project is a video translator, and subtitle generator,
