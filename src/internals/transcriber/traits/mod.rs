@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::internals::ServiceProvider;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct TranscriptionSentence {
+pub struct Sentence {
     pub start_time: i32,
     pub end_time: i32,
     pub text: String,
@@ -16,5 +16,5 @@ pub trait TranscriberClient: ServiceProvider {
     async fn get_transcription_sentences(
         &self,
         transcription_id: &str,
-    ) -> Result<Vec<TranscriptionSentence>, Box<dyn std::error::Error>>;
+    ) -> Result<Vec<Sentence>, Box<dyn std::error::Error>>;
 }

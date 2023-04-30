@@ -6,7 +6,7 @@ use crate::internals::ServiceProvider;
 
 use self::payload::{request::TranscribeRequestBody, response::TranscribeSentencesResponse};
 
-use super::traits::{TranscriberClient, TranscriptionSentence};
+use super::traits::{Sentence, TranscriberClient};
 
 mod payload;
 
@@ -43,7 +43,7 @@ impl TranscriberClient for AssemblyAiClient {
     async fn get_transcription_sentences(
         &self,
         transcription_id: &str,
-    ) -> Result<Vec<TranscriptionSentence>, Box<dyn std::error::Error>> {
+    ) -> Result<Vec<Sentence>, Box<dyn std::error::Error>> {
         let url = format!("{}/transcript/{}/sentences", self.api_url, transcription_id);
         let client = Client::new();
 

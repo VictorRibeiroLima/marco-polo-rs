@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
 
-use crate::internals::transcriber::traits::TranscriptionSentence;
+use crate::internals::transcriber::traits::Sentence;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TranscribeSentencesResponse {
-    pub sentences: Vec<Sentence>,
+    pub sentences: Vec<AssemblyAiSentence>,
     pub id: String,
     pub confidence: f64,
     #[serde(rename = "audio_duration")]
@@ -14,7 +14,7 @@ pub struct TranscribeSentencesResponse {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Sentence {
+pub struct AssemblyAiSentence {
     pub text: String,
     pub start: i32,
     pub end: i32,
@@ -31,9 +31,9 @@ pub struct Word {
     pub confidence: f64,
 }
 
-impl Into<TranscriptionSentence> for Sentence {
-    fn into(self) -> TranscriptionSentence {
-        TranscriptionSentence {
+impl Into<Sentence> for AssemblyAiSentence {
+    fn into(self) -> Sentence {
+        Sentence {
             text: self.text,
             start_time: self.start,
             end_time: self.end,
