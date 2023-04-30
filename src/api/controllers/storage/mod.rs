@@ -8,9 +8,12 @@ use actix_web::{
 };
 use state::StorageState;
 
+use super::middleware::authorization;
 mod state;
 #[cfg(test)]
 mod test;
+
+authorization!(ApiKeyMiddleware, "API_KEY");
 
 async fn signed_upload_url<C>(state: Data<StorageState<C>>) -> Result<impl Responder, AppError>
 where
@@ -27,10 +30,13 @@ pub fn init_routes(config: &mut web::ServiceConfig) {
 
     let app_data = web::Data::new(storage_state);
 
-    let scope = web::scope("/storage").app_data(app_data).route(
-        "/signed-upload-url",
-        web::get().to(signed_upload_url::<S3Client>),
-    );
+    let scope = web::scope("/storage")
+        .wrap(ApiKeyMiddleware)
+        .app_data(app_data)
+        .route(
+            "/signed-upload-url",
+            web::get().to(signed_upload_url::<S3Client>),
+        );
 
     config.service(scope);
 }

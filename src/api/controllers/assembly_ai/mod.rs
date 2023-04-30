@@ -11,9 +11,13 @@ use actix_web::{
 
 use self::state::AssemblyAiState;
 
+use super::middleware::authorization;
+
 mod models;
 mod service;
 mod state;
+
+authorization!(ApiKeyMiddleware, "ASSEMBLY_AI_WEBHOOK_TOKEN");
 
 async fn webhook<C>(
     req_body: web::Json<WebhookRequestBody>,
@@ -39,6 +43,7 @@ pub fn init_routes(config: &mut web::ServiceConfig) {
     let app_data = web::Data::new(storage_state);
 
     let scope = web::scope("/assemblyai");
+    let scope = scope.wrap(ApiKeyMiddleware);
     let scope = scope.app_data(app_data);
     let scope = scope.route("/transcriptions/webhook", post().to(webhook::<S3Client>));
 

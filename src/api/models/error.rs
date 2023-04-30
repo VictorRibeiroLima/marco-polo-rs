@@ -1,9 +1,15 @@
-use std::fmt;
+use core::fmt;
 
-use actix_web::ResponseError;
-use serde::{Deserialize, Serialize};
+use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
 
-#[derive(Debug, Serialize, Deserialize)]
+use serde::Serialize;
+
+#[derive(Serialize)]
+pub struct AppErrorResponse {
+    pub error: String,
+}
+
+#[derive(Debug)]
 pub enum AppErrorType {
     BadRequest,
     InternalServerError,
@@ -13,29 +19,19 @@ pub enum AppErrorType {
 
 impl fmt::Display for AppErrorType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        return write!(f, "{:?}", self);
+        write!(f, "{:?}", self)
     }
 }
-
 impl ResponseError for AppErrorType {
-    fn status_code(&self) -> actix_web::http::StatusCode {
-        match self {
-            AppErrorType::BadRequest => actix_web::http::StatusCode::BAD_REQUEST,
-            AppErrorType::InternalServerError => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
-            AppErrorType::NotFound => actix_web::http::StatusCode::NOT_FOUND,
-            AppErrorType::Unauthorized => actix_web::http::StatusCode::UNAUTHORIZED,
-        }
-    }
-
-    fn error_response(&self) -> actix_web::HttpResponse {
-        return actix_web::HttpResponse::build(self.status_code()).json(self.to_string());
+    fn error_response(&self) -> HttpResponse {
+        HttpResponse::build(self.status_code()).finish()
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
 pub struct AppError {
-    pub error_type: AppErrorType,
     pub message: String,
+    pub error_type: AppErrorType,
 }
 
 #[allow(dead_code)]
@@ -46,7 +42,6 @@ impl AppError {
             message,
         };
     }
-
     pub fn bad_request(message: String) -> Self {
         return Self::new(AppErrorType::BadRequest, message);
     }
@@ -65,21 +60,31 @@ impl AppError {
     pub fn unauthorized(message: String) -> Self {
         return Self::new(AppErrorType::Unauthorized, message);
     }
+
+    fn message(&self) -> String {
+        self.message.clone()
+    }
 }
 
 impl fmt::Display for AppError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        return write!(f, "{}", self);
+        write!(f, "{:?}", self)
     }
 }
-
 impl ResponseError for AppError {
-    fn status_code(&self) -> actix_web::http::StatusCode {
-        return self.error_type.status_code();
+    fn status_code(&self) -> StatusCode {
+        match self.error_type {
+            AppErrorType::BadRequest => actix_web::http::StatusCode::BAD_REQUEST,
+            AppErrorType::InternalServerError => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
+            AppErrorType::NotFound => actix_web::http::StatusCode::NOT_FOUND,
+            AppErrorType::Unauthorized => actix_web::http::StatusCode::UNAUTHORIZED,
+        }
     }
 
-    fn error_response(&self) -> actix_web::HttpResponse {
-        return actix_web::HttpResponse::build(self.status_code()).json(self.to_string());
+    fn error_response(&self) -> HttpResponse {
+        HttpResponse::build(self.status_code()).json(AppErrorResponse {
+            error: self.message(),
+        })
     }
 }
 
