@@ -1,3 +1,4 @@
+#[allow(unused_macros)]
 macro_rules! time_it {
     ($func:expr,$duration:ident) => {{
         let start = std::time::SystemTime::now();
@@ -13,6 +14,7 @@ macro_rules! time_it {
     }};
 }
 
+#[allow(unused_imports)]
 pub(crate) use time_it;
 
 pub mod srt;

@@ -36,7 +36,7 @@ impl ServiceProvider for DeeplClient {
 
 #[async_trait]
 impl TranslatorClient for DeeplClient {
-    async fn translate(&self, text: String) -> Result<String, Box<dyn std::error::Error>> {
+    async fn translate_sentence(&self, text: String) -> Result<String, Box<dyn std::error::Error>> {
         let text = &*text;
         let url = &self.api_base_url;
 

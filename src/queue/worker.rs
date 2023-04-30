@@ -9,15 +9,11 @@ use crate::internals::{
     translator::traits::TranslatorClient,
 };
 
-use crate::util::time_it;
-
 use super::handlers;
 
 /**
- * 1 - Call DeepL to translate the transcription
- * 2 - Save the translated transcription in the database
- * 3 - Call FFMPEG (or something else) to generate the video with the translated transcription
- * 4 - Upload the video to Youtube
+ * 1 - Call FFMPEG (or something else) to generate the video with the translated transcription
+ * 2 - Upload the video to Youtube
  */
 
 pub struct Worker<CS, TC, TLC>
@@ -64,39 +60,8 @@ where
                     }
                     PayloadType::BatukaSrtTranscriptionUpload(payload) => {
                         let handler = handlers::transcription::Handler::new(&self);
-
-                        let sentences_result = handler.get_sentences(payload).await;
-
-                        let sentences = match sentences_result {
-                            Ok(sentences) => sentences,
-                            Err(e) => {
-                                println!("{:?}", e);
-                                continue;
-                            }
-                        };
-
-                        let wait_time_in_secs = sentences.len() / 10;
-
-                        let result = queue_client
-                            .change_message_visibility(&message, wait_time_in_secs)
-                            .await;
-
-                        match result {
-                            Ok(_) => {}
-                            Err(e) => {
-                                println!("{:?}", e);
-                                continue;
-                            }
-                        }
-                        let result;
-                        time_it!(
-                            {
-                                result = handler.translate(sentences).await;
-                            },
-                            as_millis
-                        );
-
-                        result
+                        let sentences_result = handler.handle(payload).await;
+                        sentences_result
                     }
                 };
 

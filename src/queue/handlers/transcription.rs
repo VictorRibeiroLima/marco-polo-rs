@@ -1,10 +1,12 @@
 use futures::future::join_all;
-use std::{fs::File, io::Write};
 
 use crate::{
-    database::queries,
+    database::queries::{self, translation::CreateTranslationDto},
     internals::{
-        cloud::{models::payload::SrtTranscriptionPayload, traits::CloudService},
+        cloud::{
+            models::payload::SrtTranscriptionPayload,
+            traits::{BucketClient, CloudService},
+        },
         transcriber::traits::{Sentence, TranscriberClient},
         translator::traits::TranslatorClient,
     },
@@ -31,42 +33,50 @@ where
         Self { worker }
     }
 
-    pub async fn get_sentences(
+    pub async fn handle(
         &self,
         payload: SrtTranscriptionPayload,
-    ) -> Result<Vec<Sentence>, Box<dyn std::error::Error>>
-    where
-        CS: CloudService,
-        TC: TranscriberClient,
-    {
-        let worker = &self.worker;
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let worker = self.worker;
         let transcriber_client = &worker.transcriber_client;
+        let bucket_client = &worker.cloud_service.bucket_client();
+        let translator_id = TLC::id();
+
         let transcription =
             queries::transcription::find_by_video_id(&worker.pool, &payload.video_id).await?;
 
-        let sentences = transcriber_client
+        let transcription_sentences = transcriber_client
             .get_transcription_sentences(&transcription.transcription_id)
             .await?;
 
-        Ok(sentences)
+        let (translation_raw, id) = self.translate(transcription_sentences).await?;
+
+        queries::translation::create(
+            &worker.pool,
+            CreateTranslationDto {
+                video_id: &payload.video_id,
+                translator_id,
+                translation_id: id,
+            },
+        )
+        .await?;
+
+        let file_path = format!("srt_translations/{}.srt", payload.video_id);
+        bucket_client
+            .upload_file(&file_path, translation_raw.into())
+            .await?;
+
+        Ok(())
     }
 
-    /*
-    {}
-    {} --> {}
-    {}
-     */
     pub async fn translate(
         &self,
         sentences: Vec<Sentence>,
-    ) -> Result<(), Box<dyn std::error::Error>>
+    ) -> Result<(String, Option<String>), Box<dyn std::error::Error>>
     where
         CS: CloudService,
         TC: TranscriberClient,
     {
-        //let worker = &self.worker;
-        //let transcriber_client = &worker.transcriber_client;
-
         let mut translation_futures = vec![];
 
         for sen in sentences {
@@ -83,10 +93,7 @@ where
 
         let new_srt_buffer = util::srt::create_based_on_sentences(translated_sentences);
 
-        let mut file = File::create("test.srt")?;
-        file.write_all(new_srt_buffer.as_bytes())?;
-
-        Ok(())
+        Ok((new_srt_buffer, None))
     }
 
     async fn get_translated_sentence(
@@ -99,7 +106,7 @@ where
         let worker = &self.worker;
         let translator_client = &worker.translator_client;
 
-        let translation = translator_client.translate(payload.text).await?;
+        let translation = translator_client.translate_sentence(payload.text).await?;
         let sentence = Sentence {
             text: translation,
             start_time: payload.start_time,
