@@ -14,6 +14,7 @@ pub struct AssemblyAiClient {
     api_key: String,
     api_url: String,
     webhook_url: String,
+    webhook_token: String,
 }
 
 impl AssemblyAiClient {
@@ -23,11 +24,14 @@ impl AssemblyAiClient {
 
         let our_base_url = std::env::var("API_URL").unwrap();
         let endpoint_url = std::env::var("ASSEMBLY_AI_WEBHOOK_ENDPOINT").unwrap();
+
         let webhook_url = format!("{}/{}", our_base_url, endpoint_url);
+        let webhook_token = std::env::var("ASSEMBLY_AI_WEBHOOK_TOKEN").unwrap();
         Self {
             api_key,
             api_url,
             webhook_url,
+            webhook_token,
         }
     }
 }
@@ -74,7 +78,7 @@ impl TranscriberClient for AssemblyAiClient {
             audio_url: media_url.to_string(),
             webhook_url: self.webhook_url.to_string(),
             webhook_auth_header_name: "Authorization".to_string(),
-            webhook_auth_header_value: "Corn Incident".to_string(),
+            webhook_auth_header_value: self.webhook_token.to_string(),
         };
 
         let parsed_body = serde_json::to_string(&req_body)?;

@@ -13,6 +13,7 @@ fn check_envs() {
 
     //API
     std::env::var("API_URL").expect("API_URL not found");
+    std::env::var("API_KEY").expect("API_KEY not found");
 
     //AWS
     std::env::var("AWS_BUCKET_NAME").expect("AWS_BUCKET_NAME not found");
@@ -24,6 +25,7 @@ fn check_envs() {
     std::env::var("ASSEMBLY_AI_API_KEY").expect("ASSEMBLY_AI_API_KEY not found");
     std::env::var("ASSEMBLY_AI_BASE_URL").expect("ASSEMBLY_AI_BASE_URL not found");
     std::env::var("ASSEMBLY_AI_WEBHOOK_ENDPOINT").expect("ASSEMBLY_AI_WEBHOOK_ENDPOINT not found");
+    std::env::var("ASSEMBLY_AI_WEBHOOK_TOKEN").expect("ASSEMBLY_AI_WEBHOOK_TOKEN not found");
 
     //DEEPL
     std::env::var("DEEPL_BASE_URL").expect("DEEPL_BASE_URL not set");
