@@ -1,4 +1,4 @@
-use crate::internals::cloud::models::payload::{SrtTranscriptionPayload, UploadPayload};
+use crate::internals::cloud::models::payload::{SrtPayload, VideoPayload};
 use serde::{Deserialize, Serialize};
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -10,15 +10,15 @@ pub struct S3UploadPayload {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct S3SrtTranscriptionPayload {
+pub struct S3SrtPayload {
     #[serde(rename = "s3SrtURI")]
     pub s3srt_uri: String,
 }
 
 // videos/{}.mp4
 // srt_transcription/{}.srt
-impl Into<UploadPayload> for S3UploadPayload {
-    fn into(self) -> UploadPayload {
+impl Into<VideoPayload> for S3UploadPayload {
+    fn into(self) -> VideoPayload {
         let video_id = self
             .s3video_uri
             .split('/')
@@ -30,15 +30,15 @@ impl Into<UploadPayload> for S3UploadPayload {
 
         let video_id = uuid::Uuid::parse_str(video_id).unwrap();
 
-        UploadPayload {
+        VideoPayload {
             video_id,
             video_uri: self.s3video_uri,
         }
     }
 }
 
-impl Into<SrtTranscriptionPayload> for S3SrtTranscriptionPayload {
-    fn into(self) -> SrtTranscriptionPayload {
+impl Into<SrtPayload> for S3SrtPayload {
+    fn into(self) -> SrtPayload {
         let video_id = self
             .s3srt_uri
             .split('/')
@@ -50,7 +50,7 @@ impl Into<SrtTranscriptionPayload> for S3SrtTranscriptionPayload {
 
         let video_id = uuid::Uuid::parse_str(video_id).unwrap();
 
-        SrtTranscriptionPayload {
+        SrtPayload {
             video_id,
             srt_uri: self.s3srt_uri,
         }
@@ -68,7 +68,7 @@ mod test {
             s3video_uri: uri.clone(),
         };
 
-        let upload_payload: super::UploadPayload = s3_upload_payload.into();
+        let upload_payload: super::VideoPayload = s3_upload_payload.into();
 
         assert_eq!(upload_payload.video_uri, uri);
         assert_eq!(upload_payload.video_id, uuid);

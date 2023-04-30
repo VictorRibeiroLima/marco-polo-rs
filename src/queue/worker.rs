@@ -55,11 +55,16 @@ where
                 };
 
                 let result = match payload_type {
-                    PayloadType::BatukaVideoUpload(payload) => {
-                        handlers::upload::handle(&self, payload).await
+                    PayloadType::BatukaVideoRawUpload(payload) => {
+                        handlers::raw_upload::handle(&self, payload).await
                     }
                     PayloadType::BatukaSrtTranscriptionUpload(payload) => {
                         let handler = handlers::transcription::Handler::new(&self);
+                        let sentences_result = handler.handle(payload).await;
+                        sentences_result
+                    }
+                    PayloadType::BatukaSrtTranslationUpload(payload) => {
+                        let handler = handlers::translation::Handler::new(&self, &message);
                         let sentences_result = handler.handle(payload).await;
                         sentences_result
                     }

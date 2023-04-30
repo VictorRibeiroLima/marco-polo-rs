@@ -9,7 +9,7 @@ use rusoto_sqs::{
 };
 use serde_json::Value;
 
-use super::payload::{S3SrtTranscriptionPayload, S3UploadPayload};
+use super::payload::{S3SrtPayload, S3UploadPayload};
 
 pub struct SQSClient {
     client: SqsClient,
@@ -57,13 +57,17 @@ impl QueueMessage for Message {
         }
         let payload = v["payload"].to_string();
         match type_field {
-            "BatukaVideoUpload" => {
+            "BatukaVideoRawUpload" => {
                 let payload: S3UploadPayload = serde_json::from_str(&payload)?;
-                return Ok(PayloadType::BatukaVideoUpload(payload.into()));
+                return Ok(PayloadType::BatukaVideoRawUpload(payload.into()));
             }
             "BatukaSrtTranscriptionUpload" => {
-                let payload: S3SrtTranscriptionPayload = serde_json::from_str(&payload)?;
+                let payload: S3SrtPayload = serde_json::from_str(&payload)?;
                 return Ok(PayloadType::BatukaSrtTranscriptionUpload(payload.into()));
+            }
+            "BatukaSrtTranslationUpload" => {
+                let payload: S3SrtPayload = serde_json::from_str(&payload)?;
+                return Ok(PayloadType::BatukaSrtTranslationUpload(payload.into()));
             }
             _ => Err("Invalid type field".into()),
         }

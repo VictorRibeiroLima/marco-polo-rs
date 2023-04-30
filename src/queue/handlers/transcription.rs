@@ -4,7 +4,7 @@ use crate::{
     database::queries::{self, translation::CreateTranslationDto},
     internals::{
         cloud::{
-            models::payload::SrtTranscriptionPayload,
+            models::payload::SrtPayload,
             traits::{BucketClient, CloudService},
         },
         transcriber::traits::{Sentence, TranscriberClient},
@@ -33,10 +33,7 @@ where
         Self { worker }
     }
 
-    pub async fn handle(
-        &self,
-        payload: SrtTranscriptionPayload,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn handle(&self, payload: SrtPayload) -> Result<(), Box<dyn std::error::Error>> {
         let worker = self.worker;
         let transcriber_client = &worker.transcriber_client;
         let bucket_client = &worker.cloud_service.bucket_client();

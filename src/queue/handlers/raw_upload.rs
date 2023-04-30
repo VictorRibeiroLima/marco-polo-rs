@@ -5,17 +5,18 @@ use crate::{
     },
     internals::{
         cloud::{
-            models::payload::UploadPayload,
+            models::payload::VideoPayload,
             traits::{BucketClient, CloudService},
         },
-        transcriber::traits::TranscriberClient, translator::traits::TranslatorClient,
+        transcriber::traits::TranscriberClient,
+        translator::traits::TranslatorClient,
     },
     queue::worker::Worker,
 };
 
 pub async fn handle<CS, TC, TLC>(
     worker: &Worker<CS, TC, TLC>,
-    payload: UploadPayload,
+    payload: VideoPayload,
 ) -> Result<(), Box<dyn std::error::Error>>
 where
     CS: CloudService,

@@ -59,7 +59,7 @@ impl BucketClient for S3Client {
         expiration: u16,
     ) -> Result<String, Box<dyn std::error::Error>> {
         let uuid = uuid::Uuid::new_v4().to_string();
-        let file_name = format!("videos/{}.mp4", uuid);
+        let file_name = format!("videos/raw/{}.mp4", uuid);
         let request = PutObjectRequest {
             bucket: self.bucket_name.clone(),
             key: file_name,
