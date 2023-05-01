@@ -13,14 +13,11 @@ pub fn write_to_temp_files(
     video: &[u8],
     srt: &[u8],
     temp_dir: &PathBuf,
+    id: &str,
 ) -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
-    let video_path = temp_dir.join("video.mp4");
-    let srt_path = temp_dir.join("video.srt");
-    let output_path = temp_dir.join("output.mp4");
-
-    println!("video_path: {:?}", video_path);
-    println!("srt_path: {:?}", srt_path);
-    println!("output_path: {:?}", output_path);
+    let video_path = temp_dir.join(format!("input_{}.{}", id, "mp4"));
+    let srt_path = temp_dir.join(format!("{}.{}", id, "srt"));
+    let output_path = temp_dir.join(format!("output_{}.{}", id, "mp4"));
     let mut temp_file_paths = Vec::new();
 
     let mut video_file = File::create(&video_path)?;
@@ -41,6 +38,9 @@ pub fn call_ffmpeg(
     srt_path: &PathBuf,
     output_path: &PathBuf,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    println!("video_path: {:?}", video_path);
+    println!("srt_path: {:?}", srt_path);
+    println!("output_path: {:?}", output_path);
     let output = Command::new("ffmpeg")
         .arg("-i")
         .arg(&video_path)

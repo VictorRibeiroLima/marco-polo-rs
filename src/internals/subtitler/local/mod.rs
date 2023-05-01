@@ -37,10 +37,14 @@ impl SubtitlerClient for LocalClient {
         let video = bucket_client.download_file(&video_uri).await?;
         let srt = bucket_client.download_file(&payload.srt_uri).await?;
         let temp_dir = util::create_temp_dir()?;
-        let temp_file_paths = util::write_to_temp_files(&video, &srt, &temp_dir)?;
-        let output_path = temp_dir.join("output.mp4");
-        util::call_ffmpeg(&temp_file_paths[0], &temp_file_paths[1], &output_path)?;
-        util::upload_output_file(bucket_client, &output_path, &video_id).await?;
+        let temp_file_paths = util::write_to_temp_files(&video, &srt, &temp_dir, &video_id)?;
+
+        util::call_ffmpeg(
+            &temp_file_paths[0],
+            &temp_file_paths[1],
+            &temp_file_paths[2],
+        )?;
+        util::upload_output_file(bucket_client, &temp_file_paths[2], &video_id).await?;
         util::delete_temp_files(temp_file_paths)?;
         Ok(())
     }
