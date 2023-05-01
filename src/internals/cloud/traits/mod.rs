@@ -12,6 +12,13 @@ pub trait BucketClient: ServiceProvider + Sync {
         &self,
         expires_in: u16,
     ) -> Result<String, Box<dyn std::error::Error>>;
+
+    async fn create_signed_upload_url_with_uri(
+        &self,
+        file_uri: &str,
+        expires_in: u16,
+    ) -> Result<String, Box<dyn std::error::Error>>;
+
     async fn create_signed_download_url(
         &self,
         file_uri: &str,

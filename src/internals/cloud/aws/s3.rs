@@ -61,9 +61,19 @@ impl BucketClient for S3Client {
     ) -> Result<String, Box<dyn std::error::Error>> {
         let uuid = uuid::Uuid::new_v4().to_string();
         let file_name = format!("videos/raw/{}.mp4", uuid);
+        return self
+            .create_signed_upload_url_with_uri(&file_name, expiration)
+            .await;
+    }
+
+    async fn create_signed_upload_url_with_uri(
+        &self,
+        file_uri: &str,
+        expiration: u16,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         let request = PutObjectRequest {
             bucket: self.bucket_name.clone(),
-            key: file_name,
+            key: file_uri.to_string(),
             ..Default::default()
         };
 

@@ -28,6 +28,14 @@ impl crate::internals::cloud::traits::BucketClient for TestClient {
         Ok(())
     }
 
+    async fn create_signed_upload_url_with_uri(
+        &self,
+        _file_uri: &str,
+        expires_in: u16,
+    ) -> Result<String, Box<dyn std::error::Error>> {
+        Ok(format!("https://storage.googleapis.com/{}", expires_in))
+    }
+
     async fn create_signed_download_url(
         &self,
         _file_uri: &str,

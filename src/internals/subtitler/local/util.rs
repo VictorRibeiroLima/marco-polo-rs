@@ -61,18 +61,34 @@ pub fn call_ffmpeg(
     Ok(())
 }
 
-pub fn read_output_file(output_path: &PathBuf) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+pub fn _read_output_file(output_path: &PathBuf) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
     let output_bytes = std::fs::read(&output_path)?;
     Ok(output_bytes)
 }
 
+/*
+    This is just stupid.
+    For some reason when i try to use the bucket_client to upload the file directly it fails with:
+        HttpDispatch(HttpDispatchError { message: "Error during dispatch: connection closed before message completed" })
+    For now i'm just using curl to upload the file, but i'll have to fix this later.
+
+    ps: On a second run of the program it works on the file created on the first run, if i comment the ffmpeg call
+*/
 pub async fn upload_output_file<BC: BucketClient + Sync>(
     bucket_client: &BC,
-    file: Vec<u8>,
+    file: &PathBuf,
     video_id: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let output_uri = format!("videos/processed/{}.{}", video_id, "mp4");
-    bucket_client.upload_file(&output_uri, file).await?;
+    let url = bucket_client
+        .create_signed_upload_url_with_uri(&output_uri, 3600)
+        .await?;
+
+    let curl_command = format!("curl -T {} '{}'", file.to_str().unwrap(), url);
+    let output = Command::new("sh").arg("-c").arg(curl_command).output()?;
+    if !output.status.success() {
+        return Err("Failed to upload file".into());
+    }
 
     Ok(())
 }

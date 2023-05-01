@@ -44,9 +44,8 @@ impl SubtitlerClient for LocalClient {
             &temp_file_paths[1],
             &temp_file_paths[2],
         )?;
-        let output = util::read_output_file(&temp_file_paths[2])?;
-        util::delete_temp_files(temp_file_paths)?;
-        util::upload_output_file(bucket_client, output, &video_id).await?;
-        Err("pior que foi".into())
+        util::upload_output_file(bucket_client, &temp_file_paths[2], &video_id).await?;
+        util::delete_temp_files(temp_file_paths)?; // Invert this to delete first, then upload when the upload method start using a Vec<u8> instead of a PathBuf
+        Ok(())
     }
 }
