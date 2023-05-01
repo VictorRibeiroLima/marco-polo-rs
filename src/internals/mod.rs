@@ -1,4 +1,5 @@
 pub mod cloud;
+pub mod subtitler;
 pub mod transcriber;
 pub mod translator;
 
