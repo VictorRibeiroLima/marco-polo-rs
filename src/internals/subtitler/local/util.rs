@@ -26,8 +26,8 @@ pub fn write_to_temp_files(
     let mut srt_file = File::create(&srt_path)?;
     srt_file.write_all(&srt)?;
 
-    temp_file_paths.push(srt_path);
     temp_file_paths.push(video_path);
+    temp_file_paths.push(srt_path);
     temp_file_paths.push(output_path);
 
     Ok(temp_file_paths)
@@ -38,9 +38,6 @@ pub fn call_ffmpeg(
     srt_path: &PathBuf,
     output_path: &PathBuf,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    println!("video_path: {:?}", video_path);
-    println!("srt_path: {:?}", srt_path);
-    println!("output_path: {:?}", output_path);
     let output = Command::new("ffmpeg")
         .arg("-i")
         .arg(&video_path)
@@ -64,14 +61,18 @@ pub fn call_ffmpeg(
     Ok(())
 }
 
+pub fn read_output_file(output_path: &PathBuf) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+    let output_bytes = std::fs::read(&output_path)?;
+    Ok(output_bytes)
+}
+
 pub async fn upload_output_file<BC: BucketClient + Sync>(
     bucket_client: &BC,
-    output_path: &PathBuf,
+    file: Vec<u8>,
     video_id: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let output_uri = format!("videos/processed/{}.{}", video_id, "mp4");
-    let output_bytes = std::fs::read(&output_path)?;
-    bucket_client.upload_file(&output_uri, output_bytes).await?;
+    bucket_client.upload_file(&output_uri, file).await?;
 
     Ok(())
 }

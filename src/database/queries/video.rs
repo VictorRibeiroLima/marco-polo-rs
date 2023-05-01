@@ -7,8 +7,16 @@ use crate::database::models::{
     video_storage::{VideoFormat, VideoStage},
 };
 
-pub struct CreateVideoDto<'a> {
+pub struct CreateVideoWithStorageDto<'a> {
     pub video_id: Uuid,
+    pub video_uri: &'a str,
+    pub storage_id: i32,
+    pub format: VideoFormat,
+    pub stage: VideoStage,
+}
+
+pub struct CreateStorageDto<'a> {
+    pub video_id: &'a Uuid,
     pub video_uri: &'a str,
     pub storage_id: i32,
     pub format: VideoFormat,
@@ -21,7 +29,28 @@ pub struct UpdateVideoTranscriptionDto {
     pub path: String,
 }
 
-pub async fn create(pool: &PgPool, dto: CreateVideoDto<'_>) -> Result<(), sqlx::Error> {
+pub async fn create_storage(pool: &PgPool, dto: CreateStorageDto<'_>) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"
+        INSERT INTO videos_storages (video_id, storage_id, video_path, format, stage)
+        VALUES ($1, $2, $3, $4, $5);
+        "#,
+        dto.video_id,
+        dto.storage_id,
+        dto.video_uri,
+        dto.format as VideoFormat,
+        dto.stage as VideoStage,
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn create_with_storage(
+    pool: &PgPool,
+    dto: CreateVideoWithStorageDto<'_>,
+) -> Result<(), sqlx::Error> {
     let mut trx = pool.begin().await?;
     sqlx::query!(
         r#"

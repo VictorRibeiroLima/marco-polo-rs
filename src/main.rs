@@ -1,4 +1,5 @@
 use dotenv;
+use internals::cloud::traits::BucketClient;
 use std::{sync::Arc, thread};
 
 mod api;
@@ -36,6 +37,22 @@ fn check_envs() {
 async fn main() -> std::io::Result<()> {
     dotenv::from_filename(".env").expect("Failed to load .env file");
     check_envs();
+
+    /*
+    let bucket_client = internals::cloud::aws::s3::S3Client::new().unwrap();
+
+    let root = std::env::current_dir().unwrap();
+    let temp_dir = root.join("temp");
+    let video_id = "839b6b64-ace9-4425-b017-717aca77ea3c";
+    let output_path = temp_dir.join(format!("output_{}.{}", video_id, "mp4"));
+    let output_bytes = std::fs::read(&output_path)?;
+    let output_uri = format!("videos/processed/{}.{}", video_id, "mp4");
+
+    println!("output_path: {:?}", output_path);
+    bucket_client
+    .upload_file(&output_uri, output_bytes)
+    .await
+    .unwrap();*/
 
     let pool = Arc::new(database::create_pool().await);
     let thread_pool = pool.clone();

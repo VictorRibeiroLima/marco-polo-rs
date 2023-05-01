@@ -71,9 +71,7 @@ where
                         let sentences_result = handler.handle(payload).await;
                         sentences_result
                     }
-                    PayloadType::BatukaVideoProcessedUpload(_) => {
-                        todo!()
-                    }
+                    PayloadType::BatukaVideoProcessedUpload(_) => Ok(()),
                 };
 
                 match result {

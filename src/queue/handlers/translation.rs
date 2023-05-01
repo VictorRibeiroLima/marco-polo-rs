@@ -1,7 +1,7 @@
 use crate::{
     database::{
         models::video_storage::{VideoFormat, VideoStage},
-        queries::{self, video::CreateVideoDto},
+        queries::{self, video::CreateStorageDto},
     },
     internals::{
         cloud::{
@@ -57,12 +57,12 @@ where
 
         let video_uri = format!("videos/processed/{}.{}", payload.video_id, "mp4");
 
-        queries::video::create(
+        queries::video::create_storage(
             &self.worker.pool,
-            CreateVideoDto {
+            CreateStorageDto {
                 format: VideoFormat::Mp4,
                 storage_id: CS::id(),
-                video_id: payload.video_id,
+                video_id: &payload.video_id,
                 video_uri: &video_uri,
                 stage: VideoStage::Processed,
             },

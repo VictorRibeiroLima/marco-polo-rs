@@ -1,7 +1,7 @@
 use crate::{
     database::{
         models::video_storage::{VideoFormat, VideoStage},
-        queries::{self, transcription::CreateTranscriptionDto, video::CreateVideoDto},
+        queries::{self, transcription::CreateTranscriptionDto, video::CreateVideoWithStorageDto},
     },
     internals::{
         cloud::{
@@ -26,9 +26,9 @@ where
     SC: SubtitlerClient,
 {
     let bucket_client = worker.cloud_service.bucket_client();
-    queries::video::create(
+    queries::video::create_with_storage(
         &worker.pool,
-        CreateVideoDto {
+        CreateVideoWithStorageDto {
             format: VideoFormat::Mp4,
             storage_id: CS::id(),
             video_id: payload.video_id,
