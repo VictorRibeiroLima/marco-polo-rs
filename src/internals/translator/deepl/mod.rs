@@ -30,7 +30,7 @@ impl DeeplClient {
 
 impl ServiceProvider for DeeplClient {
     fn id() -> i32 {
-        return 3;
+        return 4;
     }
 }
 

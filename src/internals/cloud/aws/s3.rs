@@ -30,7 +30,7 @@ impl S3Client {
 
 impl ServiceProvider for S3Client {
     fn id() -> i32 {
-        1
+        2
     }
 }
 
