@@ -18,7 +18,7 @@ pub fn init(pool: Arc<sqlx::PgPool>) {
     let cloud_service = AwsCloudService::new(queue_url).unwrap();
     let transcriber_client = AssemblyAiClient::new();
     let translator_client: DeeplClient = DeeplClient::new();
-    let subtitler_client = LocalClient;
+    let subtitler_client = LocalClient::new();
 
     let worker = Worker {
         pool,

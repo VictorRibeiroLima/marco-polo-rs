@@ -2,13 +2,17 @@ use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::database::models::{video::Video, video_storage::VideoFormat};
+use crate::database::models::{
+    video::Video,
+    video_storage::{VideoFormat, VideoStage},
+};
 
-pub struct CreateVideoUploadDto<'a> {
+pub struct CreateVideoDto<'a> {
     pub video_id: Uuid,
     pub video_uri: &'a str,
     pub storage_id: i32,
     pub format: VideoFormat,
+    pub stage: VideoStage,
 }
 
 pub struct UpdateVideoTranscriptionDto {
@@ -17,10 +21,7 @@ pub struct UpdateVideoTranscriptionDto {
     pub path: String,
 }
 
-pub async fn create_upload(
-    pool: &PgPool,
-    dto: CreateVideoUploadDto<'_>,
-) -> Result<(), sqlx::Error> {
+pub async fn create(pool: &PgPool, dto: CreateVideoDto<'_>) -> Result<(), sqlx::Error> {
     let mut trx = pool.begin().await?;
     sqlx::query!(
         r#"
@@ -35,12 +36,13 @@ pub async fn create_upload(
     sqlx::query!(
         r#"
         INSERT INTO videos_storages (video_id, storage_id, video_path, format, stage)
-        VALUES ($1, $2, $3, $4, 'RAW');
+        VALUES ($1, $2, $3, $4, $5);
         "#,
         dto.video_id,
         dto.storage_id,
         dto.video_uri,
-        dto.format as VideoFormat
+        dto.format as VideoFormat,
+        dto.stage as VideoStage,
     )
     .execute(&mut trx)
     .await?;

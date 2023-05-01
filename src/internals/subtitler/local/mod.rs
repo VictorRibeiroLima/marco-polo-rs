@@ -5,8 +5,15 @@ use crate::internals::{
 
 use super::traits::SubtitlerClient;
 use async_trait::async_trait;
+mod util;
 
 pub struct LocalClient;
+
+impl LocalClient {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
 
 impl ServiceProvider for LocalClient {
     fn id() -> i32 {
@@ -17,29 +24,24 @@ impl ServiceProvider for LocalClient {
 #[async_trait]
 impl SubtitlerClient for LocalClient {
     fn estimate_time<BC: BucketClient>(&self, _: &SrtPayload, _: &BC) -> u32 {
-        10000
+        1000
     }
 
     async fn subtitle<BC: BucketClient + Sync>(
         &self,
-        payload: SrtPayload,
+        payload: &SrtPayload,
         bucket_client: &BC,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let video_id = payload.video_id.to_string();
         let video_uri = format!("videos/raw/{}.{}", video_id, "mp4"); // for now, we only support mp4,refactor later
         let video = bucket_client.download_file(&video_uri).await?;
         let srt = bucket_client.download_file(&payload.srt_uri).await?;
-        let mut temp_dir = std::env::temp_dir();
-        temp_dir.push("temp");
-
-        std::fs::create_dir_all(&temp_dir)?;
-        let mut video_path = temp_dir.clone();
-        video_path.push(format!("{}.{}", video_id, "mp4"));
-        let mut srt_path = temp_dir.clone();
-        srt_path.push(format!("{}.{}", video_id, "srt"));
-        std::fs::write(&video_path, video)?;
-        std::fs::write(&srt_path, srt)?;
-
-        Err("TODO: Implement ffmpeg".into())
+        let temp_dir = util::create_temp_dir()?;
+        let temp_file_paths = util::write_to_temp_files(&video, &srt, &temp_dir)?;
+        let output_path = temp_dir.join("output.mp4");
+        util::call_ffmpeg(&temp_file_paths[0], &temp_file_paths[1], &output_path)?;
+        util::upload_output_file(bucket_client, &output_path, &video_id).await?;
+        util::delete_temp_files(temp_file_paths)?;
+        Ok(())
     }
 }

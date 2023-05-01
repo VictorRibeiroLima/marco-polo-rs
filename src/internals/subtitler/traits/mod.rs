@@ -9,7 +9,7 @@ pub trait SubtitlerClient: ServiceProvider {
     fn estimate_time<BC: BucketClient>(&self, payload: &SrtPayload, bucket_client: &BC) -> u32;
     async fn subtitle<BC: BucketClient + Sync>(
         &self,
-        payload: SrtPayload,
+        payload: &SrtPayload,
         bucket_client: &BC,
     ) -> Result<(), Box<dyn std::error::Error>>;
 }

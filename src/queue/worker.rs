@@ -13,9 +13,8 @@ use crate::internals::{
 use super::handlers;
 
 /**
- * 1 - Call FFMPEG (or something else) to generate the video with the translated transcription
- * 2 - Upload the video to Youtube
- */
+* 1 - Upload the video to Youtube
+*/
 
 pub struct Worker<CS, TC, TLC, SC>
 where
@@ -72,7 +71,7 @@ where
                         let sentences_result = handler.handle(payload).await;
                         sentences_result
                     }
-                    PayloadType::BatukaVideoProcessedUpload(payload) => {
+                    PayloadType::BatukaVideoProcessedUpload(_) => {
                         todo!()
                     }
                 };
