@@ -7,7 +7,7 @@ use async_trait::async_trait;
 #[async_trait]
 pub trait SubtitlerClient: ServiceProvider {
     fn estimate_time<BC: BucketClient>(&self, payload: &SrtPayload, bucket_client: &BC) -> u32;
-    async fn subtitle<BC: BucketClient>(
+    async fn subtitle<BC: BucketClient + Sync>(
         &self,
         payload: SrtPayload,
         bucket_client: &BC,

@@ -5,6 +5,7 @@ use crate::internals::{
         models::payload::PayloadType,
         traits::{CloudService, QueueClient, QueueMessage},
     },
+    subtitler::traits::SubtitlerClient,
     transcriber::traits::TranscriberClient,
     translator::traits::TranslatorClient,
 };
@@ -16,23 +17,26 @@ use super::handlers;
  * 2 - Upload the video to Youtube
  */
 
-pub struct Worker<CS, TC, TLC>
+pub struct Worker<CS, TC, TLC, SC>
 where
     CS: CloudService,
     TC: TranscriberClient,
     TLC: TranslatorClient,
+    SC: SubtitlerClient,
 {
     pub cloud_service: CS,
     pub transcriber_client: TC,
     pub translator_client: TLC,
+    pub subtitler_client: SC,
     pub pool: Arc<sqlx::PgPool>,
 }
 
-impl<CS, TC, TLC> Worker<CS, TC, TLC>
+impl<CS, TC, TLC, SC> Worker<CS, TC, TLC, SC>
 where
     CS: CloudService,
     TC: TranscriberClient,
     TLC: TranslatorClient,
+    SC: SubtitlerClient,
 {
     pub async fn handle_queue(&self) {
         let queue_client = self.cloud_service.queue_client();

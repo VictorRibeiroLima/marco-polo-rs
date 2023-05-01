@@ -4,30 +4,35 @@ use crate::{
             models::payload::SrtPayload,
             traits::{CloudService, QueueClient},
         },
+        subtitler::traits::SubtitlerClient,
         transcriber::traits::TranscriberClient,
         translator::traits::TranslatorClient,
     },
     queue::worker::Worker,
 };
 
-pub struct Handler<'a, CS, TC, TLC>
+pub struct Handler<'a, CS, TC, TLC, SC>
 where
     CS: CloudService,
     TC: TranscriberClient,
     TLC: TranslatorClient,
+
+    SC: SubtitlerClient,
 {
-    worker: &'a Worker<CS, TC, TLC>,
+    worker: &'a Worker<CS, TC, TLC, SC>,
     message: &'a <<CS as CloudService>::QC as QueueClient>::M,
 }
 
-impl<'a, CS, TC, TLC> Handler<'a, CS, TC, TLC>
+impl<'a, CS, TC, TLC, SC> Handler<'a, CS, TC, TLC, SC>
 where
     CS: CloudService,
     TC: TranscriberClient,
     TLC: TranslatorClient,
+
+    SC: SubtitlerClient,
 {
     pub fn new(
-        worker: &'a Worker<CS, TC, TLC>,
+        worker: &'a Worker<CS, TC, TLC, SC>,
         message: &'a <<CS as CloudService>::QC as QueueClient>::M,
     ) -> Self {
         Self { worker, message }

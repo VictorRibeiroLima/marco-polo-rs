@@ -7,6 +7,7 @@ use crate::{
             models::payload::SrtPayload,
             traits::{BucketClient, CloudService},
         },
+        subtitler::traits::SubtitlerClient,
         transcriber::traits::{Sentence, TranscriberClient},
         translator::traits::TranslatorClient,
     },
@@ -14,22 +15,24 @@ use crate::{
     util,
 };
 
-pub struct Handler<'a, CS, TC, TLC>
+pub struct Handler<'a, CS, TC, TLC, SC>
 where
     CS: CloudService,
     TC: TranscriberClient,
     TLC: TranslatorClient,
+    SC: SubtitlerClient,
 {
-    worker: &'a Worker<CS, TC, TLC>,
+    worker: &'a Worker<CS, TC, TLC, SC>,
 }
 
-impl<'a, CS, TC, TLC> Handler<'a, CS, TC, TLC>
+impl<'a, CS, TC, TLC, SC> Handler<'a, CS, TC, TLC, SC>
 where
     CS: CloudService,
     TC: TranscriberClient,
     TLC: TranslatorClient,
+    SC: SubtitlerClient,
 {
-    pub fn new(worker: &'a Worker<CS, TC, TLC>) -> Handler<'a, CS, TC, TLC> {
+    pub fn new(worker: &'a Worker<CS, TC, TLC, SC>) -> Handler<'a, CS, TC, TLC, SC> {
         Self { worker }
     }
 

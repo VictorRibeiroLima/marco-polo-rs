@@ -8,20 +8,22 @@ use crate::{
             models::payload::VideoPayload,
             traits::{BucketClient, CloudService},
         },
+        subtitler::traits::SubtitlerClient,
         transcriber::traits::TranscriberClient,
         translator::traits::TranslatorClient,
     },
     queue::worker::Worker,
 };
 
-pub async fn handle<CS, TC, TLC>(
-    worker: &Worker<CS, TC, TLC>,
+pub async fn handle<CS, TC, TLC, SC>(
+    worker: &Worker<CS, TC, TLC, SC>,
     payload: VideoPayload,
 ) -> Result<(), Box<dyn std::error::Error>>
 where
     CS: CloudService,
     TC: TranscriberClient,
     TLC: TranslatorClient,
+    SC: SubtitlerClient,
 {
     let bucket_client = worker.cloud_service.bucket_client();
     queries::video::create_upload(
