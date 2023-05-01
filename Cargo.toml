@@ -16,10 +16,11 @@ rusoto_core = "0.48.0"
 rusoto_s3 = "0.48.0"
 rusoto_credential = "0.48.0"
 rusoto_sqs = "0.48.0"
-async-std = "1.12"
 futures = "0.3.28"
 uuid = { version = "1.2", features = ["v4","serde"] }
 async-trait = "0.1.68"
 serde_json = "1.0.96"
 sqlx = { version = "0.6.3", features = ["runtime-actix-native-tls","postgres", "macros","uuid","chrono","offline"] }
 chrono = "0.4.24"
+tokio = { version = "1.16.1", features = ["full"] }
+tokio-util = { version = "0.6.3", features = ["codec"] }

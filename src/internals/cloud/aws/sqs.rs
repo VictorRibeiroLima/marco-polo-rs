@@ -69,6 +69,10 @@ impl QueueMessage for Message {
                 let payload: S3SrtPayload = serde_json::from_str(&payload)?;
                 return Ok(PayloadType::BatukaSrtTranslationUpload(payload.into()));
             }
+            "BatukaVideoProcessedUpload" => {
+                let payload: S3UploadPayload = serde_json::from_str(&payload)?;
+                return Ok(PayloadType::BatukaVideoProcessedUpload(payload.into()));
+            }
             _ => Err("Invalid type field".into()),
         }
     }

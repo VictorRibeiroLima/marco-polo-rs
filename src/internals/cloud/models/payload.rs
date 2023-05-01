@@ -15,6 +15,7 @@ pub struct SrtPayload {
 #[derive(Debug)]
 pub enum PayloadType {
     BatukaVideoRawUpload(VideoPayload),
+    BatukaVideoProcessedUpload(VideoPayload),
     BatukaSrtTranscriptionUpload(SrtPayload),
     BatukaSrtTranslationUpload(SrtPayload),
 }

@@ -7,7 +7,7 @@ use crate::internals::ServiceProvider;
 use super::models::payload::PayloadType;
 
 #[async_trait]
-pub trait BucketClient: ServiceProvider {
+pub trait BucketClient: ServiceProvider + Sync {
     async fn create_signed_upload_url(
         &self,
         expires_in: u16,

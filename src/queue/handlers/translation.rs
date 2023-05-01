@@ -39,12 +39,17 @@ where
     }
 
     pub async fn handle(&self, payload: SrtPayload) -> Result<(), Box<dyn std::error::Error>> {
+        let subtitler_client = &self.worker.subtitler_client;
+        let bucket_client = self.worker.cloud_service.bucket_client();
         let queue_client = self.worker.cloud_service.queue_client();
-        println!("Handling translation");
-        println!("Payload: {:?}", payload);
-        queue_client
-            .change_message_visibility(&self.message, 1000)
-            .await?;
+
+        let estimation = subtitler_client.estimate_time(&payload, bucket_client);
+
+        /*queue_client
+        .change_message_visibility(&self.message, estimation as usize)
+        .await?;*/
+
+        subtitler_client.subtitle(payload, bucket_client).await?;
 
         return Ok(());
     }

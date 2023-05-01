@@ -1,11 +1,11 @@
-use async_std::task::block_on;
 use async_trait::async_trait;
+use futures::executor::block_on;
 use rusoto_credential::{EnvironmentProvider, ProvideAwsCredentials};
 use rusoto_s3::{
     util::{PreSignedRequest, PreSignedRequestOption},
     GetObjectRequest, PutObjectRequest, S3,
 };
-use std::io::Read;
+use tokio::io::AsyncReadExt;
 
 use crate::internals::{cloud::traits::BucketClient, ServiceProvider};
 
@@ -110,8 +110,10 @@ impl BucketClient for S3Client {
             None => return Err("No body found".into()),
         };
 
-        let mut buffer = Vec::new();
-        body.into_blocking_read().read_to_end(&mut buffer)?;
+        let mut buffer: Vec<u8> = Vec::new();
+        let mut reader = body.into_async_read();
+        reader.read_to_end(&mut buffer).await?;
+
         Ok(buffer)
     }
 }

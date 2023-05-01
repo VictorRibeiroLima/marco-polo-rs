@@ -72,12 +72,15 @@ where
                         let sentences_result = handler.handle(payload).await;
                         sentences_result
                     }
+                    PayloadType::BatukaVideoProcessedUpload(payload) => {
+                        todo!()
+                    }
                 };
 
                 match result {
                     Ok(_) => {}
                     Err(e) => {
-                        println!("{:?}", e);
+                        println!("worker result err:{:?}", e);
                         continue;
                     }
                 }
