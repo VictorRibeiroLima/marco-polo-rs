@@ -45,6 +45,10 @@ impl crate::internals::cloud::traits::BucketClient for TestClient {
     ) -> Result<String, Box<dyn std::error::Error>> {
         Ok(format!("https://storage.googleapis.com/{}", expires_in))
     }
+
+    async fn download_file(&self, _file_path: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+        Ok(vec![])
+    }
 }
 
 #[actix_web::test]

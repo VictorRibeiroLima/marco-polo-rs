@@ -5,6 +5,7 @@ use rusoto_s3::{
     util::{PreSignedRequest, PreSignedRequestOption},
     GetObjectRequest, PutObjectRequest, S3,
 };
+use std::io::Read;
 
 use crate::internals::{cloud::traits::BucketClient, ServiceProvider};
 
@@ -93,5 +94,24 @@ impl BucketClient for S3Client {
 
         let url = request.get_presigned_url(&self.region, &self.credential, &option);
         return Ok(url);
+    }
+
+    async fn download_file(&self, file_path: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+        let request = GetObjectRequest {
+            bucket: self.bucket_name.clone(),
+            key: file_path.to_string(),
+            ..Default::default()
+        };
+
+        let client = rusoto_s3::S3Client::new(self.region.clone());
+        let response = client.get_object(request).await?;
+        let body = match response.body {
+            Some(body) => body,
+            None => return Err("No body found".into()),
+        };
+
+        let mut buffer = Vec::new();
+        body.into_blocking_read().read_to_end(&mut buffer)?;
+        Ok(buffer)
     }
 }

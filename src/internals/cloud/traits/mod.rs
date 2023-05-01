@@ -23,6 +23,8 @@ pub trait BucketClient: ServiceProvider {
         file_path: &str,
         file: Vec<u8>,
     ) -> Result<(), Box<dyn std::error::Error>>;
+
+    async fn download_file(&self, file_path: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>>;
 }
 
 #[async_trait]
