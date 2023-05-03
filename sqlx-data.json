@@ -1,5 +1,42 @@
 {
   "db": "PostgreSQL",
+  "28c3cc46ca261ddac740d6ab35f44aa23388d21086872102df103dc19437c28b": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Int4",
+          "Varchar",
+          {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "MP4",
+                  "AVI",
+                  "MOV"
+                ]
+              },
+              "name": "video_format"
+            }
+          },
+          {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "RAW",
+                  "PROCESSED"
+                ]
+              },
+              "name": "video_stage"
+            }
+          }
+        ]
+      }
+    },
+    "query": "\n        INSERT INTO videos_storages (video_id, storage_id, video_path, format, stage)\n        VALUES ($1, $2, $3, $4, $5);\n        "
+  },
   "a2942ce2cc35f204ded8852e2319cb460e1715d7e4dc17d70867abfaadabe83f": {
     "describe": {
       "columns": [
@@ -87,32 +124,6 @@
       }
     },
     "query": "\n        INSERT INTO videos (id)\n        VALUES ($1);\n        "
-  },
-  "cfe29ed8f88ae2fafa7ccaca4f9db90deb3ebfb9d863d796863289e6b71aaf13": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Left": [
-          "Uuid",
-          "Int4",
-          "Varchar",
-          {
-            "Custom": {
-              "kind": {
-                "Enum": [
-                  "MP4",
-                  "AVI",
-                  "MOV"
-                ]
-              },
-              "name": "video_format"
-            }
-          }
-        ]
-      }
-    },
-    "query": "\n        INSERT INTO videos_storages (video_id, storage_id, video_path, format, stage)\n        VALUES ($1, $2, $3, $4, 'RAW');\n        "
   },
   "e50541be0f4d4cc075c56496a53346057758fc14d368d6ee9f03c4b0d6d9e902": {
     "describe": {
