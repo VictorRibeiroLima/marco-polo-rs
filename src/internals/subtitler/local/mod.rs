@@ -22,12 +22,12 @@ impl ServiceProvider for LocalClient {
 }
 
 #[async_trait]
-impl SubtitlerClient for LocalClient {
-    fn estimate_time<BC: BucketClient>(&self, _: &SrtPayload, _: &BC) -> u32 {
+impl<BC: BucketClient> SubtitlerClient<BC> for LocalClient {
+    fn estimate_time(&self, _: &SrtPayload, _: &BC) -> u32 {
         1000
     }
 
-    async fn subtitle<BC: BucketClient + Sync>(
+    async fn subtitle(
         &self,
         payload: &SrtPayload,
         bucket_client: &BC,

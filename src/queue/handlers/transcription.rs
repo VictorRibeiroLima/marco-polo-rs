@@ -20,7 +20,7 @@ where
     CS: CloudService,
     TC: TranscriberClient,
     TLC: TranslatorClient,
-    SC: SubtitlerClient,
+    SC: SubtitlerClient<CS::BC>,
 {
     worker: &'a Worker<CS, TC, TLC, SC>,
 }
@@ -30,7 +30,7 @@ where
     CS: CloudService,
     TC: TranscriberClient,
     TLC: TranslatorClient,
-    SC: SubtitlerClient,
+    SC: SubtitlerClient<CS::BC>,
 {
     pub fn new(worker: &'a Worker<CS, TC, TLC, SC>) -> Handler<'a, CS, TC, TLC, SC> {
         Self { worker }

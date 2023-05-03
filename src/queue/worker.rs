@@ -21,7 +21,7 @@ where
     CS: CloudService,
     TC: TranscriberClient,
     TLC: TranslatorClient,
-    SC: SubtitlerClient,
+    SC: SubtitlerClient<CS::BC>,
 {
     pub cloud_service: CS,
     pub transcriber_client: TC,
@@ -35,7 +35,7 @@ where
     CS: CloudService,
     TC: TranscriberClient,
     TLC: TranslatorClient,
-    SC: SubtitlerClient,
+    SC: SubtitlerClient<CS::BC>,
 {
     pub async fn handle_queue(&self) {
         let queue_client = self.cloud_service.queue_client();

@@ -23,7 +23,7 @@ where
     CS: CloudService,
     TC: TranscriberClient,
     TLC: TranslatorClient,
-    SC: SubtitlerClient,
+    SC: SubtitlerClient<CS::BC>,
 {
     let bucket_client = worker.cloud_service.bucket_client();
     queries::video::create_with_storage(
