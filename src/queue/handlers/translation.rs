@@ -49,9 +49,9 @@ where
 
         let estimation = subtitler_client.estimate_time(&payload, bucket_client);
 
-        /* queue_client
-        .change_message_visibility(&self.message, estimation as usize)
-        .await?;*/
+        queue_client
+            .change_message_visibility(&self.message, estimation as usize)
+            .await?;
 
         subtitler_client.subtitle(&payload, bucket_client).await?;
 
