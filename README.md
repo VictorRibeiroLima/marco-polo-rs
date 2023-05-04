@@ -11,6 +11,7 @@ capable of translating videos from more then 100 languages to more then 100 lang
 ```bash
 $ curl --proto '=https' --tlsv1.3 https://sh.rustup.rs -sSf | sh
 $ sudo apt install libssl-dev
+$ apt install pkg-config
 ```
 
 # Env config
