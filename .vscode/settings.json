@@ -9,7 +9,11 @@
     "reqwest",
     "rusoto",
     "sqlx",
-    "subtitler"
+    "subtitler",
+    "serde",
+    "proto",
+    "tlsv",
+    "sslmode"
   ],
   "rust-analyzer.showUnlinkedFileNotification": false
 }
