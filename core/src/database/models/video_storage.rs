@@ -8,6 +8,7 @@ pub enum VideoFormat {
     Mp4,
     Webm,
     Ogg,
+    Mkv,
 }
 
 #[derive(Debug, sqlx::Type, Serialize, Deserialize)]

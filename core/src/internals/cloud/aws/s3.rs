@@ -60,7 +60,7 @@ impl BucketClient for S3Client {
         expiration: u16,
     ) -> Result<String, Box<dyn std::error::Error>> {
         let uuid = uuid::Uuid::new_v4().to_string();
-        let file_name = format!("videos/raw/{}.mp4", uuid);
+        let file_name = format!("videos/raw/{}.mkv", uuid);
         return self
             .create_signed_upload_url_with_uri(&file_name, expiration)
             .await;

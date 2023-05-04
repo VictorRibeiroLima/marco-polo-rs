@@ -33,7 +33,7 @@ impl<BC: BucketClient> SubtitlerClient<BC> for LocalClient {
         bucket_client: &BC,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let video_id = payload.video_id.to_string();
-        let video_uri = format!("videos/raw/{}.{}", video_id, "mp4"); // for now, we only support mp4,refactor later
+        let video_uri = format!("videos/raw/{}.{}", video_id, "mkv"); // for now, we only support mkv,refactor later
         let video = bucket_client.download_file(&video_uri).await?;
         let srt = bucket_client.download_file(&payload.srt_uri).await?;
         let temp_dir = util::create_temp_dir()?;

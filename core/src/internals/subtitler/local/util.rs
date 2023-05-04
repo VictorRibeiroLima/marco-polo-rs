@@ -15,9 +15,9 @@ pub fn write_to_temp_files(
     temp_dir: &PathBuf,
     id: &str,
 ) -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
-    let video_path = temp_dir.join(format!("input_{}.{}", id, "mp4"));
+    let video_path = temp_dir.join(format!("input_{}.{}", id, "mkv"));
     let srt_path = temp_dir.join(format!("{}.{}", id, "srt"));
-    let output_path = temp_dir.join(format!("output_{}.{}", id, "mp4"));
+    let output_path = temp_dir.join(format!("output_{}.{}", id, "mkv"));
     let mut temp_file_paths = Vec::new();
 
     let mut video_file = File::create(&video_path)?;
@@ -79,7 +79,7 @@ pub async fn upload_output_file<BC: BucketClient + Sync>(
     file: &PathBuf,
     video_id: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let output_uri = format!("videos/processed/{}.{}", video_id, "mp4");
+    let output_uri = format!("videos/processed/{}.{}", video_id, "mkv");
     let url = bucket_client
         .create_signed_upload_url_with_uri(&output_uri, 3600)
         .await?;

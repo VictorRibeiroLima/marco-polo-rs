@@ -1,6 +1,6 @@
 -- Add up migration script here
 CREATE TYPE video_stage AS ENUM ('RAW', 'PROCESSED');
-CREATE TYPE video_format AS ENUM ('MP4', 'AVI', 'MOV');
+CREATE TYPE video_format AS ENUM ('MP4', 'AVI', 'MOV','MKV');
 
 CREATE TABLE IF NOT EXISTS videos_storages (
   id serial PRIMARY KEY,

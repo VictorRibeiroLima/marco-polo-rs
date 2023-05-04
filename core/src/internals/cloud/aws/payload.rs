@@ -15,8 +15,6 @@ pub struct S3SrtPayload {
     pub s3srt_uri: String,
 }
 
-// videos/{}.mp4
-// srt_transcription/{}.srt
 impl Into<VideoPayload> for S3UploadPayload {
     fn into(self) -> VideoPayload {
         let video_id = self
@@ -63,7 +61,7 @@ mod test {
     #[test]
     fn test_into_upload_payload() {
         let uuid = uuid::Uuid::new_v4();
-        let uri = format!("videos/{}.mp4", uuid);
+        let uri = format!("videos/{}.mkv", uuid);
         let s3_upload_payload = super::S3UploadPayload {
             s3video_uri: uri.clone(),
         };

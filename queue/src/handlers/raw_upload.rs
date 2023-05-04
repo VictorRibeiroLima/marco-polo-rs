@@ -30,7 +30,7 @@ where
     queries::video::create_with_storage(
         &worker.pool,
         CreateVideoWithStorageDto {
-            format: VideoFormat::Mp4,
+            format: VideoFormat::Mkv,
             storage_id: CS::id(),
             video_id: payload.video_id,
             video_uri: &payload.video_uri,
