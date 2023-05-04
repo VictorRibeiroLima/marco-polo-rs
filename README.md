@@ -18,6 +18,11 @@ $ sudo apt install libssl-dev
 ### Env files
 You should use the .example.env file as a template to create your own .env file.
 
+### Docker
+Docker it's not required to run the project, but it's recommended to use it to run the database.
+
+You can download docker [here](https://docs.docker.com/get-docker/).
+
 ### Database
 
 It's very important to have a local database running, you can use docker to run a postgres database.
