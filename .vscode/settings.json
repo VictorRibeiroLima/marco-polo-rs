@@ -7,6 +7,7 @@
     "deeṕl",
     "dotenv",
     "dtos",
+    "jsonwebtoken",
     "proto",
     "reqwest",
     "rusoto",

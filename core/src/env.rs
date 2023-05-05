@@ -5,6 +5,7 @@ pub fn check_envs() {
     //API
     std::env::var("API_URL").expect("API_URL not found");
     std::env::var("API_KEY").expect("API_KEY not found");
+    std::env::var("API_JSON_WEB_TOKEN_SECRET").expect("API_JSON_WEB_TOKEN_SECRET not found");
 
     //AWS
     std::env::var("AWS_BUCKET_NAME").expect("AWS_BUCKET_NAME not found");

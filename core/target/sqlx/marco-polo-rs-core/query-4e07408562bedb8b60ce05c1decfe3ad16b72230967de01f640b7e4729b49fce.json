@@ -1,32 +1,19 @@
 {
-  "query": "\n        INSERT INTO videos_storages (video_id, storage_id, video_path, format, stage)\n        VALUES ($1, $2, $3, $4, $5);\n        ",
+  "query": "\n        INSERT INTO users (name, email, password, role)\n        VALUES ($1, $2, $3, $4)\n        ",
   "describe": {
     "columns": [],
     "parameters": {
       "Left": [
-        "Uuid",
-        "Int4",
+        "Varchar",
+        "Varchar",
         "Varchar",
         {
           "Custom": {
-            "name": "video_format",
+            "name": "user_role",
             "kind": {
               "Enum": [
-                "MP4",
-                "AVI",
-                "MOV",
-                "MKV"
-              ]
-            }
-          }
-        },
-        {
-          "Custom": {
-            "name": "video_stage",
-            "kind": {
-              "Enum": [
-                "RAW",
-                "PROCESSED"
+                "ADMIN",
+                "USER"
               ]
             }
           }
@@ -35,5 +22,5 @@
     },
     "nullable": []
   },
-  "hash": "28c3cc46ca261ddac740d6ab35f44aa23388d21086872102df103dc19437c28b"
+  "hash": "d681de2953a380d7203410c043792f550fefeb70fbf53f901ae4d66be20062a1"
 }

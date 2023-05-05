@@ -6,7 +6,7 @@ use serde::Serialize;
 
 #[derive(Serialize)]
 pub struct AppErrorResponse {
-    pub error: String,
+    pub errors: Vec<String>,
 }
 
 #[derive(Debug)]
@@ -82,9 +82,12 @@ impl ResponseError for AppError {
     }
 
     fn error_response(&self) -> HttpResponse {
-        HttpResponse::build(self.status_code()).json(AppErrorResponse {
-            error: self.message(),
-        })
+        let errors = self
+            .message
+            .split("\n")
+            .map(String::from)
+            .collect::<Vec<String>>();
+        HttpResponse::build(self.status_code()).json(AppErrorResponse { errors })
     }
 }
 
@@ -126,5 +129,17 @@ impl From<sqlx::Error> for AppError {
 impl From<validator::ValidationErrors> for AppError {
     fn from(value: validator::ValidationErrors) -> Self {
         return Self::new(AppErrorType::BadRequest, value.to_string());
+    }
+}
+
+impl From<bcrypt::BcryptError> for AppError {
+    fn from(value: bcrypt::BcryptError) -> Self {
+        return Self::new(AppErrorType::InternalServerError, value.to_string());
+    }
+}
+
+impl From<jsonwebtoken::errors::Error> for AppError {
+    fn from(value: jsonwebtoken::errors::Error) -> Self {
+        return Self::new(AppErrorType::InternalServerError, value.to_string());
     }
 }

@@ -1,60 +1,55 @@
 {
-  "query": "\n        SELECT \n            v.id as \"id: Uuid\", \n            v.title,\n            v.description,\n            v.url,\n            v.language,\n            v.user_id,\n            v.channel_id,\n            v.created_at as \"created_at: DateTime<Utc>\",\n            v.updated_at as \"updated_at: DateTime<Utc>\",\n            v.deleted_at as \"deleted_at: DateTime<Utc>\",\n            v.uploaded_at as \"uploaded_at: DateTime<Utc>\"\n        FROM \n            videos v\n        INNER JOIN \n            videos_transcriptions vt ON v.id = vt.video_id\n        WHERE \n            vt.transcription_id = $1\n    ",
+  "query": "\n        SELECT  \n            id,\n            name,\n            email,\n            password,\n            role as \"role: UserRole\",\n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        \n        FROM users WHERE email = $1\n        ",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "id: Uuid",
-        "type_info": "Uuid"
+        "name": "id",
+        "type_info": "Int4"
       },
       {
         "ordinal": 1,
-        "name": "title",
+        "name": "name",
         "type_info": "Varchar"
       },
       {
         "ordinal": 2,
-        "name": "description",
-        "type_info": "Text"
+        "name": "email",
+        "type_info": "Varchar"
       },
       {
         "ordinal": 3,
-        "name": "url",
+        "name": "password",
         "type_info": "Varchar"
       },
       {
         "ordinal": 4,
-        "name": "language",
-        "type_info": "Varchar"
+        "name": "role: UserRole",
+        "type_info": {
+          "Custom": {
+            "name": "user_role",
+            "kind": {
+              "Enum": [
+                "ADMIN",
+                "USER"
+              ]
+            }
+          }
+        }
       },
       {
         "ordinal": 5,
-        "name": "user_id",
-        "type_info": "Int4"
-      },
-      {
-        "ordinal": 6,
-        "name": "channel_id",
-        "type_info": "Int4"
-      },
-      {
-        "ordinal": 7,
         "name": "created_at: DateTime<Utc>",
         "type_info": "Timestamp"
       },
       {
-        "ordinal": 8,
+        "ordinal": 6,
         "name": "updated_at: DateTime<Utc>",
         "type_info": "Timestamp"
       },
       {
-        "ordinal": 9,
+        "ordinal": 7,
         "name": "deleted_at: DateTime<Utc>",
-        "type_info": "Timestamp"
-      },
-      {
-        "ordinal": 10,
-        "name": "uploaded_at: DateTime<Utc>",
         "type_info": "Timestamp"
       }
     ],
@@ -67,15 +62,12 @@
       false,
       false,
       false,
-      true,
       false,
       false,
       false,
       false,
-      false,
-      true,
       true
     ]
   },
-  "hash": "6f0e11a893c806cfe38096b7c95ac3c27333399cc32eb6863e66d35a546176ba"
+  "hash": "c2801aabb735b0e3851eda6c2c84564f0b89ee5b51c28ac2597d8577e07afcc1"
 }
