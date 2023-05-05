@@ -1,5 +1,5 @@
 {
-  "query": "\n        SELECT \n            v.id as \"id: Uuid\", \n            v.title,\n            v.description,\n            v.url,\n            v.language,\n            v.created_at as \"created_at: DateTime<Utc>\",\n            v.updated_at as \"updated_at: DateTime<Utc>\",\n            v.deleted_at as \"deleted_at: DateTime<Utc>\",\n            v.uploaded_at as \"uploaded_at: DateTime<Utc>\"\n        FROM \n            videos v\n        INNER JOIN \n            videos_transcriptions vt ON v.id = vt.video_id\n        WHERE \n            vt.transcription_id = $1\n    ",
+  "query": "\n        SELECT \n            v.id as \"id: Uuid\", \n            v.title,\n            v.description,\n            v.url,\n            v.language,\n            v.user_id,\n            v.channel_id,\n            v.created_at as \"created_at: DateTime<Utc>\",\n            v.updated_at as \"updated_at: DateTime<Utc>\",\n            v.deleted_at as \"deleted_at: DateTime<Utc>\",\n            v.uploaded_at as \"uploaded_at: DateTime<Utc>\"\n        FROM \n            videos v\n        INNER JOIN \n            videos_transcriptions vt ON v.id = vt.video_id\n        WHERE \n            vt.transcription_id = $1\n    ",
   "describe": {
     "columns": [
       {
@@ -29,21 +29,31 @@
       },
       {
         "ordinal": 5,
+        "name": "user_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "channel_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 7,
         "name": "created_at: DateTime<Utc>",
         "type_info": "Timestamp"
       },
       {
-        "ordinal": 6,
+        "ordinal": 8,
         "name": "updated_at: DateTime<Utc>",
         "type_info": "Timestamp"
       },
       {
-        "ordinal": 7,
+        "ordinal": 9,
         "name": "deleted_at: DateTime<Utc>",
         "type_info": "Timestamp"
       },
       {
-        "ordinal": 8,
+        "ordinal": 10,
         "name": "uploaded_at: DateTime<Utc>",
         "type_info": "Timestamp"
       }
@@ -55,9 +65,11 @@
     },
     "nullable": [
       false,
+      false,
+      false,
       true,
-      true,
-      true,
+      false,
+      false,
       false,
       false,
       false,
@@ -65,5 +77,5 @@
       true
     ]
   },
-  "hash": "e50541be0f4d4cc075c56496a53346057758fc14d368d6ee9f03c4b0d6d9e902"
+  "hash": "6f0e11a893c806cfe38096b7c95ac3c27333399cc32eb6863e66d35a546176ba"
 }

@@ -122,3 +122,9 @@ impl From<sqlx::Error> for AppError {
         }
     }
 }
+
+impl From<validator::ValidationErrors> for AppError {
+    fn from(value: validator::ValidationErrors) -> Self {
+        return Self::new(AppErrorType::BadRequest, value.to_string());
+    }
+}

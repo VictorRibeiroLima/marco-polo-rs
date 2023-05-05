@@ -5,8 +5,10 @@ use uuid::Uuid;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Video {
     pub id: Uuid,
-    pub title: Option<String>,
-    pub description: Option<String>,
+    pub title: String,
+    pub description: String,
+    pub user_id: i32,
+    pub channel_id: i32,
     pub url: Option<String>,
     pub language: String,
     pub created_at: DateTime<Utc>,

@@ -1,7 +1,7 @@
 use marco_polo_rs_core::{
     database::{
         models::video_storage::{VideoFormat, VideoStage},
-        queries::{self, transcription::CreateTranscriptionDto, video::CreateVideoWithStorageDto},
+        queries::{self, storage::CreateStorageDto, transcription::CreateTranscriptionDto},
     },
     internals::{
         cloud::{
@@ -26,14 +26,15 @@ where
     TLC: TranslatorClient,
     SC: SubtitlerClient<CS::BC>,
 {
+    let pool = &worker.pool;
     let bucket_client = worker.cloud_service.bucket_client();
-    queries::video::create_with_storage(
-        &worker.pool,
-        CreateVideoWithStorageDto {
-            format: VideoFormat::Mkv,
-            storage_id: CS::id(),
+    queries::storage::create(
+        &pool,
+        CreateStorageDto {
             video_id: payload.video_id,
             video_uri: &payload.video_uri,
+            storage_id: CS::id(),
+            format: VideoFormat::Mp4,
             stage: VideoStage::Raw,
         },
     )

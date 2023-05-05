@@ -6,14 +6,15 @@
     "chrono",
     "deeṕl",
     "dotenv",
+    "dtos",
+    "proto",
     "reqwest",
     "rusoto",
-    "sqlx",
-    "subtitler",
     "serde",
-    "proto",
-    "tlsv",
-    "sslmode"
+    "sqlx",
+    "sslmode",
+    "subtitler",
+    "tlsv"
   ],
   "rust-analyzer.showUnlinkedFileNotification": false
 }

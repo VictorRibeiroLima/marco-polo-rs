@@ -7,14 +7,6 @@ use crate::database::models::{
     video_storage::{VideoFormat, VideoStage},
 };
 
-pub struct CreateVideoWithStorageDto<'a> {
-    pub video_id: Uuid,
-    pub video_uri: &'a str,
-    pub storage_id: i32,
-    pub format: VideoFormat,
-    pub stage: VideoStage,
-}
-
 pub struct CreateStorageDto<'a> {
     pub video_id: &'a Uuid,
     pub video_uri: &'a str,
@@ -47,36 +39,22 @@ pub async fn create_storage(pool: &PgPool, dto: CreateStorageDto<'_>) -> Result<
     Ok(())
 }
 
-pub async fn create_with_storage(
-    pool: &PgPool,
-    dto: CreateVideoWithStorageDto<'_>,
-) -> Result<(), sqlx::Error> {
-    let mut trx = pool.begin().await?;
+pub async fn create(pool: &PgPool, dto: &Video) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
-        INSERT INTO videos (id)
-        VALUES ($1);
+        INSERT INTO videos (id, title, description, user_id, channel_id, language)
+        VALUES ($1, $2, $3, $4, $5, $6);
         "#,
-        dto.video_id,
+        dto.id,
+        dto.title,
+        dto.description,
+        dto.user_id,
+        dto.channel_id,
+        dto.language,
     )
-    .execute(&mut trx)
+    .execute(pool)
     .await?;
 
-    sqlx::query!(
-        r#"
-        INSERT INTO videos_storages (video_id, storage_id, video_path, format, stage)
-        VALUES ($1, $2, $3, $4, $5);
-        "#,
-        dto.video_id,
-        dto.storage_id,
-        dto.video_uri,
-        dto.format as VideoFormat,
-        dto.stage as VideoStage,
-    )
-    .execute(&mut trx)
-    .await?;
-
-    trx.commit().await?;
     Ok(())
 }
 
@@ -93,6 +71,8 @@ pub async fn find_by_transcription_id(
             v.description,
             v.url,
             v.language,
+            v.user_id,
+            v.channel_id,
             v.created_at as "created_at: DateTime<Utc>",
             v.updated_at as "updated_at: DateTime<Utc>",
             v.deleted_at as "deleted_at: DateTime<Utc>",
