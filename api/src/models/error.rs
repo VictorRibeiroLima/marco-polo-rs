@@ -114,6 +114,7 @@ impl From<reqwest::Error> for AppError {
 
 impl From<sqlx::Error> for AppError {
     fn from(value: sqlx::Error) -> Self {
+        println!("SQLx Error: {:?}", value);
         match value {
             sqlx::Error::RowNotFound => {
                 return Self::new(AppErrorType::NotFound, value.to_string());

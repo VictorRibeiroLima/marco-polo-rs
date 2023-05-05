@@ -1,6 +1,9 @@
-use crate::internals::{
-    cloud::{models::payload::SrtPayload, traits::BucketClient},
-    ServiceProvider,
+use crate::{
+    internals::{
+        cloud::{models::payload::SrtPayload, traits::BucketClient},
+        ServiceProvider,
+    },
+    util::fs::create_temp_dir,
 };
 
 use super::traits::SubtitlerClient;
@@ -36,7 +39,7 @@ impl<BC: BucketClient> SubtitlerClient<BC> for LocalClient {
         let video_uri = format!("videos/raw/{}.{}", video_id, "mkv"); // for now, we only support mkv,refactor later
         let video = bucket_client.download_file(&video_uri).await?;
         let srt = bucket_client.download_file(&payload.srt_uri).await?;
-        let temp_dir = util::create_temp_dir()?;
+        let temp_dir = create_temp_dir()?;
         let temp_file_paths = util::write_to_temp_files(&video, &srt, &temp_dir, &video_id)?;
 
         util::call_ffmpeg(

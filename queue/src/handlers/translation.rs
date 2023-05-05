@@ -1,7 +1,7 @@
 use marco_polo_rs_core::{
     database::{
         models::video_storage::{VideoFormat, VideoStage},
-        queries::{self, video::CreateStorageDto},
+        queries::{self, storage::CreateStorageDto},
     },
     internals::{
         cloud::{
@@ -57,12 +57,12 @@ where
 
         let video_uri = format!("videos/processed/{}.{}", payload.video_id, "mkv");
 
-        queries::video::create_storage(
+        queries::storage::create(
             &self.worker.pool,
             CreateStorageDto {
                 format: VideoFormat::Mkv,
                 storage_id: CS::id(),
-                video_id: &payload.video_id,
+                video_id: payload.video_id,
                 video_uri: &video_uri,
                 stage: VideoStage::Processed,
             },

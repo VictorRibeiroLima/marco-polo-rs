@@ -2,13 +2,35 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, sqlx::Type, Serialize, Deserialize)]
+#[derive(Debug, sqlx::Type, Serialize, Deserialize, Clone)]
 #[sqlx(type_name = "video_format", rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum VideoFormat {
     Mp4,
     Webm,
     Ogg,
     Mkv,
+}
+
+impl VideoFormat {
+    pub fn to_string(&self) -> String {
+        match self {
+            VideoFormat::Mp4 => "mp4".to_string(),
+            VideoFormat::Webm => "webm".to_string(),
+            VideoFormat::Ogg => "ogg".to_string(),
+            VideoFormat::Mkv => "mkv".to_string(),
+        }
+    }
+}
+
+impl Into<String> for VideoFormat {
+    fn into(self) -> String {
+        match self {
+            VideoFormat::Mp4 => "mp4".to_string(),
+            VideoFormat::Webm => "webm".to_string(),
+            VideoFormat::Ogg => "ogg".to_string(),
+            VideoFormat::Mkv => "mkv".to_string(),
+        }
+    }
 }
 
 #[derive(Debug, sqlx::Type, Serialize, Deserialize)]

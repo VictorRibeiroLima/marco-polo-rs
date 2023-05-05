@@ -10,11 +10,8 @@ pub struct CreateUserDto<'a> {
     pub role: &'a Option<UserRole>,
 }
 
-pub async fn create(
-    pool: &PgPool,
-    dto: CreateUserDto<'_>,
-) -> Result<(), Box<dyn std::error::Error>> {
-    let password = bcrypt::hash(dto.password, bcrypt::DEFAULT_COST)?;
+pub async fn create(pool: &PgPool, dto: CreateUserDto<'_>) -> Result<(), sqlx::Error> {
+    let password = bcrypt::hash(dto.password, bcrypt::DEFAULT_COST).unwrap();
 
     sqlx::query!(
         r#"
@@ -32,10 +29,7 @@ pub async fn create(
     return Ok(());
 }
 
-pub async fn find_by_email(
-    pool: &PgPool,
-    email: &str,
-) -> Result<Option<User>, Box<dyn std::error::Error>> {
+pub async fn find_by_email(pool: &PgPool, email: &str) -> Result<Option<User>, sqlx::Error> {
     let user = sqlx::query_as!(
         User,
         r#"

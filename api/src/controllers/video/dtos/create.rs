@@ -7,7 +7,8 @@ pub struct CreateVideo {
     pub description: String,
     pub video_url: String,
     pub channel_id: i32,
+    pub language: Option<String>,
     pub format: Option<VideoFormat>,
-    pub start_time: Option<i32>,
-    pub end_time: Option<i32>,
+    pub start_time: Option<String>,
+    pub end_time: Option<String>,
 }

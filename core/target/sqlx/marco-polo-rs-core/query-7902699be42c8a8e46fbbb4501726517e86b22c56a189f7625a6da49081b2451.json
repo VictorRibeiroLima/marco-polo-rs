@@ -1,5 +1,5 @@
 {
-  "query": "\n        SELECT  \n            id,\n            name,\n            email,\n            password,\n            role as \"role: UserRole\",\n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        \n        FROM users WHERE email = $1\n        ",
+  "query": "\n        SELECT \n            id,\n            name,\n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        FROM channels WHERE id = $1\n        ",
   "describe": {
     "columns": [
       {
@@ -14,48 +14,23 @@
       },
       {
         "ordinal": 2,
-        "name": "email",
-        "type_info": "Varchar"
-      },
-      {
-        "ordinal": 3,
-        "name": "password",
-        "type_info": "Varchar"
-      },
-      {
-        "ordinal": 4,
-        "name": "role: UserRole",
-        "type_info": {
-          "Custom": {
-            "name": "user_role",
-            "kind": {
-              "Enum": [
-                "ADMIN",
-                "USER"
-              ]
-            }
-          }
-        }
-      },
-      {
-        "ordinal": 5,
         "name": "created_at: DateTime<Utc>",
         "type_info": "Timestamp"
       },
       {
-        "ordinal": 6,
+        "ordinal": 3,
         "name": "updated_at: DateTime<Utc>",
         "type_info": "Timestamp"
       },
       {
-        "ordinal": 7,
+        "ordinal": 4,
         "name": "deleted_at: DateTime<Utc>",
         "type_info": "Timestamp"
       }
     ],
     "parameters": {
       "Left": [
-        "Text"
+        "Int4"
       ]
     },
     "nullable": [
@@ -63,11 +38,8 @@
       false,
       false,
       false,
-      false,
-      false,
-      false,
       true
     ]
   },
-  "hash": "c2801aabb735b0e3851eda6c2c84564f0b89ee5b51c28ac2597d8577e07afcc1"
+  "hash": "2b1f55593d527148a5699ec2092fa55642574bf6ba8b43836d4d3db77893317b"
 }

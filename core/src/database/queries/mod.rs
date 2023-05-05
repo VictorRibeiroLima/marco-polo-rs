@@ -1,3 +1,4 @@
+pub mod channel;
 pub mod storage;
 pub mod transcription;
 pub mod translation;

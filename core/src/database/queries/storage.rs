@@ -11,10 +11,7 @@ pub struct CreateStorageDto<'a> {
     pub stage: VideoStage,
 }
 
-pub async fn create(
-    pool: &PgPool,
-    dto: CreateStorageDto<'_>,
-) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn create(pool: &PgPool, dto: CreateStorageDto<'_>) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
         INSERT INTO videos_storages (video_id, storage_id, video_path, format, stage)
