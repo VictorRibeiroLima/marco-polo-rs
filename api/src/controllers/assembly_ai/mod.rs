@@ -4,7 +4,7 @@ use actix_web::{
 };
 use marco_polo_rs_core::internals::cloud::{aws::s3::S3Client, traits::BucketClient};
 
-use crate::{middleware::authorization, models::error::AppError, GlobalState};
+use crate::{middleware::api_token::authorization, models::error::AppError, GlobalState};
 
 use self::{models::WebhookRequestBody, state::AssemblyAiState};
 

@@ -8,8 +8,11 @@ use marco_polo_rs_core::database::queries::{self, user::CreateUserDto};
 
 use validator::Validate;
 
-use crate::models::{error::AppError, result::AppResult};
 use crate::{controllers::user::dtos::create::CreateUser, GlobalState};
+use crate::{
+    middleware::jwt_token::TokenClaims,
+    models::{error::AppError, result::AppResult},
+};
 
 use self::dtos::login::Login;
 
@@ -67,7 +70,7 @@ async fn login(
         return Err(AppError::not_found("Invalid email or password".into()));
     }
 
-    let token_claims = dtos::login::TokenClaims {
+    let token_claims = TokenClaims {
         id: user.id,
         email: user.email,
         role: user.role,

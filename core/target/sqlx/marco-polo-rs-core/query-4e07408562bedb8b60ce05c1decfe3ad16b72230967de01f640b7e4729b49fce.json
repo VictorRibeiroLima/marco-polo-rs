@@ -1,26 +1,15 @@
 {
-  "query": "\n        INSERT INTO users (name, email, password, role)\n        VALUES ($1, $2, $3, $4)\n        ",
+  "query": "\n            UPDATE videos_transcriptions SET storage_id = $1, path = $2, updated_at = NOW()\n            WHERE video_id = $3;\n        ",
   "describe": {
     "columns": [],
     "parameters": {
       "Left": [
+        "Int4",
         "Varchar",
-        "Varchar",
-        "Varchar",
-        {
-          "Custom": {
-            "name": "user_role",
-            "kind": {
-              "Enum": [
-                "ADMIN",
-                "USER"
-              ]
-            }
-          }
-        }
+        "Uuid"
       ]
     },
     "nullable": []
   },
-  "hash": "d681de2953a380d7203410c043792f550fefeb70fbf53f901ae4d66be20062a1"
+  "hash": "a3907c388014733f4487f723bf20307a3619a281bb75a2aa1435b8c73893bb22"
 }

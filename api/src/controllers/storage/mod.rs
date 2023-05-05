@@ -5,16 +5,11 @@ use actix_web::{
 use marco_polo_rs_core::internals::cloud::{aws::s3::S3Client, traits::BucketClient};
 use state::StorageState;
 
-use crate::{
-    middleware::authorization,
-    models::{error::AppError, result::AppResult},
-};
+use crate::models::{error::AppError, result::AppResult};
 
 mod state;
 #[cfg(test)]
 mod test;
-
-authorization!(ApiKeyMiddleware, "API_KEY");
 
 async fn signed_upload_url<C>(state: Data<StorageState<C>>) -> Result<impl Responder, AppError>
 where
@@ -31,13 +26,10 @@ pub fn init_routes(config: &mut web::ServiceConfig) {
 
     let app_data = web::Data::new(storage_state);
 
-    let scope = web::scope("/storage")
-        .wrap(ApiKeyMiddleware)
-        .app_data(app_data)
-        .route(
-            "/signed-upload-url",
-            web::get().to(signed_upload_url::<S3Client>),
-        );
+    let scope = web::scope("/storage").app_data(app_data).route(
+        "/signed-upload-url",
+        web::get().to(signed_upload_url::<S3Client>),
+    );
 
     config.service(scope);
 }
