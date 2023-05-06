@@ -4,7 +4,7 @@ use uuid::Uuid;
 use crate::database::models::video_storage::{VideoFormat, VideoStage};
 
 pub struct CreateStorageDto<'a> {
-    pub video_id: Uuid,
+    pub video_id: &'a Uuid,
     pub video_uri: &'a str,
     pub storage_id: i32,
     pub format: VideoFormat,

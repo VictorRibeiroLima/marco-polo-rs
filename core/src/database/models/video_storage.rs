@@ -22,6 +22,18 @@ impl VideoFormat {
     }
 }
 
+impl From<String> for VideoFormat {
+    fn from(value: String) -> Self {
+        match value.as_str() {
+            "mp4" => VideoFormat::Mp4,
+            "webm" => VideoFormat::Webm,
+            "ogg" => VideoFormat::Ogg,
+            "mkv" => VideoFormat::Mkv,
+            _ => VideoFormat::Mp4,
+        }
+    }
+}
+
 impl Into<String> for VideoFormat {
     fn into(self) -> String {
         match self {

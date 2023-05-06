@@ -12,14 +12,14 @@ pub struct YtDl;
 impl YoutubeDownloader for YtDl {
     async fn download(
         &self,
-        config: YoutubeVideoConfig,
+        config: YoutubeVideoConfig<'_>,
     ) -> Result<(Vec<u8>, Uuid), Box<dyn std::error::Error>> {
         let format: String = match config.format {
-            Some(format) => format.into(),
+            Some(format) => format.to_string(),
             None => VideoFormat::Mkv.into(),
         };
         let start_time = match config.start_time {
-            Some(start_time) => start_time,
+            Some(start_time) => start_time.to_string(),
             None => "00:00:00".to_string(),
         };
 

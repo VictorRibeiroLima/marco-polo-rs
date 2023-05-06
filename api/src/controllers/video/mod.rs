@@ -3,7 +3,7 @@ use actix_web::{
     HttpResponse, Responder,
 };
 use marco_polo_rs_core::{
-    database::queries::{self, video::CreateVideoDto},
+    database::queries,
     internals::{
         cloud::{aws::s3::S3Client, traits::BucketClient},
         yt_downloader::{
@@ -18,6 +18,7 @@ use crate::{middleware::jwt_token::TokenClaims, models::error::AppError, GlobalS
 use self::dtos::create::CreateVideo;
 
 mod dtos;
+mod service;
 mod state;
 
 async fn create_video<YD, BC>(
@@ -31,43 +32,19 @@ where
     BC: BucketClient,
 {
     let pool = &global_state.pool;
+    let body = body.into_inner();
     queries::channel::find_by_id(pool, body.channel_id).await?;
 
     let config = YoutubeVideoConfig {
-        url: body.video_url.clone(),
-        format: body.format.clone(),
-        end_time: body.end_time.clone(),
-        start_time: body.start_time.clone(),
+        url: &body.video_url,
+        format: &body.format,
+        end_time: &body.end_time,
+        start_time: &body.start_time,
     };
 
     let (file, video_id) = state.youtube_downloader.download(config).await?;
 
-    let format: String = match &body.format {
-        Some(format) => format.to_string(),
-        None => "mkv".into(),
-    };
-
-    let language = match &body.language {
-        Some(language) => language.to_string(),
-        None => "en".into(),
-    };
-
-    let file_uri = format!("videos/raw/{}.{}", video_id, format);
-
-    state.bucket_client.upload_file(&file_uri, file).await?;
-
-    queries::video::create(
-        pool,
-        CreateVideoDto {
-            id: &video_id,
-            user_id: jwt.id,
-            title: &body.title,
-            description: &body.description,
-            channel_id: body.channel_id,
-            language: &language,
-        },
-    )
-    .await?;
+    service::create_video(pool, body, &state.bucket_client, jwt.id, video_id, file).await?;
 
     return Ok(HttpResponse::Created().finish());
 }
