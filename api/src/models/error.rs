@@ -1,6 +1,10 @@
 use core::fmt;
 
-use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
+use actix_web::{
+    error::{JsonPayloadError, ResponseError},
+    http::StatusCode,
+    HttpResponse,
+};
 
 use serde::Serialize;
 
@@ -142,5 +146,11 @@ impl From<bcrypt::BcryptError> for AppError {
 impl From<jsonwebtoken::errors::Error> for AppError {
     fn from(value: jsonwebtoken::errors::Error) -> Self {
         return Self::new(AppErrorType::InternalServerError, value.to_string());
+    }
+}
+
+impl From<JsonPayloadError> for AppError {
+    fn from(value: JsonPayloadError) -> Self {
+        return Self::new(AppErrorType::BadRequest, value.to_string());
     }
 }

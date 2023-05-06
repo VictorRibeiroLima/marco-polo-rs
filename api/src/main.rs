@@ -2,11 +2,11 @@ use std::sync::Arc;
 
 use actix_web::{
     get,
-    web::{self, Json},
+    web::{self, Json, JsonConfig},
     App, HttpServer, Responder,
 };
 use marco_polo_rs_core::{database::create_pool, env};
-use models::result::AppResult;
+use models::{error::AppError, result::AppResult};
 
 mod controllers;
 mod middleware;
@@ -30,6 +30,10 @@ async fn main() -> std::io::Result<()> {
     let pool = Arc::new(pool);
     HttpServer::new(move || {
         App::new()
+            .app_data(JsonConfig::default().error_handler(|err, _req| {
+                let error = AppError::from(err);
+                return error.into();
+            }))
             .app_data(web::Data::new(GlobalState { pool: pool.clone() }))
             .service(hello)
             .configure(controllers::init_routes)
