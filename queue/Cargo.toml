@@ -3,6 +3,10 @@ name = "marco-polo-rs-queue"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "marco-polo-rs-"
+path = "src/main.rs"
+
 [dependencies]
 marco-polo-rs-core = { path = "../core" }
 tokio = { version = "1.16.1", features = ["full"] }
