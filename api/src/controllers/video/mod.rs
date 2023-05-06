@@ -1,5 +1,5 @@
 use actix_web::{
-    web::{self, post},
+    web::{self, post, Json},
     HttpResponse, Responder,
 };
 use marco_polo_rs_core::{
@@ -12,6 +12,7 @@ use marco_polo_rs_core::{
         },
     },
 };
+use validator::Validate;
 
 use crate::{middleware::jwt_token::TokenClaims, models::error::AppError, GlobalState};
 
@@ -25,12 +26,13 @@ async fn create_video<YD, BC>(
     global_state: web::Data<GlobalState>,
     state: web::Data<state::State<YD, BC>>,
     jwt: TokenClaims,
-    body: web::Json<CreateVideo>,
+    body: Json<CreateVideo>,
 ) -> Result<impl Responder, AppError>
 where
     YD: YoutubeDownloader,
     BC: BucketClient,
 {
+    body.validate()?;
     let pool = &global_state.pool;
     let body = body.into_inner();
     queries::channel::find_by_id(pool, body.channel_id).await?;
