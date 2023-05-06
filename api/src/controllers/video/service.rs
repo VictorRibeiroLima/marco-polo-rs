@@ -19,7 +19,7 @@ pub async fn create_video<BC: BucketClient>(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let (format, format_extension) = match body.format {
         Some(format) => {
-            let format_extension = (&format).to_string();
+            let format_extension = format.to_string();
             (format, format_extension)
         }
         None => (VideoFormat::Mkv, "mkv".into()),

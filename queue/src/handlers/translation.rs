@@ -62,7 +62,7 @@ where
             CreateStorageDto {
                 format: VideoFormat::Mkv,
                 storage_id: CS::id(),
-                video_id: payload.video_id,
+                video_id: &payload.video_id,
                 video_uri: &video_uri,
                 stage: VideoStage::Processed,
             },
