@@ -114,6 +114,6 @@ this can cause problems if the database is not running or the URL is not correct
 
 To mitigate this you can run the `prepare` command:
 ```bash	
-$ cargo sqlx prepare
+$ cargo sqlx prepare --merged
 ```
 This will create a file called `sqlx-data.json` with the database schema, and sqlx will use this file to run the queries instead of the DATABASE_URL env var.

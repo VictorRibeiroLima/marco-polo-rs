@@ -1,0 +1,9 @@
+target
+.github
+.vscode
+README.md
+Dockerfile
+*.mp4
+*.mkv
+curl.txt
+build.rs

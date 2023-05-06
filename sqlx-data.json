@@ -15,7 +15,8 @@
                 "Enum": [
                   "MP4",
                   "AVI",
-                  "MOV"
+                  "MOV",
+                  "MKV"
                 ]
               },
               "name": "video_format"
@@ -36,6 +37,130 @@
       }
     },
     "query": "\n        INSERT INTO videos_storages (video_id, storage_id, video_path, format, stage)\n        VALUES ($1, $2, $3, $4, $5);\n        "
+  },
+  "2b1f55593d527148a5699ec2092fa55642574bf6ba8b43836d4d3db77893317b": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "created_at: DateTime<Utc>",
+          "ordinal": 2,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "updated_at: DateTime<Utc>",
+          "ordinal": 3,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "deleted_at: DateTime<Utc>",
+          "ordinal": 4,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n        SELECT \n            id,\n            name,\n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        FROM channels WHERE id = $1\n        "
+  },
+  "6f0e11a893c806cfe38096b7c95ac3c27333399cc32eb6863e66d35a546176ba": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id: Uuid",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "title",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "description",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "url",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "language",
+          "ordinal": 4,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "user_id",
+          "ordinal": 5,
+          "type_info": "Int4"
+        },
+        {
+          "name": "channel_id",
+          "ordinal": 6,
+          "type_info": "Int4"
+        },
+        {
+          "name": "created_at: DateTime<Utc>",
+          "ordinal": 7,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "updated_at: DateTime<Utc>",
+          "ordinal": 8,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "deleted_at: DateTime<Utc>",
+          "ordinal": 9,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "uploaded_at: DateTime<Utc>",
+          "ordinal": 10,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        SELECT \n            v.id as \"id: Uuid\", \n            v.title,\n            v.description,\n            v.url,\n            v.language,\n            v.user_id,\n            v.channel_id,\n            v.created_at as \"created_at: DateTime<Utc>\",\n            v.updated_at as \"updated_at: DateTime<Utc>\",\n            v.deleted_at as \"deleted_at: DateTime<Utc>\",\n            v.uploaded_at as \"uploaded_at: DateTime<Utc>\"\n        FROM \n            videos v\n        INNER JOIN \n            videos_transcriptions vt ON v.id = vt.video_id\n        WHERE \n            vt.transcription_id = $1\n    "
   },
   "a2942ce2cc35f204ded8852e2319cb460e1715d7e4dc17d70867abfaadabe83f": {
     "describe": {
@@ -113,45 +238,60 @@
     },
     "query": "\n            UPDATE videos_transcriptions SET storage_id = $1, path = $2, updated_at = NOW()\n            WHERE video_id = $3;\n        "
   },
-  "bbe92fc5b99877b8a4452f1cb40b95dafb599c0612b8083ba797eba90baa44fa": {
+  "babea2c4398c8010f490603c2cf328ae398a13093d79253e5007b58fbea4628a": {
     "describe": {
       "columns": [],
       "nullable": [],
       "parameters": {
         "Left": [
-          "Uuid"
+          "Uuid",
+          "Varchar",
+          "Text",
+          "Int4",
+          "Int4",
+          "Varchar"
         ]
       }
     },
-    "query": "\n        INSERT INTO videos (id)\n        VALUES ($1);\n        "
+    "query": "\n        INSERT INTO videos (id, title, description, user_id, channel_id, language)\n        VALUES ($1, $2, $3, $4, $5, $6);\n        "
   },
-  "e50541be0f4d4cc075c56496a53346057758fc14d368d6ee9f03c4b0d6d9e902": {
+  "c2801aabb735b0e3851eda6c2c84564f0b89ee5b51c28ac2597d8577e07afcc1": {
     "describe": {
       "columns": [
         {
-          "name": "id: Uuid",
+          "name": "id",
           "ordinal": 0,
-          "type_info": "Uuid"
+          "type_info": "Int4"
         },
         {
-          "name": "title",
+          "name": "name",
           "ordinal": 1,
           "type_info": "Varchar"
         },
         {
-          "name": "description",
+          "name": "email",
           "ordinal": 2,
-          "type_info": "Text"
+          "type_info": "Varchar"
         },
         {
-          "name": "url",
+          "name": "password",
           "ordinal": 3,
           "type_info": "Varchar"
         },
         {
-          "name": "language",
+          "name": "role: UserRole",
           "ordinal": 4,
-          "type_info": "Varchar"
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "ADMIN",
+                  "USER"
+                ]
+              },
+              "name": "user_role"
+            }
+          }
         },
         {
           "name": "created_at: DateTime<Utc>",
@@ -167,22 +307,16 @@
           "name": "deleted_at: DateTime<Utc>",
           "ordinal": 7,
           "type_info": "Timestamp"
-        },
-        {
-          "name": "uploaded_at: DateTime<Utc>",
-          "ordinal": 8,
-          "type_info": "Timestamp"
         }
       ],
       "nullable": [
         false,
-        true,
-        true,
-        true,
         false,
         false,
         false,
-        true,
+        false,
+        false,
+        false,
         true
       ],
       "parameters": {
@@ -191,7 +325,32 @@
         ]
       }
     },
-    "query": "\n        SELECT \n            v.id as \"id: Uuid\", \n            v.title,\n            v.description,\n            v.url,\n            v.language,\n            v.created_at as \"created_at: DateTime<Utc>\",\n            v.updated_at as \"updated_at: DateTime<Utc>\",\n            v.deleted_at as \"deleted_at: DateTime<Utc>\",\n            v.uploaded_at as \"uploaded_at: DateTime<Utc>\"\n        FROM \n            videos v\n        INNER JOIN \n            videos_transcriptions vt ON v.id = vt.video_id\n        WHERE \n            vt.transcription_id = $1\n    "
+    "query": "\n        SELECT  \n            id,\n            name,\n            email,\n            password,\n            role as \"role: UserRole\",\n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        \n        FROM users WHERE email = $1\n        "
+  },
+  "d681de2953a380d7203410c043792f550fefeb70fbf53f901ae4d66be20062a1": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "ADMIN",
+                  "USER"
+                ]
+              },
+              "name": "user_role"
+            }
+          }
+        ]
+      }
+    },
+    "query": "\n        INSERT INTO users (name, email, password, role)\n        VALUES ($1, $2, $3, $4)\n        "
   },
   "e6c82bd3af457ed042c08baf5a8aeb9bc95cde104ca4b2137191a13d7ab2d2b9": {
     "describe": {
