@@ -54,9 +54,6 @@ RUN cargo build --release --package marco-polo-rs-api --bin marco-polo-rs-api
 # Copy the binary to a new container
 FROM alpine:latest as runtime
 
-# Copy .env file
-COPY .env .env
-
 # Install musl to run the binary
 RUN apk add --no-cache musl
 
@@ -69,6 +66,9 @@ RUN pip3 install yt-dlp
 
 # Copy the binary from the builder container
 COPY --from=builder /target/release/marco-polo-rs-api /usr/local/bin/marco-polo-rs-api
+
+# Copy .env file
+COPY .env .env
 
 EXPOSE 8080
 

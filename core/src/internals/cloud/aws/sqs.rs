@@ -18,6 +18,7 @@ pub struct SQSClient {
 
 impl SQSClient {
     pub fn new(queue_url: String) -> Self {
+        println!("Creating SQS client...");
         let region = rusoto_core::Region::SaEast1;
         let client = SqsClient::new(region);
         SQSClient { client, queue_url }

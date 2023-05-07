@@ -37,7 +37,7 @@ where
 {
     pub async fn handle_queue(&self) {
         let queue_client = self.cloud_service.queue_client();
-
+        println!("Listening to queue...");
         loop {
             let message_result = queue_client.receive_message().await.unwrap();
             let messages = match message_result {

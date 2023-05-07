@@ -15,6 +15,7 @@ pub struct DeeplClient {
 
 impl DeeplClient {
     pub fn new() -> Self {
+        println!("Creating Deepl client...");
         let api_key = std::env::var("DEEPL_API_KEY").expect("DEEPL_API_KEY not set");
 
         let api_key = format!("DeepL-Auth-Key {}", api_key);

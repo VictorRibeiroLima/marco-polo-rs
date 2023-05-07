@@ -6,6 +6,7 @@ mod user;
 mod video;
 
 pub fn init_routes(config: &mut web::ServiceConfig) {
+    println!("Initializing routes...");
     config.configure(storage::init_routes);
     config.configure(assembly_ai::init_routes);
     config.configure(user::init_routes);

@@ -19,6 +19,7 @@ pub struct AssemblyAiClient {
 
 impl AssemblyAiClient {
     pub fn new() -> Self {
+        println!("Creating AssemblyAI client...");
         let api_key = std::env::var("ASSEMBLY_AI_API_KEY").unwrap();
         let api_url = std::env::var("ASSEMBLY_AI_BASE_URL").unwrap();
 

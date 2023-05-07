@@ -14,6 +14,7 @@ pub struct LocalClient;
 
 impl LocalClient {
     pub fn new() -> Self {
+        println!("Creating LocalClient...");
         Self {}
     }
 }

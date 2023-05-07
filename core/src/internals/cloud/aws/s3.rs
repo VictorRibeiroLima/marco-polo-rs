@@ -13,18 +13,22 @@ pub struct S3Client {
     region: rusoto_core::Region,
     credential: rusoto_credential::AwsCredentials,
     bucket_name: String,
+    client: rusoto_s3::S3Client,
 }
 
 impl S3Client {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
+        println!("Creating S3 client...");
         let region = rusoto_core::Region::SaEast1;
         let bucket_name = std::env::var("AWS_BUCKET_NAME")?;
 
         let credential = block_on(EnvironmentProvider::default().credentials())?;
+        let client = rusoto_s3::S3Client::new(region.clone());
         return Ok(Self {
             region,
             credential,
             bucket_name,
+            client,
         });
     }
 }
@@ -49,8 +53,8 @@ impl BucketClient for S3Client {
             ..Default::default()
         };
 
-        let client = rusoto_s3::S3Client::new(self.region.clone());
-        client.put_object(request).await?;
+        println!("Uploading file to S3...");
+        self.client.put_object(request).await?;
 
         Ok(())
     }
@@ -113,8 +117,7 @@ impl BucketClient for S3Client {
             ..Default::default()
         };
 
-        let client = rusoto_s3::S3Client::new(self.region.clone());
-        let response = client.get_object(request).await?;
+        let response = self.client.get_object(request).await?;
         let body = match response.body {
             Some(body) => body,
             None => return Err("No body found".into()),

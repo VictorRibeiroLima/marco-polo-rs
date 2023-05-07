@@ -14,6 +14,7 @@ mod worker;
 
 #[tokio::main]
 async fn main() {
+    println!("Starting worker...");
     dotenv::dotenv().ok();
     env::check_envs();
     let pool = create_pool().await;

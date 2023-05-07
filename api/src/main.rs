@@ -24,6 +24,7 @@ async fn hello() -> impl Responder {
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
+    println!("Starting server...");
     dotenv::dotenv().ok();
     env::check_envs();
     let pool = create_pool().await;
