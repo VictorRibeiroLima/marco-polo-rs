@@ -1,23 +1,27 @@
-use std::{fs::File, io::Write, path::PathBuf, process::Command};
+use std::{path::PathBuf, process::Command};
 
 use crate::internals::cloud::traits::BucketClient;
 
-pub fn write_to_temp_files(
-    video: &[u8],
-    srt: &[u8],
+pub async fn write_to_temp_files<BC: BucketClient + Sync>(
+    bucket_client: &BC,
     temp_dir: &PathBuf,
     id: &str,
 ) -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
     let video_path = temp_dir.join(format!("input_{}.{}", id, "mkv"));
     let srt_path = temp_dir.join(format!("{}.{}", id, "srt"));
     let output_path = temp_dir.join(format!("output_{}.{}", id, "mkv"));
+
+    let video_uri = format!("videos/raw/{}.{}", id, "mkv"); // for now, we only support mkv,refactor later
+    let srt_uri = format!("srt_translations/{}.srt", id);
+
     let mut temp_file_paths = Vec::new();
 
-    let mut video_file = File::create(&video_path)?;
-    video_file.write_all(&video)?;
-
-    let mut srt_file = File::create(&srt_path)?;
-    srt_file.write_all(&srt)?;
+    bucket_client
+        .download_file_to_path(&video_uri, video_path.to_str().unwrap())
+        .await?;
+    bucket_client
+        .download_file_to_path(&srt_uri, srt_path.to_str().unwrap())
+        .await?;
 
     temp_file_paths.push(video_path);
     temp_file_paths.push(srt_path);
@@ -40,9 +44,7 @@ pub fn call_ffmpeg(
         .output()?;
 
     match output.status.code() {
-        Some(0) => {
-            println!("ffmpeg success:{:?}", output);
-        }
+        Some(0) => {}
         Some(_) => {
             println!("1:{:?}", output);
             return Err("ffmpeg failed".into());

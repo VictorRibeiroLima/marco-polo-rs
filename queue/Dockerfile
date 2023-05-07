@@ -72,6 +72,8 @@ RUN apk add --no-cache musl
 # Install ffmpeg
 RUN apk add --no-cache ffmpeg
 
+# Install arial font
+RUN apk add --no-cache ttf-dejavu
 
 # Copy .env file
 COPY .env .env

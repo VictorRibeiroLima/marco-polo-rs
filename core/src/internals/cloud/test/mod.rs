@@ -59,6 +59,14 @@ impl crate::internals::cloud::traits::BucketClient for TestClient {
     async fn download_file(&self, _file_path: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
         Ok(vec![])
     }
+
+    async fn download_file_to_path(
+        &self,
+        _file_path: &str,
+        _destination_path: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        Ok(())
+    }
 }
 
 #[derive(Debug)]

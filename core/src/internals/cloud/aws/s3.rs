@@ -128,4 +128,28 @@ impl BucketClient for S3Client {
 
         Ok(buffer)
     }
+
+    async fn download_file_to_path(
+        &self,
+        file_path: &str,
+        destination_path: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let request = GetObjectRequest {
+            bucket: self.bucket_name.clone(),
+            key: file_path.to_string(),
+            ..Default::default()
+        };
+
+        let response = self.client.get_object(request).await?;
+        let body = match response.body {
+            Some(body) => body,
+            None => return Err("No body found".into()),
+        };
+
+        let mut reader = body.into_async_read();
+        let mut file = tokio::fs::File::create(destination_path).await?;
+        tokio::io::copy(&mut reader, &mut file).await?;
+
+        Ok(())
+    }
 }
