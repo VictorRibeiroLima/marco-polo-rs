@@ -1,11 +1,14 @@
 # Build: docker build -t api .
 FROM rust:alpine as builder
 
+# Set the target feature to -crt-static to build for alpine
+ENV RUSTFLAGS="-C target-feature=-crt-static"
+
 # Install musl-dev to build for alpine
 RUN apk add --no-cache musl-dev
 
 # Install openssl-dev to build for alpine
-RUN apk add --no-cache openssl-dev
+RUN apk add openssl-dev
 
 # Install pkgconfig to build for alpine
 RUN apk add --no-cache pkgconfig
@@ -54,10 +57,16 @@ RUN cargo build --release --package marco-polo-rs-queue --bin marco-polo-rs-queu
 # Copy the binary to a new container
 FROM alpine:latest as runtime
 
-# Install openssl-dev to build for alpine
-RUN apk add --no-cache openssl-dev
+# Install openssl-dev
+RUN apk add openssl-dev
 
-# Install pkgconfig to build for alpine
+# Install pkgconfig
+RUN apk add --no-cache pkgconfig
+
+# Install curl
+RUN apk add --no-cache curl
+
+# Install pkgconfig
 RUN apk add --no-cache pkgconfig
 
 # Install musl to run the binary

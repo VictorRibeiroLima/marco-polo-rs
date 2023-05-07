@@ -80,6 +80,7 @@ pub async fn upload_output_file<BC: BucketClient + Sync>(
     let curl_command = format!("curl -T {} '{}'", file.to_str().unwrap(), url);
     let output = Command::new("sh").arg("-c").arg(curl_command).output()?;
     if !output.status.success() {
+        println!("upload output {:?}", output);
         return Err("Failed to upload file".into());
     }
 

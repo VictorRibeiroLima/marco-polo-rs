@@ -1,6 +1,9 @@
 # Build: docker build -t api .
 FROM rust:alpine as builder
 
+# Set the target feature to -crt-static to build for alpine
+ENV RUSTFLAGS="-C target-feature=-crt-static"
+
 # Install musl-dev to build for alpine
 RUN apk add --no-cache musl-dev
 

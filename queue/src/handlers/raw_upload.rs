@@ -23,14 +23,11 @@ where
     TLC: TranslatorClient,
     SC: SubtitlerClient<CS::BC>,
 {
-    println!("Handling raw upload for video {}", payload.video_id);
     let bucket_client = worker.cloud_service.bucket_client();
 
     let signed_url = bucket_client
         .create_signed_download_url(&payload.video_uri, None)
         .await?;
-
-    println!("Signed URL: {}", signed_url);
 
     let transcribe_id = worker.transcriber_client.transcribe(&signed_url).await?;
 

@@ -39,15 +39,10 @@ where
         let queue_client = self.cloud_service.queue_client();
         println!("Listening to queue...");
         loop {
-            println!("Receiving message...");
             let message_result = queue_client.receive_message().await.unwrap();
             let messages = match message_result {
-                Some(messages) => {
-                    println!("Received {} messages", messages.len());
-                    messages
-                }
+                Some(messages) => messages,
                 _ => {
-                    println!("No messages received");
                     continue;
                 }
             };

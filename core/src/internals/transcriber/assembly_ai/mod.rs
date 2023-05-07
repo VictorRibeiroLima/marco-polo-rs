@@ -74,10 +74,7 @@ impl TranscriberClient for AssemblyAiClient {
     async fn transcribe(&self, media_url: &str) -> Result<String, Box<dyn std::error::Error>> {
         let url = format!("{}/transcript", self.api_url);
 
-        println!("Transcribing media at {}", media_url);
         let client = Client::new();
-
-        println!("Webhook URL: {}", self.webhook_url);
 
         let req_body = TranscribeRequestBody {
             audio_url: media_url.to_string(),
