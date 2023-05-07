@@ -40,7 +40,9 @@ pub fn call_ffmpeg(
         .output()?;
 
     match output.status.code() {
-        Some(0) => {}
+        Some(0) => {
+            println!("ffmpeg success:{:?}", output);
+        }
         Some(_) => {
             println!("1:{:?}", output);
             return Err("ffmpeg failed".into());

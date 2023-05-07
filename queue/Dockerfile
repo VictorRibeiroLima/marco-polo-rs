@@ -66,13 +66,10 @@ RUN apk add --no-cache pkgconfig
 # Install curl
 RUN apk add --no-cache curl
 
-# Install pkgconfig
-RUN apk add --no-cache pkgconfig
-
-# Install musl to run the binary
+# Install musl
 RUN apk add --no-cache musl
 
-# Install yt-dlp
+# Install ffmpeg
 RUN apk add --no-cache ffmpeg
 
 
