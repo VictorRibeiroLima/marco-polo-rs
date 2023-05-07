@@ -53,7 +53,6 @@ impl BucketClient for S3Client {
             ..Default::default()
         };
 
-        println!("Uploading file to S3...");
         self.client.put_object(request).await?;
 
         Ok(())
