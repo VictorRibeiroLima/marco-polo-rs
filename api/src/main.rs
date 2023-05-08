@@ -8,6 +8,7 @@ use actix_web::{
 use marco_polo_rs_core::{database::create_pool, env};
 use models::{error::AppError, result::AppResult};
 
+mod auth;
 mod controllers;
 mod middleware;
 mod models;
