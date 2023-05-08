@@ -12,7 +12,6 @@ pub struct CreateUserDto<'a> {
 
 pub async fn create(pool: &PgPool, dto: CreateUserDto<'_>) -> Result<(), sqlx::Error> {
     let password = bcrypt::hash(dto.password, bcrypt::DEFAULT_COST).unwrap();
-
     sqlx::query!(
         r#"
         INSERT INTO users (name, email, password, role)
@@ -51,4 +50,32 @@ pub async fn find_by_email(pool: &PgPool, email: &str) -> Result<Option<User>, s
     .await?;
 
     return Ok(user);
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use sqlx::{Pool, Postgres};
+
+    use crate::database::models::user::UserRole;
+
+    #[sqlx::test(migrations = "../migrations")]
+    async fn test(pool: Pool<Postgres>) {
+        let email = "test@hotmail.com";
+
+        let user_dto = CreateUserDto {
+            email: &email,
+            name: "Test",
+            password: "123456",
+            role: &Some(UserRole::User),
+        };
+
+        create(&pool, user_dto).await.unwrap();
+
+        let user = find_by_email(&pool, &email).await.unwrap().unwrap();
+
+        assert_eq!(user.email, email);
+        assert!(bcrypt::verify("123456", &user.password).unwrap());
+    }
 }
