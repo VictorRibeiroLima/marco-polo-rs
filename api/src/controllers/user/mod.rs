@@ -56,7 +56,13 @@ async fn login(
     let user = user.unwrap();
     let dirty_password = &body.password;
 
-    let token = crate::auth::gen_token(user, dirty_password).await?;
+    let is_valid_password = bcrypt::verify(dirty_password, &user.password)?;
+
+    if !is_valid_password {
+        return Err(AppError::not_found("Invalid email or password".into()));
+    }
+
+    let token = crate::auth::gen_token(user).await?;
 
     let response = dtos::login::LoginResponse { token };
     let response = AppResult::new(response);
