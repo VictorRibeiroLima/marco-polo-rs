@@ -61,7 +61,7 @@ mod test {
     use crate::database::models::user::UserRole;
 
     #[sqlx::test(migrations = "../migrations")]
-    async fn test(pool: Pool<Postgres>) {
+    async fn test_create(pool: Pool<Postgres>) {
         let email = "test@hotmail.com";
 
         let user_dto = CreateUserDto {
