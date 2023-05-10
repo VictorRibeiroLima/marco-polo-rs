@@ -6,6 +6,8 @@ use actix_web::{
 use marco_polo_rs_core::database::queries;
 
 mod dtos;
+#[cfg(test)]
+mod test;
 
 use crate::{middleware::jwt_token::TokenClaims, models::error::AppError, GlobalState};
 
