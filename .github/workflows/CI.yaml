@@ -20,15 +20,17 @@ jobs:
         with:
           postgresql version: '14'
           postgresql db: marco_polo_rs_test
-          postgresql password: test
+          postgresql password: test123
           postgresql user: postgres
+      - name: write env
+        run: echo "DATABASE_URL=postgresql://localhost/marco_polo_rs_test?user=postgres&password=test&port=5432&sslmode=disable" > .env
       - name: install sqlx-cli
         run: cargo install sqlx-cli --no-default-features --features native-tls,postgres
       - name: run migrations
         run: 
-           sqlx migrate run --database-url postgresql://localhost/marco_polo_rs_test?user=postgres&password=test&port=5432&sslmode=disable
+           sqlx migrate run
       - name: test
         run: 
-          echo "DATABASE_URL=postgresql://localhost/marco_polo_rs_test?user=postgres&password=test&port=5432&sslmode=disable" > .env && cargo test
+          cargo test
   
       
