@@ -22,20 +22,13 @@ jobs:
           postgresql db: marco_polo_rs_test
           postgresql password: test
           postgresql user: postgres
+      - name: install sqlx-cli
+        run: cargo install sqlx-cli --no-default-features --features postgres
+      - name: run migrations
+        run: 
+          export DATABASE_URL=postgresql://localhost/marco_polo_rs_test?user=postgres&password=test&port=5432&sslmode=disable && sqlx migrate run
       - name: test
         run: 
           export DATABASE_URL=postgresql://localhost/marco_polo_rs_test?user=postgres&password=test&port=5432&sslmode=disable && cargo test
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: checkout code
-        uses: actions/checkout@v3
-      - name: setup rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-      - name: build
-        run: cargo build --release --verbose
   
       
