@@ -7,11 +7,12 @@ pub struct CreateUserDto<'a> {
     pub name: &'a str,
     pub email: &'a str,
     pub password: &'a str,
-    pub role: &'a Option<UserRole>,
+    pub role: Option<&'a UserRole>,
 }
 
 pub async fn create(pool: &PgPool, dto: CreateUserDto<'_>) -> Result<(), sqlx::Error> {
     let password = bcrypt::hash(dto.password, bcrypt::DEFAULT_COST).unwrap();
+    let role = dto.role.unwrap_or(&UserRole::User);
     sqlx::query!(
         r#"
         INSERT INTO users (name, email, password, role)
@@ -20,7 +21,7 @@ pub async fn create(pool: &PgPool, dto: CreateUserDto<'_>) -> Result<(), sqlx::E
         dto.name,
         dto.email,
         password,
-        dto.role as &Option<UserRole>,
+        role as &UserRole,
     )
     .execute(pool)
     .await?;
@@ -61,14 +62,33 @@ mod test {
     use crate::database::models::user::UserRole;
 
     #[sqlx::test(migrations = "../migrations")]
-    async fn test_create(pool: Pool<Postgres>) {
+    async fn test_create_with_role(pool: Pool<Postgres>) {
         let email = "test@hotmail.com";
 
         let user_dto = CreateUserDto {
             email: &email,
             name: "Test",
             password: "123456",
-            role: &Some(UserRole::User),
+            role: Some(&UserRole::User),
+        };
+
+        create(&pool, user_dto).await.unwrap();
+
+        let user = find_by_email(&pool, &email).await.unwrap().unwrap();
+
+        assert_eq!(user.email, email);
+        assert!(bcrypt::verify("123456", &user.password).unwrap());
+    }
+
+    #[sqlx::test(migrations = "../migrations")]
+    async fn test_create_without_role(pool: Pool<Postgres>) {
+        let email = "test@hotmail.com";
+
+        let user_dto = CreateUserDto {
+            email,
+            name: "Test",
+            password: "123456",
+            role: None,
         };
 
         create(&pool, user_dto).await.unwrap();

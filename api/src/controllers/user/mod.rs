@@ -33,7 +33,7 @@ async fn create_user(
         name: &body.name,
         email: &body.email,
         password: &body.password,
-        role: &body.role,
+        role: body.role.as_ref(),
     };
 
     queries::user::create(pool, db_dto).await?;

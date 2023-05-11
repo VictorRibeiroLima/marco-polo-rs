@@ -13,10 +13,12 @@ use crate::{
     GlobalState,
 };
 
+const CHANNEL_NAME: &str = "ElonMusk Cortes";
+
 #[sqlx::test(migrations = "../migrations")]
 async fn test_create_channel_unauthorized(pool: PgPool) {
     let create_channel_dto = CreateChannel {
-        name: String::from("ElonMusk Cortes"),
+        name: String::from(CHANNEL_NAME),
     };
 
     let test_app = innit_test_app(Arc::new(pool)).await;
@@ -56,7 +58,7 @@ async fn test_create_channel_authorized(pool: PgPool) {
     let token = gen_token(user).await.unwrap();
 
     let create_channel_dto = CreateChannel {
-        name: String::from("ElonMusk Cortes"),
+        name: String::from(CHANNEL_NAME),
     };
 
     let test_app = innit_test_app(pool.clone()).await;
@@ -73,8 +75,9 @@ async fn test_create_channel_authorized(pool: PgPool) {
 
     let record = sqlx::query!(
         r#"
-        SELECT COUNT(*) FROM channels WHERE name = 'ElonMusk Cortes'
-    "#
+        SELECT COUNT(*) FROM channels WHERE name = $1
+        "#,
+        CHANNEL_NAME
     )
     .fetch_one(pool.as_ref())
     .await
