@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use super::*;
 use actix_web::{http::header::ContentType, test, web, App};
-use marco_polo_rs_core::internals::cloud::test::TestCloudService;
+use marco_polo_rs_core::internals::cloud::mock::TestCloudService;
 
 #[actix_web::test]
 async fn test_create_signed_upload_url() {
