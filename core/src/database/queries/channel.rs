@@ -22,3 +22,43 @@ pub async fn find_by_id(pool: &PgPool, id: i32) -> Result<Channel, sqlx::Error> 
 
     return Ok(channel);
 }
+
+pub async fn create(pool: &PgPool, name: String) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"
+    INSERT INTO channels (name) 
+    VALUES ($1)
+    "#,
+        name
+    )
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod test {
+
+    use sqlx::PgPool;
+
+    use crate::database::queries::channel::create;
+
+    #[sqlx::test(migrations = "../migrations")]
+    async fn test_create(pool: PgPool) {
+        let result = create(&pool, "ElonMuskCortes".to_string()).await;
+
+        assert!(result.is_ok());
+        let record = sqlx::query!(
+            r#"
+            SELECT COUNT(*) FROM channels WHERE name = 'ElonMuskCortes'
+        "#
+        )
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+
+        assert!(record.count.is_some());
+
+        assert_eq!(record.count.unwrap(), 1);
+    }
+}
