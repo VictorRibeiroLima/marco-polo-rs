@@ -2,33 +2,36 @@ use actix_web::{
     web::{self, Data, Json},
     Responder,
 };
-use marco_polo_rs_core::internals::cloud::{aws::s3::S3Client, traits::BucketClient};
-use state::StorageState;
+use marco_polo_rs_core::internals::cloud::{
+    aws::AwsCloudService,
+    traits::{BucketClient, CloudService},
+};
 
-use crate::models::{error::AppError, result::AppResult};
+use crate::{
+    models::{error::AppError, result::AppResult},
+    AppCloudService,
+};
 
-mod state;
 #[cfg(test)]
 mod test;
 
-async fn signed_upload_url<C>(state: Data<StorageState<C>>) -> Result<impl Responder, AppError>
+async fn signed_upload_url<CS>(
+    cloud_service: Data<AppCloudService<CS>>,
+) -> Result<impl Responder, AppError>
 where
-    C: BucketClient,
+    CS: CloudService,
 {
-    let result = state.storage_client.create_signed_upload_url(3600).await?;
+    let storage_client = cloud_service.client.bucket_client();
+
+    let result = storage_client.create_signed_upload_url(3600).await?;
 
     return Ok(Json(AppResult::new(result)));
 }
 
 pub fn init_routes(config: &mut web::ServiceConfig) {
-    let storage_client = S3Client::new().unwrap();
-    let storage_state = StorageState::new(storage_client);
-
-    let app_data = web::Data::new(storage_state);
-
-    let scope = web::scope("/storage").app_data(app_data).route(
+    let scope = web::scope("/storage").route(
         "/signed-upload-url",
-        web::get().to(signed_upload_url::<S3Client>),
+        web::get().to(signed_upload_url::<AwsCloudService>),
     );
 
     config.service(scope);
