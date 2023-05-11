@@ -41,7 +41,7 @@ mod test {
 
     use sqlx::PgPool;
 
-    use crate::database::queries::channel::create;
+    use crate::database::queries::channel::{create, find_by_id};
 
     #[sqlx::test(migrations = "../migrations")]
     async fn test_create(pool: PgPool) {
@@ -60,5 +60,21 @@ mod test {
         assert!(record.count.is_some());
 
         assert_eq!(record.count.unwrap(), 1);
+    }
+
+    #[sqlx::test(migrations = "../migrations", fixtures("channel"))]
+    async fn find_by_channel_id(pool: PgPool) {
+        let channel_id = 666;
+        let find_sucess = find_by_id(&pool, channel_id).await;
+
+        assert!(find_sucess.is_ok());
+        assert_eq!(find_sucess.unwrap().id, channel_id);
+    }
+
+    #[sqlx::test(migrations = "../migrations", fixtures("channel"))]
+    async fn find_by_invalid_channel_id(pool: PgPool) {
+        let invalid_channel_id = 999;
+        let find_error = find_by_id(&pool, invalid_channel_id).await;
+        assert!(find_error.is_err());
     }
 }
