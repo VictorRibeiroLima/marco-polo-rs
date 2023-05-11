@@ -4,7 +4,7 @@ use actix_web::{
 };
 use marco_polo_rs_core::internals::cloud::{aws::s3::S3Client, traits::BucketClient};
 
-use crate::{middleware::api_token::authorization, models::error::AppError, GlobalState};
+use crate::{middleware::api_token::authorization, models::error::AppError, AppPool};
 
 use self::{models::WebhookRequestBody, state::AssemblyAiState};
 
@@ -16,13 +16,13 @@ authorization!(ApiKeyMiddleware, "ASSEMBLY_AI_WEBHOOK_TOKEN");
 
 async fn webhook<C>(
     req_body: web::Json<WebhookRequestBody>,
-    global_state: web::Data<GlobalState>,
+    pool: web::Data<AppPool>,
     local_state: web::Data<state::AssemblyAiState<C>>,
 ) -> Result<impl Responder, AppError>
 where
     C: BucketClient,
 {
-    let pool = &global_state.pool;
+    let pool = &pool.pool;
 
     let req_body = req_body.into_inner();
 

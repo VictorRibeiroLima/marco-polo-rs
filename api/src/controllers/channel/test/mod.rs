@@ -10,7 +10,7 @@ use sqlx::PgPool;
 use crate::{
     auth::gen_token,
     controllers::channel::{create_channel, dtos::CreateChannel},
-    GlobalState,
+    AppPool,
 };
 
 const CHANNEL_NAME: &str = "ElonMusk Cortes";
@@ -91,8 +91,8 @@ async fn test_create_channel_authorized(pool: PgPool) {
 async fn innit_test_app(
     pool: Arc<PgPool>,
 ) -> impl actix_web::dev::Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
-    let global_state = GlobalState { pool };
-    let web_data = web::Data::new(global_state);
+    let pool = AppPool { pool };
+    let web_data = web::Data::new(pool);
     let app = App::new().app_data(web_data).service(create_channel);
 
     let test_app = test::init_service(app).await;

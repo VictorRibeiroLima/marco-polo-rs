@@ -13,7 +13,7 @@ mod controllers;
 mod middleware;
 mod models;
 
-struct GlobalState {
+struct AppPool {
     pool: Arc<sqlx::PgPool>,
 }
 
@@ -36,7 +36,7 @@ async fn main() -> std::io::Result<()> {
                 let error = AppError::from(err);
                 return error.into();
             }))
-            .app_data(web::Data::new(GlobalState { pool: pool.clone() }))
+            .app_data(web::Data::new(AppPool { pool: pool.clone() }))
             .service(hello)
             .configure(controllers::init_routes)
     })

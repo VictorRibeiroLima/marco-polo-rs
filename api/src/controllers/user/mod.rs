@@ -9,7 +9,7 @@ use marco_polo_rs_core::database::queries::{self, user::CreateUserDto};
 use validator::Validate;
 
 use crate::models::{error::AppError, result::AppResult};
-use crate::{controllers::user::dtos::create::CreateUser, GlobalState};
+use crate::{controllers::user::dtos::create::CreateUser, AppPool};
 
 use self::dtos::login::Login;
 
@@ -17,12 +17,12 @@ mod dtos;
 
 #[post("/")]
 async fn create_user(
-    global_state: web::Data<GlobalState>,
+    pool: web::Data<AppPool>,
     body: Json<CreateUser>,
 ) -> Result<impl Responder, AppError> {
     body.validate()?;
 
-    let pool = &global_state.pool;
+    let pool = &pool.pool;
 
     let user_email = queries::user::find_by_email(pool, &body.email).await?;
     if user_email.is_some() {
@@ -43,7 +43,7 @@ async fn create_user(
 
 #[post("/login")]
 async fn login(
-    global_state: web::Data<GlobalState>,
+    global_state: web::Data<AppPool>,
     body: Json<Login>,
 ) -> Result<impl Responder, AppError> {
     let pool = &global_state.pool;

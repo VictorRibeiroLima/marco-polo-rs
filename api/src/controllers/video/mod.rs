@@ -14,7 +14,7 @@ use marco_polo_rs_core::{
 };
 use validator::Validate;
 
-use crate::{middleware::jwt_token::TokenClaims, models::error::AppError, GlobalState};
+use crate::{middleware::jwt_token::TokenClaims, models::error::AppError, AppPool};
 
 use self::dtos::create::CreateVideo;
 
@@ -23,7 +23,7 @@ mod service;
 mod state;
 
 async fn create_video<YD, BC>(
-    global_state: web::Data<GlobalState>,
+    pool: web::Data<AppPool>,
     state: web::Data<state::State<YD, BC>>,
     jwt: TokenClaims,
     body: Json<CreateVideo>,
@@ -33,7 +33,7 @@ where
     BC: BucketClient,
 {
     body.validate()?;
-    let pool = &global_state.pool;
+    let pool = &pool.pool;
     let body = body.into_inner();
     queries::channel::find_by_id(pool, body.channel_id).await?;
 

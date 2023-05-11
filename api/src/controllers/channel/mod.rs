@@ -9,17 +9,17 @@ mod dtos;
 #[cfg(test)]
 mod test;
 
-use crate::{middleware::jwt_token::TokenClaims, models::error::AppError, GlobalState};
+use crate::{middleware::jwt_token::TokenClaims, models::error::AppError, AppPool};
 
 use self::dtos::CreateChannel;
 
 #[post("/")]
 async fn create_channel(
-    global_state: web::Data<GlobalState>,
+    pool: web::Data<AppPool>,
     body: Json<CreateChannel>,
     _jwt: TokenClaims,
 ) -> Result<impl Responder, AppError> {
-    let pool = &global_state.pool;
+    let pool = &pool.pool;
     let body = body.into_inner();
     queries::channel::create(pool, body.name).await?;
 
