@@ -29,6 +29,6 @@ jobs:
            sqlx migrate run --database-url postgresql://localhost/marco_polo_rs_test?user=postgres&password=test&port=5432&sslmode=disable
       - name: test
         run: 
-          export DATABASE_URL=postgresql://localhost/marco_polo_rs_test?user=postgres&password=test&port=5432&sslmode=disable && cargo test
+          echo "DATABASE_URL=postgresql://localhost/marco_polo_rs_test?user=postgres&password=test&port=5432&sslmode=disable" > .env && cargo test
   
       
