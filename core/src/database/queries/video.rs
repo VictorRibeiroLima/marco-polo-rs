@@ -90,3 +90,32 @@ pub async fn update_transcription(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod test {
+    use sqlx::PgPool;
+
+    #[sqlx::test(migrations = "../migrations", fixtures("user", "channel"))]
+    async fn test_create_video(pool: PgPool) {
+        let id = uuid::Uuid::new_v4();
+
+        let dto = super::CreateVideoDto {
+            id: &id,
+            title: "Test",
+            description: "Test",
+            user_id: 666,
+            channel_id: 666,
+            language: "en",
+        };
+
+        super::create(&pool, dto).await.unwrap();
+
+        let count = sqlx::query!("SELECT COUNT(*) FROM videos where id = $1", id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+
+        assert!(count.count.is_some());
+        assert_eq!(count.count.unwrap(), 1);
+    }
+}
