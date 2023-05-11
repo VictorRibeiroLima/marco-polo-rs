@@ -118,4 +118,22 @@ mod test {
         assert!(count.count.is_some());
         assert_eq!(count.count.unwrap(), 1);
     }
+
+    #[sqlx::test(migrations = "../migrations")]
+    async fn test_create_if_foreign_key(pool: PgPool) {
+        let id = uuid::Uuid::new_v4();
+
+        let dto = super::CreateVideoDto {
+            id: &id,
+            title: "Test",
+            description: "Test",
+            user_id: 666,
+            channel_id: 666,
+            language: "en",
+        };
+
+        let result = super::create(&pool, dto).await;
+
+        assert!(result.is_err());
+    }
 }
