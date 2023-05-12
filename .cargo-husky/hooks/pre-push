@@ -5,7 +5,12 @@
 # Output at /path/to/target/debug/build/cargo-husky-xxxxxx/out
 #
 
-set -e
+# Run SQLx prepare
+sqlx prepare
 
-echo '+cargo test'
-cargo test
+
+# Stage the generated file
+git add ../../sqlx-data.json
+
+# Commit the changes
+git commit -m "Generated SQLx file"
