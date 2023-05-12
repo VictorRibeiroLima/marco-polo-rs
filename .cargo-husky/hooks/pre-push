@@ -15,7 +15,10 @@ git add sqlx-data.json
 if [ -n "$(git status --porcelain)" ]; then
   # Commit the changes
   git commit -m "chore: Generated SQLx file"
-fi
+  
+ # Get the current branch name
+  BRANCH_NAME=$(git symbolic-ref --short HEAD)
 
-# Push the changes
-git push
+  # Push the changes
+  git push origin "$BRANCH_NAME"
+fi
