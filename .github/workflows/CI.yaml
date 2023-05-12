@@ -32,11 +32,6 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
-      - name: install sqlx-cli
-        run: cargo install sqlx-cli --no-default-features --features native-tls,postgres
-      - name: run migrations
-        run: 
-           sqlx migrate run
       - name: test
         run: 
           cargo test
