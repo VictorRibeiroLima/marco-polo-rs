@@ -23,8 +23,6 @@ jobs:
           postgresql password: test123
           postgresql user: postgres
           postgresql port: 5432
-      - name: build
-        run: cargo build
       - name: Cache Rust dependencies
         uses: actions/cache@v2
         with:
