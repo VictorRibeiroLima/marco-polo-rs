@@ -381,5 +381,17 @@
       }
     },
     "query": "\n        INSERT INTO videos_translations (video_id, translator_id, translation_id, storage_id, path)\n        VALUES ($1, $2, $3, $4, $5);\n        "
+  },
+  "fb3f122f0259f38d68703d4d3fffa2a05d8c978a3921fa5ede402f1033eec96d": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Varchar"
+        ]
+      }
+    },
+    "query": "\n    INSERT INTO channels (name) \n    VALUES ($1)\n    "
   }
 }
