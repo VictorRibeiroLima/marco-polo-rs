@@ -25,6 +25,13 @@ jobs:
           postgresql port: 5432
       - name: write env
         run: mv .example.env .env
+      - name: Cache Rust dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cargo
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
       - name: install sqlx-cli
         run: cargo install sqlx-cli --no-default-features --features native-tls,postgres
       - name: run migrations
