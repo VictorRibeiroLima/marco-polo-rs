@@ -6,11 +6,10 @@
 #
 
 # Run SQLx prepare
-sqlx prepare
-
+cargo sqlx prepare --merged
 
 # Stage the generated file
-git add ../../sqlx-data.json
+git add sqlx-data.json
 
 # Commit the changes
-git commit -m "Generated SQLx file"
+git commit -m "chore: Generated SQLx file"
