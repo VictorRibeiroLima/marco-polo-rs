@@ -23,20 +23,18 @@ jobs:
           postgresql password: test123
           postgresql user: postgres
           postgresql port: 5432
-      - name: write env
-        run: mv .example.env .env
       - name: Cache Rust dependencies
         uses: actions/cache@v2
         with:
-          path: ~/.cargo
+          path: |
+            target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
-      - name: install sqlx-cli
-        run: cargo install sqlx-cli --no-default-features --features native-tls,postgres
-      - name: run migrations
-        run: 
-           sqlx migrate run
+      - name: build
+        run: cargo build
+      - name: write env
+        run: mv .example.env .env
       - name: test
         run: 
           cargo test
