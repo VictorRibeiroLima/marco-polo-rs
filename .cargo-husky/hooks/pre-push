@@ -6,7 +6,7 @@
 #
 
 # Run SQLx prepare
-cargo sqlx prepare --merged
+cargo sqlx prepare --merged -- --all-targets --all-features
 
 # Stage the generated file
 git add sqlx-data.json
