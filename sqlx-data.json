@@ -1,5 +1,75 @@
 {
   "db": "PostgreSQL",
+  "2708118f5f0013141b538eea92742fcceea72939ce4d2bf882a4c5cbf64c6af7": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "email",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "password",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "role: UserRole",
+          "ordinal": 4,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "ADMIN",
+                  "USER"
+                ]
+              },
+              "name": "user_role"
+            }
+          }
+        },
+        {
+          "name": "created_at: DateTime <Utc>",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "updated_at: DateTime <Utc>",
+          "ordinal": 6,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "deleted_at: DateTime <Utc>",
+          "ordinal": 7,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "SELECT id, \n        name, \n        email, \n        password, \n        role as \"role: UserRole\",\n        created_at as \"created_at: DateTime <Utc>\",\n        updated_at as \"updated_at: DateTime <Utc>\",\n        deleted_at as \"deleted_at: DateTime <Utc>\"\n        FROM users WHERE id = 666"
+  },
   "28c3cc46ca261ddac740d6ab35f44aa23388d21086872102df103dc19437c28b": {
     "describe": {
       "columns": [],
@@ -327,6 +397,44 @@
     },
     "query": "\n        SELECT  \n            id,\n            name,\n            email,\n            password,\n            role as \"role: UserRole\",\n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        \n        FROM users WHERE email = $1\n        "
   },
+  "c63d015969ef0ed31e8f314a6a7a5b1ccb4c578773e5d70ee40eba67218d697f": {
+    "describe": {
+      "columns": [
+        {
+          "name": "count",
+          "ordinal": 0,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "SELECT COUNT(*) FROM videos where id = $1"
+  },
+  "d345d1e77aad5bd0994bc4d3fd5216145abf5f53179d570032db1f4536b801bf": {
+    "describe": {
+      "columns": [
+        {
+          "name": "count",
+          "ordinal": 0,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "\n            SELECT COUNT(*) FROM channels WHERE name = 'ElonMuskCortes'\n        "
+  },
   "d681de2953a380d7203410c043792f550fefeb70fbf53f901ae4d66be20062a1": {
     "describe": {
       "columns": [],
@@ -381,5 +489,37 @@
       }
     },
     "query": "\n        INSERT INTO videos_translations (video_id, translator_id, translation_id, storage_id, path)\n        VALUES ($1, $2, $3, $4, $5);\n        "
+  },
+  "f5c2f97d5392830afb45c5de6a11b0369ecaaf322d6f958722e167e89e3a458c": {
+    "describe": {
+      "columns": [
+        {
+          "name": "count",
+          "ordinal": 0,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        SELECT COUNT(*) FROM channels WHERE name = $1\n        "
+  },
+  "fb3f122f0259f38d68703d4d3fffa2a05d8c978a3921fa5ede402f1033eec96d": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Varchar"
+        ]
+      }
+    },
+    "query": "\n    INSERT INTO channels (name) \n    VALUES ($1)\n    "
   }
 }
