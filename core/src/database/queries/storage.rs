@@ -1,7 +1,8 @@
+use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::database::models::video_storage::{VideoFormat, VideoStage};
+use crate::database::models::video_storage::{VideoFormat, VideoStage, VideosStorage};
 
 pub struct CreateStorageDto<'a> {
     pub video_id: &'a Uuid,
@@ -27,4 +28,34 @@ pub async fn create(pool: &PgPool, dto: CreateStorageDto<'_>) -> Result<(), sqlx
     .await?;
 
     Ok(())
+}
+
+pub async fn find_by_video_id_and_stage(
+    pool: &PgPool,
+    video_id: &Uuid,
+    video_stage: VideoStage,
+) -> Result<VideosStorage, sqlx::Error> {
+    let result = sqlx::query_as!(
+        VideosStorage,
+        r#"
+        SELECT 
+            id,
+            video_id as "video_id: Uuid",
+            storage_id,
+            video_path,
+            format as "format: VideoFormat",
+            stage as "stage: VideoStage",
+            created_at as "created_at: DateTime<Utc>",
+            updated_at as "updated_at: DateTime<Utc>",
+            deleted_at as "deleted_at: DateTime<Utc>"
+        FROM videos_storages
+            WHERE video_id = $1 AND stage = $2
+        "#,
+        video_id,
+        video_stage as VideoStage,
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok(result)
 }
