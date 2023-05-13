@@ -2,8 +2,10 @@ use marco_polo_rs_core::{
     database::create_pool,
     env,
     internals::{
-        cloud::aws::AwsCloudService, subtitler::local::LocalClient,
-        transcriber::assembly_ai::AssemblyAiClient, translator::deepl::DeeplClient,
+        cloud::aws::AwsCloudService,
+        subtitler::{local::LocalClient, videobox::VideoBoxClient},
+        transcriber::assembly_ai::AssemblyAiClient,
+        translator::deepl::DeeplClient,
     },
 };
 use worker::Worker;
@@ -22,7 +24,7 @@ async fn main() {
     let cloud_service = AwsCloudService::new(queue_url).unwrap();
     let transcriber_client = AssemblyAiClient::new();
     let translator_client: DeeplClient = DeeplClient::new();
-    let subtitler_client = LocalClient::new();
+    let subtitler_client = VideoBoxClient::new();
 
     let worker = Worker {
         pool,

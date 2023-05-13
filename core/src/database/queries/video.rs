@@ -2,7 +2,12 @@ use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::database::models::video::Video;
+use crate::database::models::{
+    video::{Video, VideoWithStorage},
+    video_storage::VideoStage,
+};
+
+use super::storage;
 
 pub struct CreateVideoDto<'a> {
     pub id: &'a Uuid,
@@ -89,6 +94,46 @@ pub async fn update_transcription(
     .await?;
 
     Ok(())
+}
+
+pub async fn find_by_id(pool: &PgPool, id: &Uuid) -> Result<Video, sqlx::Error> {
+    let video = sqlx::query_as!(
+        Video,
+        r#"
+        SELECT 
+            v.id as "id: Uuid", 
+            v.title,
+            v.description,
+            v.url,
+            v.language,
+            v.user_id,
+            v.channel_id,
+            v.created_at as "created_at: DateTime<Utc>",
+            v.updated_at as "updated_at: DateTime<Utc>",
+            v.deleted_at as "deleted_at: DateTime<Utc>",
+            v.uploaded_at as "uploaded_at: DateTime<Utc>"
+        FROM 
+            videos v
+        WHERE 
+            v.id = $1
+    "#,
+        id
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok(video)
+}
+
+pub async fn find_by_id_with_storage(
+    pool: &PgPool,
+    id: &Uuid,
+    video_stage: VideoStage,
+) -> Result<VideoWithStorage, sqlx::Error> {
+    let video = find_by_id(pool, id).await?;
+    let storage = storage::find_by_video_id_and_stage(pool, id, video_stage).await?;
+
+    Ok(VideoWithStorage { video, storage })
 }
 
 #[cfg(test)]

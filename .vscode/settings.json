@@ -15,6 +15,7 @@
     "sqlx",
     "sslmode",
     "subtitler",
+    "subtitlings",
     "tlsv"
   ],
   "rust-analyzer.showUnlinkedFileNotification": false
