@@ -2,7 +2,9 @@ use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::database::models::video_transcription::VideosTranscription;
+use crate::database::{
+    models::video_transcription::VideosTranscription, queries::video::CreateVideoDto,
+};
 
 pub struct CreateTranscriptionDto {
     pub video_id: Uuid,
@@ -51,4 +53,51 @@ pub async fn create(pool: &PgPool, dto: CreateTranscriptionDto) -> Result<(), sq
     .await?;
 
     Ok(())
+}
+#[cfg(test)]
+mod test {
+
+    use sqlx::PgPool;
+
+    use crate::database::queries::video::create;
+
+    #[sqlx::test(migrations = "../migrations", fixtures("user", "channel"))]
+    async fn test_create_transcription(pool: PgPool) {
+        let id = uuid::Uuid::new_v4();
+
+        let dto = super::CreateVideoDto {
+            id: &id,
+            title: "Test",
+            description: "Test",
+            user_id: 666,
+            channel_id: 666,
+            language: "en",
+        };
+
+        create(&pool, dto).await.unwrap();
+
+        let dto = super::CreateTranscriptionDto {
+            video_id: id,
+            transcription_id: "Teste".to_string(),
+            transcriber_id: 1,
+        };
+
+        match super::create(&pool, dto).await {
+            Ok(_) => {
+                let count = sqlx::query!(
+                    "SELECT COUNT(*) FROM videos_transcriptions where video_id = $1",
+                    id
+                )
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+
+                assert!(count.count.is_some());
+                assert_eq!(count.count.unwrap(), 1);
+            }
+            Err(err) => {
+                return Err(err).unwrap();
+            }
+        }
+    }
 }
