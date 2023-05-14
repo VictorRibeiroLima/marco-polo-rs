@@ -16,7 +16,7 @@ use crate::worker::Worker;
 pub async fn handle<CS, TC, TLC, SC>(
     worker: &Worker<CS, TC, TLC, SC>,
     payload: VideoPayload,
-) -> Result<(), Box<dyn std::error::Error>>
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
 where
     CS: CloudService,
     TC: TranscriberClient,

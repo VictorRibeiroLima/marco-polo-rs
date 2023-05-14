@@ -42,18 +42,28 @@ where
         Self { worker, message }
     }
 
-    pub async fn handle(&self, payload: SrtPayload) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn handle(
+        &self,
+        payload: SrtPayload,
+    ) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
         let subtitler_client = &self.worker.subtitler_client;
         let bucket_client = self.worker.cloud_service.bucket_client();
         let queue_client = self.worker.cloud_service.queue_client();
 
-        let estimation = subtitler_client.estimate_time(&payload, bucket_client);
+        let video = queries::video::find_by_id_with_storage(
+            &self.worker.pool,
+            &payload.video_id,
+            VideoStage::Raw,
+        )
+        .await?;
+
+        let estimation = subtitler_client.estimate_time(&video, bucket_client);
 
         queue_client
             .change_message_visibility(&self.message, estimation as usize)
             .await?;
 
-        subtitler_client.subtitle(&payload, bucket_client).await?;
+        subtitler_client.subtitle(&video, bucket_client).await?;
 
         let video_uri = format!("videos/processed/{}.{}", payload.video_id, "mkv");
 

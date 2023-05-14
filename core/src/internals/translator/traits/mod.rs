@@ -7,5 +7,5 @@ pub trait TranslatorClient: ServiceProvider {
     async fn translate_sentence(
         &self,
         sentence: String,
-    ) -> Result<String, Box<dyn std::error::Error>>;
+    ) -> Result<String, Box<dyn std::error::Error + Sync + Send>>;
 }

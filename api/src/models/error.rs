@@ -95,8 +95,8 @@ impl ResponseError for AppError {
     }
 }
 
-impl From<Box<dyn std::error::Error>> for AppError {
-    fn from(value: Box<dyn std::error::Error>) -> Self {
+impl From<Box<dyn std::error::Error + Sync + Send>> for AppError {
+    fn from(value: Box<dyn std::error::Error + Sync + Send>) -> Self {
         println!("Boxed Error: {}", value);
         return Self::new(AppErrorType::InternalServerError, value.to_string());
     }

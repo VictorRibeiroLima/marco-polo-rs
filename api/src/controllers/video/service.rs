@@ -16,7 +16,7 @@ pub async fn create_video<BC: BucketClient>(
     user_id: i32,
     video_id: Uuid,
     file: Vec<u8>,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
     let (format, format_extension) = match body.format {
         Some(format) => {
             let format_extension = format.to_string();

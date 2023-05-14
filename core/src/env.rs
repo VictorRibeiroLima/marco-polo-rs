@@ -22,4 +22,8 @@ pub fn check_envs() {
     //DEEPL
     std::env::var("DEEPL_BASE_URL").expect("DEEPL_BASE_URL not set");
     std::env::var("DEEPL_API_KEY").expect("DEEPL_API_KEY not set");
+
+    //VIDEO BOX
+    std::env::var("VIDEO_BOX_BASE_URL").expect("VIDEO_BOX_BASE_URL not set");
+    std::env::var("VIDEO_BOX_API_KEY").expect("VIDEO_BOX_API_KEY not set");
 }

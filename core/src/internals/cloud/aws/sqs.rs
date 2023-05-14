@@ -5,14 +5,14 @@ use crate::internals::cloud::{
 use async_trait::async_trait;
 use rusoto_sqs::{
     ChangeMessageVisibilityRequest, DeleteMessageRequest, Message, ReceiveMessageRequest, Sqs,
-    SqsClient,
 };
 use serde_json::Value;
 
 use super::payload::{S3SrtPayload, S3UploadPayload};
 
+#[derive(Clone)]
 pub struct SQSClient {
-    client: SqsClient,
+    client: rusoto_sqs::SqsClient,
     queue_url: String,
 }
 
@@ -20,7 +20,7 @@ impl SQSClient {
     pub fn new(queue_url: String) -> Self {
         println!("Creating SQS client...");
         let region = rusoto_core::Region::SaEast1;
-        let client = SqsClient::new(region);
+        let client = rusoto_sqs::SqsClient::new(region);
         SQSClient { client, queue_url }
     }
 }
@@ -42,8 +42,10 @@ impl QueueMessage for Message {
 
     fn to_payload(
         &self,
-    ) -> Result<crate::internals::cloud::models::payload::PayloadType, Box<dyn std::error::Error>>
-    {
+    ) -> Result<
+        crate::internals::cloud::models::payload::PayloadType,
+        Box<dyn std::error::Error + Send + Sync>,
+    > {
         let body = match &self.body {
             Some(body) => body,
             None => return Err("No body found".into()),
@@ -82,7 +84,9 @@ impl QueueMessage for Message {
 #[async_trait]
 impl QueueClient for SQSClient {
     type M = Message;
-    async fn receive_message(&self) -> Result<Option<Vec<Self::M>>, Box<dyn std::error::Error>> {
+    async fn receive_message(
+        &self,
+    ) -> Result<Option<Vec<Self::M>>, Box<dyn std::error::Error + Send + Sync>> {
         let request = ReceiveMessageRequest {
             queue_url: self.queue_url.clone(),
             max_number_of_messages: Some(10),
@@ -94,11 +98,14 @@ impl QueueClient for SQSClient {
         return Ok(output.messages);
     }
 
-    async fn send_message(&self) -> Result<(), Box<dyn std::error::Error>> {
+    async fn send_message(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         Ok(())
     }
 
-    async fn delete_message(&self, message: Self::M) -> Result<(), Box<dyn std::error::Error>> {
+    async fn delete_message(
+        &self,
+        message: Self::M,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let receipt_handle = match message.receipt_handle {
             Some(receipt_handle) => receipt_handle,
             None => {
@@ -121,7 +128,7 @@ impl QueueClient for SQSClient {
         &self,
         message: &Self::M,
         visibility_timeout: usize,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let receipt_handle = match message.receipt_handle.as_ref() {
             Some(receipt_handle) => receipt_handle.to_string(),
             None => {
