@@ -1,23 +1,23 @@
-struct Queue<T> {
+pub struct Queue<T> {
     elements: Vec<T>,
 }
 
 impl<T> Queue<T> {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Queue {
             elements: Vec::new(),
         }
     }
 
-    fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.elements.is_empty()
     }
 
-    fn enqueue(&mut self, value: T) {
+    pub fn enqueue(&mut self, value: T) {
         self.elements.push(value);
     }
 
-    fn dequeue(&mut self) -> Option<T> {
+    pub fn dequeue(&mut self) -> Option<T> {
         if self.elements.is_empty() {
             None
         } else {
