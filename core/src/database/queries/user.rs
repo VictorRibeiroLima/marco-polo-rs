@@ -99,7 +99,7 @@ mod test {
         assert!(bcrypt::verify("123456", &user.password).unwrap());
     }
     #[sqlx::test(migrations = "../migrations", fixtures("user"))]
-    async fn test_validating_email(pool: PgPool) {
+    async fn test_existing_email(pool: PgPool) {
         let email = "teste@gmail.com";
         let find_success = find_by_email(&pool, email).await.unwrap();
 
@@ -107,7 +107,7 @@ mod test {
     }
 
     #[sqlx::test(migrations = "../migrations", fixtures("user"))]
-    async fn test_invalid_email(pool: PgPool) {
+    async fn test_email_not_found(pool: PgPool) {
         let email = "invalid@gmail.com";
         let find_result = find_by_email(&pool, email).await.unwrap();
 
