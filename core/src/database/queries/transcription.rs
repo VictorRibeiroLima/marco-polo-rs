@@ -100,4 +100,20 @@ mod test {
             }
         }
     }
+
+    #[sqlx::test(migrations = "../migrations")]
+
+    async fn test_create_transcription_if_foreign_key_video(pool: PgPool) {
+        let id = uuid::Uuid::new_v4();
+
+        let dto = super::CreateTranscriptionDto {
+            video_id: id,
+            transcription_id: "Teste".to_string(),
+            transcriber_id: 1,
+        };
+
+        let result = super::create(&pool, dto).await;
+
+        assert!(result.is_err());
+    }
 }
