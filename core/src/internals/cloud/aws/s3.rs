@@ -9,6 +9,7 @@ use tokio::io::AsyncReadExt;
 
 use crate::internals::{cloud::traits::BucketClient, ServiceProvider};
 
+#[derive(Clone)]
 pub struct S3Client {
     region: rusoto_core::Region,
     credential: rusoto_credential::AwsCredentials,

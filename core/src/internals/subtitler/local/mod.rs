@@ -8,6 +8,7 @@ use super::traits::SubtitlerClient;
 use async_trait::async_trait;
 mod util;
 
+#[derive(Clone)]
 pub struct LocalClient;
 
 impl LocalClient {

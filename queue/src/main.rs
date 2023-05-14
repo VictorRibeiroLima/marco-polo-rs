@@ -14,7 +14,12 @@ use marco_polo_rs_core::{
     },
     util::queue::Queue,
 };
-use tokio::{runtime::Builder, sync::Mutex, task::JoinHandle};
+use sqlx::PgPool;
+use tokio::{
+    runtime::{Builder, Runtime},
+    sync::Mutex,
+    task::JoinHandle,
+};
 use worker::Worker;
 
 mod handlers;
@@ -31,16 +36,6 @@ async fn main() {
 
     let queue_url = std::env::var("AWS_QUEUE_URL").expect("QUEUE_URL not found");
     let cloud_service = AwsCloudService::new(queue_url).unwrap();
-    let cloud_service = Arc::new(cloud_service);
-
-    let transcriber_client = AssemblyAiClient::new();
-    let transcriber_client = Arc::new(transcriber_client);
-
-    let translator_client: DeeplClient = DeeplClient::new();
-    let translator_client = Arc::new(translator_client);
-
-    let subtitler_client = LocalClient::new();
-    let subtitler_client = Arc::new(subtitler_client);
 
     let message_pool = Queue::new();
     let message_pool = Arc::new(Mutex::new(message_pool));
@@ -51,24 +46,7 @@ async fn main() {
         .build()
         .unwrap();
 
-    let _: Vec<JoinHandle<()>> = (0..num_cpus::get())
-        .enumerate()
-        .map(|(id, _)| {
-            let worker = Worker {
-                id,
-                pool: pool.clone(),
-                cloud_service: cloud_service.clone(),
-                transcriber_client: transcriber_client.clone(),
-                translator_client: translator_client.clone(),
-                subtitler_client: subtitler_client.clone(),
-                message_pool: message_pool.clone(),
-            };
-
-            runtime.spawn(async move {
-                worker.handle_queue().await;
-            })
-        })
-        .collect();
+    spawn_workers(pool, &runtime, cloud_service.clone(), message_pool.clone());
 
     let queue_client = cloud_service.queue_client();
     loop {
@@ -86,4 +64,40 @@ async fn main() {
         }
         drop(lock);
     }
+}
+
+fn spawn_workers<CS>(
+    pool: Arc<PgPool>,
+    runtime: &Runtime,
+    cloud_service: CS,
+    message_pool: Arc<Mutex<Queue<<<CS as CloudService>::QC as QueueClient>::M>>>,
+) -> Vec<JoinHandle<()>>
+where
+    CS: 'static + CloudService + Clone + Sync + Send,
+    <CS as CloudService>::QC: Sync + Send,
+    <<CS as CloudService>::QC as QueueClient>::M: Send + Sync,
+{
+    let handles: Vec<JoinHandle<()>> = (0..num_cpus::get())
+        .map(|id| {
+            let transcriber_client = AssemblyAiClient::new();
+            let translator_client: DeeplClient = DeeplClient::new();
+            let subtitler_client = LocalClient::new();
+
+            let worker = Worker {
+                id,
+                pool: pool.clone(),
+                cloud_service: cloud_service.clone(),
+                transcriber_client,
+                translator_client,
+                subtitler_client,
+                message_pool: message_pool.clone(),
+            };
+
+            runtime.spawn(async move {
+                worker.handle_queue().await;
+            })
+        })
+        .collect();
+
+    return handles;
 }

@@ -5,14 +5,14 @@ use crate::internals::cloud::{
 use async_trait::async_trait;
 use rusoto_sqs::{
     ChangeMessageVisibilityRequest, DeleteMessageRequest, Message, ReceiveMessageRequest, Sqs,
-    SqsClient,
 };
 use serde_json::Value;
 
 use super::payload::{S3SrtPayload, S3UploadPayload};
 
+#[derive(Clone)]
 pub struct SQSClient {
-    client: SqsClient,
+    client: rusoto_sqs::SqsClient,
     queue_url: String,
 }
 
@@ -20,7 +20,7 @@ impl SQSClient {
     pub fn new(queue_url: String) -> Self {
         println!("Creating SQS client...");
         let region = rusoto_core::Region::SaEast1;
-        let client = SqsClient::new(region);
+        let client = rusoto_sqs::SqsClient::new(region);
         SQSClient { client, queue_url }
     }
 }

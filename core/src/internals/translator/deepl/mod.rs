@@ -8,9 +8,11 @@ use crate::internals::ServiceProvider;
 
 use super::traits::TranslatorClient;
 
+#[derive(Debug, Clone)]
 pub struct DeeplClient {
     api_key: String,
     api_base_url: String,
+    client: reqwest::Client,
 }
 
 impl DeeplClient {
@@ -22,9 +24,12 @@ impl DeeplClient {
 
         let api_base_url = std::env::var("DEEPL_BASE_URL").expect("DEEPL_BASE_URL not set");
 
+        let client = reqwest::Client::new();
+
         DeeplClient {
             api_key,
             api_base_url,
+            client,
         }
     }
 }
@@ -50,9 +55,9 @@ impl TranslatorClient for DeeplClient {
             ("split_sentences", "0"),
             ("text", text),
         ];
-        let client = reqwest::Client::new();
 
-        let res = client
+        let res = self
+            .client
             .post(url)
             .header("Authorization", &self.api_key)
             .form(&params)

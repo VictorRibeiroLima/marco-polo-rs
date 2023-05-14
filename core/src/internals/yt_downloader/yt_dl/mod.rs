@@ -6,6 +6,7 @@ use super::traits::{YoutubeDownloader, YoutubeVideoConfig};
 use async_trait::async_trait;
 use uuid::Uuid;
 
+#[derive(Clone)]
 pub struct YtDl;
 
 #[async_trait]

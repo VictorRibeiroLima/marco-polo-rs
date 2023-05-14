@@ -12,6 +12,7 @@ use super::traits::SubtitlerClient;
 
 use crate::internals::cloud::traits::BucketClient;
 
+#[derive(Clone)]
 pub struct VideoBoxClient {
     pub client: reqwest::Client,
     pub base_url: String,

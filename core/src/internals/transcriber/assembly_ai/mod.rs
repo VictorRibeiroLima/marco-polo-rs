@@ -10,11 +10,13 @@ use super::traits::{Sentence, TranscriberClient};
 
 mod payload;
 
+#[derive(Debug, Clone)]
 pub struct AssemblyAiClient {
     api_key: String,
     api_url: String,
     webhook_url: String,
     webhook_token: String,
+    client: Client,
 }
 
 impl AssemblyAiClient {
@@ -28,11 +30,14 @@ impl AssemblyAiClient {
 
         let webhook_url = format!("{}/{}", our_base_url, endpoint_url);
         let webhook_token = std::env::var("ASSEMBLY_AI_WEBHOOK_TOKEN").unwrap();
+
+        let client = Client::new();
         Self {
             api_key,
             api_url,
             webhook_url,
             webhook_token,
+            client,
         }
     }
 }
@@ -50,9 +55,9 @@ impl TranscriberClient for AssemblyAiClient {
         transcription_id: &str,
     ) -> Result<Vec<Sentence>, Box<dyn std::error::Error + Send + Sync>> {
         let url = format!("{}/transcript/{}/sentences", self.api_url, transcription_id);
-        let client = Client::new();
 
-        let resp = client
+        let resp = self
+            .client
             .get(&url)
             .header("Authorization", self.api_key.to_string())
             .send()

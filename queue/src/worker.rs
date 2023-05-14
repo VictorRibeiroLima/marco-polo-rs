@@ -1,4 +1,4 @@
-use std::{sync::Arc, thread, time::Duration};
+use std::sync::Arc;
 
 use marco_polo_rs_core::{
     internals::{
@@ -28,10 +28,10 @@ where
     SC: SubtitlerClient<CS::BC>,
 {
     pub id: usize,
-    pub cloud_service: Arc<CS>,
-    pub transcriber_client: Arc<TC>,
-    pub translator_client: Arc<TLC>,
-    pub subtitler_client: Arc<SC>,
+    pub cloud_service: CS,
+    pub transcriber_client: TC,
+    pub translator_client: TLC,
+    pub subtitler_client: SC,
     pub pool: Arc<sqlx::PgPool>,
     pub message_pool: Arc<Mutex<Queue<<<CS as CloudService>::QC as QueueClient>::M>>>,
 }
@@ -53,8 +53,6 @@ where
             let message = match message_result {
                 Some(message) => message,
                 _ => {
-                    println!("Worker {} sleeping...", self.id);
-                    thread::sleep(Duration::from_secs(5));
                     continue;
                 }
             };

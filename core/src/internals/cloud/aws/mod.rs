@@ -8,6 +8,7 @@ mod payload;
 pub mod s3;
 pub mod sqs;
 
+#[derive(Clone)]
 pub struct AwsCloudService {
     pub bucket_client: S3Client,
     pub queue_client: sqs::SQSClient,
