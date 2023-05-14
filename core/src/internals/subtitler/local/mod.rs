@@ -1,5 +1,5 @@
 use crate::{
-    database::models::video::{Video, VideoWithStorage},
+    database::models::video::VideoWithStorage,
     internals::{cloud::traits::BucketClient, ServiceProvider},
     util::fs::create_temp_dir,
 };
@@ -8,6 +8,7 @@ use super::traits::SubtitlerClient;
 use async_trait::async_trait;
 mod util;
 
+#[derive(Clone)]
 pub struct LocalClient;
 
 impl LocalClient {
@@ -33,7 +34,7 @@ impl<BC: BucketClient> SubtitlerClient<BC> for LocalClient {
         &self,
         video: &VideoWithStorage,
         bucket_client: &BC,
-    ) -> Result<Option<String>, Box<dyn std::error::Error>> {
+    ) -> Result<Option<String>, Box<dyn std::error::Error + Sync + Send>> {
         let video_id = video.video.id.to_string();
         let temp_dir = create_temp_dir()?;
         let temp_file_paths =

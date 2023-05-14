@@ -1318,6 +1318,7 @@ dependencies = [
  "dotenv",
  "futures",
  "marco-polo-rs-core",
+ "num_cpus",
  "sqlx",
  "tokio",
  "tokio-util",

@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use serde_json::json;
 
 use crate::{
-    database::models::video::{Video, VideoWithStorage},
+    database::models::video::VideoWithStorage,
     internals::{cloud::aws::s3::S3Client, ServiceProvider},
 };
 
@@ -12,6 +12,7 @@ use super::traits::SubtitlerClient;
 
 use crate::internals::cloud::traits::BucketClient;
 
+#[derive(Clone)]
 pub struct VideoBoxClient {
     pub client: reqwest::Client,
     pub base_url: String,
@@ -48,7 +49,7 @@ impl SubtitlerClient<S3Client> for VideoBoxClient {
         &self,
         video: &VideoWithStorage,
         bucket_client: &S3Client,
-    ) -> Result<Option<String>, Box<dyn std::error::Error>> {
+    ) -> Result<Option<String>, Box<dyn std::error::Error + Sync + Send>> {
         let file_name = format!("{}.{}", video.video.id, video.storage.format.to_string());
 
         let video_uri = format!("videos/raw/{}", file_name);

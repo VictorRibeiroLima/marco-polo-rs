@@ -42,7 +42,10 @@ where
         Self { worker, message }
     }
 
-    pub async fn handle(&self, payload: SrtPayload) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn handle(
+        &self,
+        payload: SrtPayload,
+    ) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
         let subtitler_client = &self.worker.subtitler_client;
         let bucket_client = self.worker.cloud_service.bucket_client();
         let queue_client = self.worker.cloud_service.queue_client();

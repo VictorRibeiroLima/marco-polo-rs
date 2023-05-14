@@ -6,6 +6,7 @@ use super::traits::{YoutubeDownloader, YoutubeVideoConfig};
 use async_trait::async_trait;
 use uuid::Uuid;
 
+#[derive(Clone)]
 pub struct YtDl;
 
 #[async_trait]
@@ -13,7 +14,7 @@ impl YoutubeDownloader for YtDl {
     async fn download(
         &self,
         config: YoutubeVideoConfig<'_>,
-    ) -> Result<(Vec<u8>, Uuid), Box<dyn std::error::Error>> {
+    ) -> Result<(Vec<u8>, Uuid), Box<dyn std::error::Error + Sync + Send>> {
         let format: String = match config.format {
             Some(format) => format.to_string(),
             None => VideoFormat::Mkv.into(),
@@ -32,9 +33,11 @@ impl YoutubeDownloader for YtDl {
         let video_id = uuid::Uuid::new_v4();
 
         let temp_dir = create_temp_dir()?;
+
         let output_file = format!("{}/{}.{}", temp_dir.to_str().unwrap(), video_id, format);
 
         let mut cmd = Command::new("yt-dlp");
+
         let output = cmd
             .arg("-o")
             .arg(&output_file)

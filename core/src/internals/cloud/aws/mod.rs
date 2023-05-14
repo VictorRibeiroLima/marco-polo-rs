@@ -8,13 +8,14 @@ mod payload;
 pub mod s3;
 pub mod sqs;
 
+#[derive(Clone)]
 pub struct AwsCloudService {
     pub bucket_client: S3Client,
     pub queue_client: sqs::SQSClient,
 }
 
 impl AwsCloudService {
-    pub fn new(queue_url: String) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(queue_url: String) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         let bucket_client = S3Client::new()?;
         let queue_client = sqs::SQSClient::new(queue_url);
 

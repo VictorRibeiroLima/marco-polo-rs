@@ -1,12 +1,18 @@
-use marco_polo_rs_core::internals::{
-    cloud::{
-        models::payload::PayloadType,
-        traits::{CloudService, QueueClient, QueueMessage},
+use std::sync::Arc;
+
+use marco_polo_rs_core::{
+    internals::{
+        cloud::{
+            models::payload::PayloadType,
+            traits::{CloudService, QueueClient, QueueMessage},
+        },
+        subtitler::traits::SubtitlerClient,
+        transcriber::traits::TranscriberClient,
+        translator::traits::TranslatorClient,
     },
-    subtitler::traits::SubtitlerClient,
-    transcriber::traits::TranscriberClient,
-    translator::traits::TranslatorClient,
+    util::queue::Queue,
 };
+use tokio::sync::Mutex;
 
 use super::handlers;
 
@@ -21,11 +27,13 @@ where
     TLC: TranslatorClient,
     SC: SubtitlerClient<CS::BC>,
 {
+    pub id: usize,
     pub cloud_service: CS,
     pub transcriber_client: TC,
     pub translator_client: TLC,
     pub subtitler_client: SC,
-    pub pool: sqlx::PgPool,
+    pub pool: Arc<sqlx::PgPool>,
+    pub message_pool: Arc<Mutex<Queue<<<CS as CloudService>::QC as QueueClient>::M>>>,
 }
 
 impl<CS, TC, TLC, SC> Worker<CS, TC, TLC, SC>
@@ -36,58 +44,67 @@ where
     SC: SubtitlerClient<CS::BC>,
 {
     pub async fn handle_queue(&self) {
-        let queue_client = self.cloud_service.queue_client();
-        println!("Listening to queue...");
+        println!("Worker {} started", self.id);
         loop {
-            let message_result = queue_client.receive_message().await.unwrap();
-            let messages = match message_result {
-                Some(messages) => messages,
+            let mut messages = self.message_pool.lock().await;
+            let message_result = messages.dequeue();
+            drop(messages);
+
+            let message = match message_result {
+                Some(message) => message,
                 _ => {
                     continue;
                 }
             };
 
-            for message in messages {
-                let payload_type = match message.to_payload() {
-                    Ok(payload) => payload,
-                    Err(_) => {
-                        continue;
-                    }
-                };
+            self.handle_message(message).await;
+        }
+    }
 
-                let result = match payload_type {
-                    PayloadType::BatukaVideoRawUpload(payload) => {
-                        handlers::raw_upload::handle(&self, payload).await
-                    }
-                    PayloadType::BatukaSrtTranscriptionUpload(payload) => {
-                        let handler = handlers::transcription::Handler::new(&self);
-                        let sentences_result = handler.handle(payload).await;
-                        sentences_result
-                    }
-                    PayloadType::BatukaSrtTranslationUpload(payload) => {
-                        let handler = handlers::translation::Handler::new(&self, &message);
-                        let sentences_result = handler.handle(payload).await;
-                        sentences_result
-                    }
-                    PayloadType::BatukaVideoProcessedUpload(_) => Ok(()),
-                };
+    async fn handle_message(&self, message: <<CS as CloudService>::QC as QueueClient>::M) {
+        let queue_client = self.cloud_service.queue_client();
+        let payload_type = match message.to_payload() {
+            Ok(payload) => payload,
+            Err(_) => {
+                return;
+            }
+        };
 
-                match result {
-                    Ok(_) => {}
-                    Err(e) => {
-                        println!("worker result err:{:?}", e);
-                        continue;
-                    }
-                }
+        let result = match payload_type {
+            PayloadType::BatukaVideoRawUpload(payload) => {
+                println!("Worker {} handling raw upload...", self.id);
+                handlers::raw_upload::handle(&self, payload).await
+            }
+            PayloadType::BatukaSrtTranscriptionUpload(payload) => {
+                println!("Worker {} handling transcription upload...", self.id);
+                let handler = handlers::transcription::Handler::new(&self);
+                let sentences_result = handler.handle(payload).await;
+                sentences_result
+            }
+            PayloadType::BatukaSrtTranslationUpload(payload) => {
+                println!("Worker {} handling translation upload...", self.id);
+                let handler = handlers::translation::Handler::new(&self, &message);
+                let sentences_result = handler.handle(payload).await;
+                sentences_result
+            }
+            PayloadType::BatukaVideoProcessedUpload(_) => Ok(()),
+        };
 
-                let result = queue_client.delete_message(message).await; //TODO: see what to when delete fails
+        match result {
+            Ok(_) => {}
+            Err(e) => {
+                println!("Worker {} error: {:?}", self.id, e);
+                return;
+            }
+        }
 
-                match result {
-                    Ok(_) => {}
-                    Err(e) => {
-                        println!("{:?}", e);
-                    }
-                }
+        let result = queue_client.delete_message(message).await; //TODO: see what to when delete fails
+
+        match result {
+            Ok(_) => {}
+            Err(e) => {
+                println!("Worker {} delete error: {:?}", self.id, e);
+                return;
             }
         }
     }
