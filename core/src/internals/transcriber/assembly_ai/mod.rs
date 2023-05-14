@@ -48,7 +48,7 @@ impl TranscriberClient for AssemblyAiClient {
     async fn get_transcription_sentences(
         &self,
         transcription_id: &str,
-    ) -> Result<Vec<Sentence>, Box<dyn std::error::Error>> {
+    ) -> Result<Vec<Sentence>, Box<dyn std::error::Error + Send + Sync>> {
         let url = format!("{}/transcript/{}/sentences", self.api_url, transcription_id);
         let client = Client::new();
 
@@ -71,7 +71,10 @@ impl TranscriberClient for AssemblyAiClient {
         return Ok(sentences);
     }
 
-    async fn transcribe(&self, media_url: &str) -> Result<String, Box<dyn std::error::Error>> {
+    async fn transcribe(
+        &self,
+        media_url: &str,
+    ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
         let url = format!("{}/transcript", self.api_url);
 
         let client = Client::new();

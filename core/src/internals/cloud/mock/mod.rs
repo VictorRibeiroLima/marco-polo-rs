@@ -26,7 +26,7 @@ impl crate::internals::cloud::traits::BucketClient for TestClient {
         &self,
         _file_path: &str,
         _file: Vec<u8>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
         Ok(())
     }
 
@@ -34,7 +34,7 @@ impl crate::internals::cloud::traits::BucketClient for TestClient {
         &self,
         _file_uri: &str,
         expires_in: u16,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    ) -> Result<String, Box<dyn std::error::Error + Sync + Send>> {
         Ok(format!("https://storage.googleapis.com/{}", expires_in))
     }
 
@@ -42,7 +42,7 @@ impl crate::internals::cloud::traits::BucketClient for TestClient {
         &self,
         _file_uri: &str,
         expires_in: Option<u16>,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    ) -> Result<String, Box<dyn std::error::Error + Sync + Send>> {
         Ok(format!(
             "https://storage.googleapis.com/{}",
             expires_in.unwrap()
@@ -52,11 +52,14 @@ impl crate::internals::cloud::traits::BucketClient for TestClient {
     async fn create_signed_upload_url(
         &self,
         expires_in: u16,
-    ) -> Result<String, Box<dyn std::error::Error>> {
+    ) -> Result<String, Box<dyn std::error::Error + Sync + Send>> {
         Ok(format!("https://storage.googleapis.com/{}", expires_in))
     }
 
-    async fn download_file(&self, _file_path: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+    async fn download_file(
+        &self,
+        _file_path: &str,
+    ) -> Result<Vec<u8>, Box<dyn std::error::Error + Sync + Send>> {
         Ok(vec![])
     }
 
@@ -64,7 +67,7 @@ impl crate::internals::cloud::traits::BucketClient for TestClient {
         &self,
         _file_path: &str,
         _destination_path: &str,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
         Ok(())
     }
 }
@@ -91,8 +94,10 @@ impl QueueMessage for TestMessage {
 
     fn to_payload(
         &self,
-    ) -> Result<crate::internals::cloud::models::payload::PayloadType, Box<dyn std::error::Error>>
-    {
+    ) -> Result<
+        crate::internals::cloud::models::payload::PayloadType,
+        Box<dyn std::error::Error + Sync + Send>,
+    > {
         Ok(
             crate::internals::cloud::models::payload::PayloadType::BatukaSrtTranscriptionUpload(
                 SrtPayload {
@@ -108,15 +113,20 @@ impl QueueMessage for TestMessage {
 impl QueueClient for TestClient {
     type M = TestMessage;
 
-    async fn receive_message(&self) -> Result<Option<Vec<Self::M>>, Box<dyn std::error::Error>> {
+    async fn receive_message(
+        &self,
+    ) -> Result<Option<Vec<Self::M>>, Box<dyn std::error::Error + Sync + Send>> {
         Ok(None)
     }
 
-    async fn send_message(&self) -> Result<(), Box<dyn std::error::Error>> {
+    async fn send_message(&self) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
         Ok(())
     }
 
-    async fn delete_message(&self, _message: Self::M) -> Result<(), Box<dyn std::error::Error>> {
+    async fn delete_message(
+        &self,
+        _message: Self::M,
+    ) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
         Ok(())
     }
 
@@ -124,7 +134,7 @@ impl QueueClient for TestClient {
         &self,
         _message: &Self::M,
         _visibility_timeout: usize,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
         Ok(())
     }
 }

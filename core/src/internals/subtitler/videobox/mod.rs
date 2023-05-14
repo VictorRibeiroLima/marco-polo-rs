@@ -48,7 +48,7 @@ impl SubtitlerClient<S3Client> for VideoBoxClient {
         &self,
         video: &VideoWithStorage,
         bucket_client: &S3Client,
-    ) -> Result<Option<String>, Box<dyn std::error::Error>> {
+    ) -> Result<Option<String>, Box<dyn std::error::Error + Sync + Send>> {
         let file_name = format!("{}.{}", video.video.id, video.storage.format.to_string());
 
         let video_uri = format!("videos/raw/{}", file_name);

@@ -14,7 +14,7 @@ pub struct AwsCloudService {
 }
 
 impl AwsCloudService {
-    pub fn new(queue_url: String) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(queue_url: String) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         let bucket_client = S3Client::new()?;
         let queue_client = sqs::SQSClient::new(queue_url);
 

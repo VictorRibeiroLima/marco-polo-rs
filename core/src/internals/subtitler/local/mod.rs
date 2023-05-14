@@ -33,7 +33,7 @@ impl<BC: BucketClient> SubtitlerClient<BC> for LocalClient {
         &self,
         video: &VideoWithStorage,
         bucket_client: &BC,
-    ) -> Result<Option<String>, Box<dyn std::error::Error>> {
+    ) -> Result<Option<String>, Box<dyn std::error::Error + Sync + Send>> {
         let video_id = video.video.id.to_string();
         let temp_dir = create_temp_dir()?;
         let temp_file_paths =

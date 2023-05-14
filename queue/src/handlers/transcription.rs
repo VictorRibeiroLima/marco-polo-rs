@@ -36,7 +36,10 @@ where
         Self { worker }
     }
 
-    pub async fn handle(&self, payload: SrtPayload) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn handle(
+        &self,
+        payload: SrtPayload,
+    ) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
         let worker = self.worker;
         let transcriber_client = &worker.transcriber_client;
         let bucket_client = &worker.cloud_service.bucket_client();
@@ -76,7 +79,7 @@ where
     pub async fn translate(
         &self,
         sentences: Vec<Sentence>,
-    ) -> Result<(String, Option<String>), Box<dyn std::error::Error>>
+    ) -> Result<(String, Option<String>), Box<dyn std::error::Error + Sync + Send>>
     where
         CS: CloudService,
         TC: TranscriberClient,
@@ -103,7 +106,7 @@ where
     async fn get_translated_sentence(
         &self,
         payload: Sentence,
-    ) -> Result<Sentence, Box<dyn std::error::Error>>
+    ) -> Result<Sentence, Box<dyn std::error::Error + Sync + Send>>
     where
         TLC: TranslatorClient,
     {

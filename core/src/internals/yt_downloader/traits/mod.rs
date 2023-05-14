@@ -15,5 +15,5 @@ pub trait YoutubeDownloader {
     async fn download(
         &self,
         config: YoutubeVideoConfig<'_>,
-    ) -> Result<(Vec<u8>, Uuid), Box<dyn std::error::Error>>;
+    ) -> Result<(Vec<u8>, Uuid), Box<dyn std::error::Error + Sync + Send>>;
 }

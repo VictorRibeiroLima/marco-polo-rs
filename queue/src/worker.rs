@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::{sync::Arc, thread, time::Duration};
 
 use marco_polo_rs_core::{
     internals::{
@@ -12,6 +12,7 @@ use marco_polo_rs_core::{
     },
     util::queue::Queue,
 };
+use tokio::sync::Mutex;
 
 use super::handlers;
 
@@ -26,6 +27,7 @@ where
     TLC: TranslatorClient,
     SC: SubtitlerClient<CS::BC>,
 {
+    pub id: usize,
     pub cloud_service: Arc<CS>,
     pub transcriber_client: Arc<TC>,
     pub translator_client: Arc<TLC>,
@@ -42,20 +44,22 @@ where
     SC: SubtitlerClient<CS::BC>,
 {
     pub async fn handle_queue(&self) {
-        let queue_client = self.cloud_service.queue_client();
-        println!("Listening to queue...");
+        println!("Worker {} started", self.id);
         loop {
-            let message_result = queue_client.receive_message().await.unwrap();
-            let messages = match message_result {
-                Some(messages) => messages,
+            let mut messages = self.message_pool.lock().await;
+            let message_result = messages.dequeue();
+            drop(messages);
+
+            let message = match message_result {
+                Some(message) => message,
                 _ => {
+                    println!("Worker {} sleeping...", self.id);
+                    thread::sleep(Duration::from_secs(5));
                     continue;
                 }
             };
 
-            for message in messages {
-                self.handle_message(message).await;
-            }
+            self.handle_message(message).await;
         }
     }
 
@@ -70,14 +74,17 @@ where
 
         let result = match payload_type {
             PayloadType::BatukaVideoRawUpload(payload) => {
+                println!("Worker {} handling raw upload...", self.id);
                 handlers::raw_upload::handle(&self, payload).await
             }
             PayloadType::BatukaSrtTranscriptionUpload(payload) => {
+                println!("Worker {} handling transcription upload...", self.id);
                 let handler = handlers::transcription::Handler::new(&self);
                 let sentences_result = handler.handle(payload).await;
                 sentences_result
             }
             PayloadType::BatukaSrtTranslationUpload(payload) => {
+                println!("Worker {} handling translation upload...", self.id);
                 let handler = handlers::translation::Handler::new(&self, &message);
                 let sentences_result = handler.handle(payload).await;
                 sentences_result
@@ -88,7 +95,7 @@ where
         match result {
             Ok(_) => {}
             Err(e) => {
-                println!("worker result err:{:?}", e);
+                println!("Worker {} error: {:?}", self.id, e);
                 return;
             }
         }
@@ -98,7 +105,8 @@ where
         match result {
             Ok(_) => {}
             Err(e) => {
-                println!("{:?}", e);
+                println!("Worker {} delete error: {:?}", self.id, e);
+                return;
             }
         }
     }

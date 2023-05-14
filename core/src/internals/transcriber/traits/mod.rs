@@ -12,9 +12,12 @@ pub struct Sentence {
 
 #[async_trait]
 pub trait TranscriberClient: ServiceProvider {
-    async fn transcribe(&self, media_url: &str) -> Result<String, Box<dyn std::error::Error>>;
+    async fn transcribe(
+        &self,
+        media_url: &str,
+    ) -> Result<String, Box<dyn std::error::Error + Send + Sync>>;
     async fn get_transcription_sentences(
         &self,
         transcription_id: &str,
-    ) -> Result<Vec<Sentence>, Box<dyn std::error::Error>>;
+    ) -> Result<Vec<Sentence>, Box<dyn std::error::Error + Send + Sync>>;
 }

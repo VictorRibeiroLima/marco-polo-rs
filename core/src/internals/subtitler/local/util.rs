@@ -6,7 +6,7 @@ pub async fn write_to_temp_files<BC: BucketClient + Sync>(
     bucket_client: &BC,
     temp_dir: &PathBuf,
     id: &str,
-) -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
+) -> Result<Vec<PathBuf>, Box<dyn std::error::Error + Sync + Send>> {
     let video_path = temp_dir.join(format!("input_{}.{}", id, "mkv"));
     let srt_path = temp_dir.join(format!("{}.{}", id, "srt"));
     let output_path = temp_dir.join(format!("output_{}.{}", id, "mkv"));
@@ -34,7 +34,7 @@ pub fn call_ffmpeg(
     video_path: &PathBuf,
     srt_path: &PathBuf,
     output_path: &PathBuf,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
     let output = Command::new("ffmpeg")
         .arg("-i")
         .arg(&video_path)
@@ -58,7 +58,9 @@ pub fn call_ffmpeg(
     Ok(())
 }
 
-pub fn _read_output_file(output_path: &PathBuf) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+pub fn _read_output_file(
+    output_path: &PathBuf,
+) -> Result<Vec<u8>, Box<dyn std::error::Error + Sync + Send>> {
     let output_bytes = std::fs::read(&output_path)?;
     Ok(output_bytes)
 }
@@ -75,7 +77,7 @@ pub async fn upload_output_file<BC: BucketClient + Sync>(
     bucket_client: &BC,
     file: &PathBuf,
     video_id: &str,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
     let output_uri = format!("videos/processed/{}.{}", video_id, "mkv");
     let url = bucket_client
         .create_signed_upload_url_with_uri(&output_uri, 3600)
@@ -91,7 +93,9 @@ pub async fn upload_output_file<BC: BucketClient + Sync>(
     Ok(())
 }
 
-pub fn delete_temp_files(temp_file_paths: Vec<PathBuf>) -> Result<(), Box<dyn std::error::Error>> {
+pub fn delete_temp_files(
+    temp_file_paths: Vec<PathBuf>,
+) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
     for path in temp_file_paths {
         std::fs::remove_file(path)?;
     }
