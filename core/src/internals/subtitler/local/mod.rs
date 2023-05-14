@@ -1,5 +1,5 @@
 use crate::{
-    database::models::video::{Video, VideoWithStorage},
+    database::models::video::VideoWithStorage,
     internals::{cloud::traits::BucketClient, ServiceProvider},
     util::fs::create_temp_dir,
 };

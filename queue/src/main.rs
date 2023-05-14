@@ -2,10 +2,8 @@ use marco_polo_rs_core::{
     database::create_pool,
     env,
     internals::{
-        cloud::aws::AwsCloudService,
-        subtitler::{local::LocalClient, videobox::VideoBoxClient},
-        transcriber::assembly_ai::AssemblyAiClient,
-        translator::deepl::DeeplClient,
+        cloud::aws::AwsCloudService, subtitler::videobox::VideoBoxClient,
+        transcriber::assembly_ai::AssemblyAiClient, translator::deepl::DeeplClient,
     },
 };
 use worker::Worker;
