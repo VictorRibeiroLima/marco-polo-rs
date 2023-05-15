@@ -138,6 +138,7 @@ pub async fn find_by_id_with_storage(
 
 #[cfg(test)]
 mod test {
+
     use sqlx::PgPool;
 
     #[sqlx::test(migrations = "../migrations", fixtures("user", "channel"))]

@@ -59,6 +59,8 @@ mod test {
 
     use sqlx::PgPool;
 
+    use crate::database::queries::video::find_by_transcription_id;
+
     #[sqlx::test(migrations = "../migrations", fixtures("videos"))]
     async fn test_create_transcription(pool: PgPool) {
         let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
@@ -98,5 +100,25 @@ mod test {
         let result = super::create(&pool, dto).await;
 
         assert!(result.is_err());
+    }
+    #[sqlx::test(migrations = "../migrations", fixtures("videos"))]
+    async fn test_find_by_transcription_id(pool: PgPool) {
+        let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
+        let transcription_id = "Teste";
+
+        let dto = super::CreateTranscriptionDto {
+            video_id: id,
+            transcription_id: transcription_id.to_string(),
+            transcriber_id: 1,
+        };
+
+        let result = super::create(&pool, dto).await;
+        assert!(result.is_ok());
+
+        let test = find_by_transcription_id(&pool, transcription_id)
+            .await
+            .unwrap();
+
+        assert_eq!(test.id, id);
     }
 }
