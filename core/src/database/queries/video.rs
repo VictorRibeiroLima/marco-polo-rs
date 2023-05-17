@@ -139,6 +139,8 @@ pub async fn find_by_id_with_storage(
 #[cfg(test)]
 mod test {
 
+    use std::str::FromStr;
+
     use sqlx::PgPool;
 
     #[sqlx::test(migrations = "../migrations", fixtures("user", "channel"))]
@@ -181,5 +183,12 @@ mod test {
         let result = super::create(&pool, dto).await;
 
         assert!(result.is_err());
+    }
+    #[sqlx::test(migrations = "../migrations", fixtures("videos"))]
+    async fn test_find_by_video_id(pool: PgPool) {
+        let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
+        let find_success = super::find_by_id(&pool, &id).await.unwrap();
+
+        assert_eq!(find_success.id, id);
     }
 }

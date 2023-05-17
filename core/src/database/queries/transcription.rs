@@ -93,7 +93,7 @@ mod test {
 
         let dto = super::CreateTranscriptionDto {
             video_id: id,
-            transcription_id: "Teste".to_string(),
+            transcription_id: "Test".to_string(),
             transcriber_id: 1,
         };
 
@@ -104,7 +104,7 @@ mod test {
     #[sqlx::test(migrations = "../migrations", fixtures("videos"))]
     async fn test_find_by_transcription_id(pool: PgPool) {
         let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
-        let transcription_id = "Teste";
+        let transcription_id = "Test";
 
         let dto = super::CreateTranscriptionDto {
             video_id: id,
