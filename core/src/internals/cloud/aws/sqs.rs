@@ -1,10 +1,13 @@
+use std::string;
+
 use crate::internals::cloud::{
     models::payload::PayloadType,
     traits::{QueueClient, QueueMessage},
 };
 use async_trait::async_trait;
 use rusoto_sqs::{
-    ChangeMessageVisibilityRequest, DeleteMessageRequest, Message, ReceiveMessageRequest, Sqs,
+    ChangeMessageVisibilityRequest, DeleteMessageRequest, Message, ReceiveMessageRequest,
+    SendMessageRequest, Sqs,
 };
 use serde_json::Value;
 
@@ -98,8 +101,19 @@ impl QueueClient for SQSClient {
         return Ok(output.messages);
     }
 
-    async fn send_message(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        Ok(())
+    async fn send_message(
+        &self,
+        payload: PayloadType,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let sqs_message_request = SendMessageRequest {
+            message_body: payload.to_json(),
+            queue_url: self.queue_url.clone(),
+            ..Default::default()
+        };
+
+        let result = self.client.send_message(sqs_message_request).await?;
+        println!("Message sent. Message ID: {:?}", result.message_id);
+        return Ok(());
     }
 
     async fn delete_message(

@@ -66,6 +66,13 @@ where
         let payload_type = match message.to_payload() {
             Ok(payload) => payload,
             Err(_) => {
+                let delete_result = queue_client.delete_message(message).await;
+                match delete_result {
+                    Ok(_) => {}
+                    Err(e) => {
+                        println!("Worker {} delete error: {:?}", self.id, e);
+                    }
+                }
                 return;
             }
         };
@@ -88,6 +95,7 @@ where
                 sentences_result
             }
             PayloadType::BatukaVideoProcessedUpload(_) => Ok(()),
+            PayloadType::BatukaDownloadVideo(_) => Ok(()),
         };
 
         match result {

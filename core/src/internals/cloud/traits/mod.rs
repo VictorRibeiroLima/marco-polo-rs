@@ -49,7 +49,10 @@ pub trait QueueClient {
     async fn receive_message(
         &self,
     ) -> Result<Option<Vec<Self::M>>, Box<dyn std::error::Error + Send + Sync>>;
-    async fn send_message(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
+    async fn send_message(
+        &self,
+        payload: PayloadType,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
     async fn delete_message(
         &self,
         message: Self::M,

@@ -2,7 +2,7 @@ use crate::internals::ServiceProvider;
 use async_trait::async_trait;
 
 use super::{
-    models::payload::SrtPayload,
+    models::payload::{PayloadType, SrtPayload},
     traits::{CloudService, QueueClient, QueueMessage},
 };
 
@@ -119,7 +119,10 @@ impl QueueClient for TestClient {
         Ok(None)
     }
 
-    async fn send_message(&self) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
+    async fn send_message(
+        &self,
+        _payload: PayloadType,
+    ) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
         Ok(())
     }
 

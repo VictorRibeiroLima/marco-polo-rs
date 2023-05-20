@@ -1,5 +1,8 @@
 use lazy_static::lazy_static;
-use marco_polo_rs_core::database::models::video_storage::VideoFormat;
+use marco_polo_rs_core::{
+    database::models::video_storage::VideoFormat,
+    internals::cloud::models::payload::{PayloadType, VideoDownloadPayload},
+};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -8,7 +11,7 @@ lazy_static! {
     static ref YOUTUBE_URL: Regex = Regex::new(r#"^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$"#).unwrap();
 }
 
-#[derive(Debug, Validate, Deserialize, Serialize)]
+#[derive(Debug, Validate, Deserialize, Serialize, Clone)]
 pub struct CreateVideo {
     pub title: String,
     pub description: String,
@@ -19,4 +22,15 @@ pub struct CreateVideo {
     pub format: Option<VideoFormat>,
     pub start_time: Option<String>,
     pub end_time: Option<String>,
+}
+
+impl Into<PayloadType> for CreateVideo {
+    fn into(self) -> PayloadType {
+        PayloadType::BatukaDownloadVideo(VideoDownloadPayload {
+            video_url: self.video_url,
+            start_time: self.start_time,
+            end_time: self.end_time,
+            video_format: self.format.unwrap_or(VideoFormat::Mkv),
+        })
+    }
 }
