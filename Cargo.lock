@@ -1285,6 +1285,7 @@ dependencies = [
  "sqlx",
  "tokio",
  "tokio-util",
+ "uuid",
  "validator",
 ]
 
