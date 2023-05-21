@@ -37,7 +37,7 @@ pub type Message = <<CloudServiceInUse as CloudService>::QC as QueueClient>::M;
 
 #[tokio::main]
 async fn main() {
-    println!("Starting worker...");
+    println!("Starting workers...");
     dotenv::dotenv().ok();
     env::check_envs();
     let pool = create_pool().await;
