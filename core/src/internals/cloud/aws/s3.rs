@@ -1,9 +1,12 @@
+use std::{fs::File, io::Read};
+
 use async_trait::async_trait;
 use futures::executor::block_on;
 use rusoto_credential::{EnvironmentProvider, ProvideAwsCredentials};
 use rusoto_s3::{
     util::{PreSignedRequest, PreSignedRequestOption},
-    GetObjectRequest, PutObjectRequest, S3,
+    CompletedPart, CreateMultipartUploadRequest, GetObjectRequest, PutObjectRequest,
+    UploadPartRequest, S3,
 };
 use tokio::io::AsyncReadExt;
 
@@ -44,17 +47,94 @@ impl ServiceProvider for S3Client {
 impl BucketClient for S3Client {
     async fn upload_file(
         &self,
-        file_path: &str,
+        file_uri: &str,
         file: Vec<u8>,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let request = PutObjectRequest {
             bucket: self.bucket_name.clone(),
-            key: file_path.to_string(),
+            key: file_uri.to_string(),
             body: Some(file.into()),
             ..Default::default()
         };
 
         self.client.put_object(request).await?;
+
+        Ok(())
+    }
+
+    async fn upload_file_from_path(
+        &self,
+        file_uri: &str,
+        file_path: &str,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        const PART_SIZE: usize = 5 * 1024 * 1024; // 5MB
+
+        // Create a new multipart upload
+        let create_request = CreateMultipartUploadRequest {
+            bucket: self.bucket_name.clone(),
+            key: file_uri.to_string(),
+            ..Default::default()
+        };
+        let create_response = self.client.create_multipart_upload(create_request).await?;
+        let upload_id = create_response.upload_id.unwrap();
+
+        // Open the file
+        let file = File::open(file_path)?;
+        let mut reader = std::io::BufReader::new(file);
+
+        let mut part_number = 1;
+        let mut completed_parts = Vec::new();
+
+        // Read and upload parts until the end of the file
+        loop {
+            let mut part_buffer = Vec::with_capacity(PART_SIZE);
+            let bytes_read = reader
+                .by_ref()
+                .take(PART_SIZE as u64)
+                .read_to_end(&mut part_buffer)?;
+
+            if bytes_read == 0 {
+                // End of file reached
+                break;
+            }
+
+            let upload_request = UploadPartRequest {
+                bucket: self.bucket_name.clone(),
+                key: file_uri.to_string(),
+                upload_id: upload_id.clone(),
+                part_number: part_number,
+                body: Some(part_buffer.into()),
+                ..Default::default()
+            };
+
+            let upload_response = self.client.upload_part(upload_request).await?;
+            let completed_part = CompletedPart {
+                e_tag: upload_response.e_tag,
+                part_number: Some(part_number),
+            };
+
+            completed_parts.push(completed_part);
+
+            part_number += 1;
+        }
+
+        // Complete the multipart upload
+        let complete_request = rusoto_s3::CompleteMultipartUploadRequest {
+            bucket: self.bucket_name.clone(),
+            key: file_uri.to_string(),
+            upload_id: upload_id.clone(),
+            multipart_upload: Some(rusoto_s3::CompletedMultipartUpload {
+                parts: Some(completed_parts),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+
+        self.client
+            .complete_multipart_upload(complete_request)
+            .await?;
+
+        println!("File uploaded successfully");
 
         Ok(())
     }

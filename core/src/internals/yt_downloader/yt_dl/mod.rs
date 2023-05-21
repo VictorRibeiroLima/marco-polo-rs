@@ -4,7 +4,6 @@ use crate::{database::models::video_storage::VideoFormat, util::fs::create_temp_
 
 use super::traits::{YoutubeDownloader, YoutubeVideoConfig};
 use async_trait::async_trait;
-use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct YtDl;
@@ -19,8 +18,8 @@ impl YtDl {
 impl YoutubeDownloader for YtDl {
     async fn download(
         &self,
-        config: YoutubeVideoConfig<'_>,
-    ) -> Result<(Vec<u8>, Uuid), Box<dyn std::error::Error + Sync + Send>> {
+        config: YoutubeVideoConfig,
+    ) -> Result<String, Box<dyn std::error::Error + Sync + Send>> {
         let format: String = match config.format {
             Some(format) => format.to_string(),
             None => VideoFormat::Mkv.into(),
@@ -64,10 +63,6 @@ impl YoutubeDownloader for YtDl {
             return Err("Failed to download video".into());
         }
 
-        let file = std::fs::read(&output_file)?;
-
-        std::fs::remove_file(&output_file)?;
-
-        Ok((file, video_id))
+        Ok(output_file)
     }
 }

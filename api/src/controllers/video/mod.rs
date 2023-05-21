@@ -31,10 +31,13 @@ async fn create_video<CS: CloudService>(
     let body = body.into_inner();
     queries::channel::find_by_id(pool, body.channel_id).await?;
 
-    let queue_client = cloud_service.client.queue_client();
-    queue_client.send_message(body.clone().into()).await?;
-
     let video_id = uuid::Uuid::new_v4();
+
+    let queue_client = cloud_service.client.queue_client();
+    queue_client
+        .send_message(body.clone().into(video_id))
+        .await?;
+
     service::create_video(pool, &body, jwt.id, video_id).await?;
 
     return Ok(HttpResponse::Created().finish());

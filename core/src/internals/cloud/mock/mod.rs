@@ -24,8 +24,16 @@ impl ServiceProvider for TestClient {
 impl crate::internals::cloud::traits::BucketClient for TestClient {
     async fn upload_file(
         &self,
-        _file_path: &str,
+        _file_uri: &str,
         _file: Vec<u8>,
+    ) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
+        Ok(())
+    }
+
+    async fn upload_file_from_path(
+        &self,
+        _file_uri: &str,
+        _file_path: &str,
     ) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
         Ok(())
     }

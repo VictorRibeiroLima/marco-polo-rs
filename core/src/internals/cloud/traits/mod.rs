@@ -31,6 +31,12 @@ pub trait BucketClient: ServiceProvider + Sync {
         file: Vec<u8>,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
 
+    async fn upload_file_from_path(
+        &self,
+        file_uri: &str,
+        file_path: &str,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
+
     async fn download_file(
         &self,
         file_uri: &str,

@@ -5,6 +5,7 @@ use marco_polo_rs_core::{
 };
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 use validator::Validate;
 
 lazy_static! {
@@ -24,13 +25,14 @@ pub struct CreateVideo {
     pub end_time: Option<String>,
 }
 
-impl Into<PayloadType> for CreateVideo {
-    fn into(self) -> PayloadType {
+impl CreateVideo {
+    pub fn into(self, uuid: Uuid) -> PayloadType {
         PayloadType::BatukaDownloadVideo(VideoDownloadPayload {
             video_url: self.video_url,
             start_time: self.start_time,
             end_time: self.end_time,
             video_format: self.format.unwrap_or(VideoFormat::Mkv),
+            video_id: uuid,
         })
     }
 }

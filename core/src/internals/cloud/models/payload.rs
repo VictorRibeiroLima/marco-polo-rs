@@ -1,4 +1,5 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use serde_json::json;
 use uuid::Uuid;
 
 use crate::database::models::video_storage::VideoFormat;
@@ -9,18 +10,37 @@ pub struct VideoPayload {
     pub video_id: Uuid,
 }
 
+impl VideoPayload {
+    pub fn to_json(&self) -> String {
+        serde_json::to_string(&self).unwrap()
+    }
+}
+
 #[derive(Debug, Serialize)]
 pub struct SrtPayload {
     pub video_id: Uuid,
     pub srt_uri: String,
 }
 
-#[derive(Debug, Serialize)]
+impl SrtPayload {
+    pub fn to_json(&self) -> String {
+        serde_json::to_string(&self).unwrap()
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct VideoDownloadPayload {
     pub video_url: String,
     pub start_time: Option<String>,
     pub end_time: Option<String>,
     pub video_format: VideoFormat,
+    pub video_id: Uuid,
+}
+
+impl VideoDownloadPayload {
+    pub fn to_json(&self) -> String {
+        serde_json::to_string(&self).unwrap()
+    }
 }
 
 #[derive(Debug)]
@@ -35,17 +55,26 @@ pub enum PayloadType {
 impl PayloadType {
     pub fn to_json(&self) -> String {
         match self {
-            PayloadType::BatukaVideoRawUpload(payload) => serde_json::to_string(&payload).unwrap(),
+            PayloadType::BatukaVideoRawUpload(payload) => {
+                let json = json!({"type": "BatukaVideoRawUpload", "payload": payload});
+                return json.to_string();
+            }
             PayloadType::BatukaVideoProcessedUpload(payload) => {
-                serde_json::to_string(&payload).unwrap()
+                let json = json!({"type": "BatukaVideoProcessedUpload", "payload": payload});
+                return json.to_string();
             }
             PayloadType::BatukaSrtTranscriptionUpload(payload) => {
-                serde_json::to_string(&payload).unwrap()
+                let json = json!({"type": "BatukaSrtTranscriptionUpload", "payload": payload});
+                return json.to_string();
             }
             PayloadType::BatukaSrtTranslationUpload(payload) => {
-                serde_json::to_string(&payload).unwrap()
+                let json = json!({"type": "BatukaSrtTranslationUpload", "payload": payload});
+                return json.to_string();
             }
-            PayloadType::BatukaDownloadVideo(payload) => serde_json::to_string(&payload).unwrap(),
+            PayloadType::BatukaDownloadVideo(payload) => {
+                let json = json!({"type": "BatukaDownloadVideo", "payload": payload});
+                return json.to_string();
+            }
         }
     }
 }

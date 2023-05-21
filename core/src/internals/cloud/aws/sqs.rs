@@ -1,5 +1,5 @@
 use crate::internals::cloud::{
-    models::payload::PayloadType,
+    models::payload::{PayloadType, VideoDownloadPayload},
     traits::{QueueClient, QueueMessage},
 };
 use async_trait::async_trait;
@@ -77,6 +77,10 @@ impl QueueMessage for Message {
                 let payload: S3UploadPayload = serde_json::from_str(&payload)?;
                 return Ok(PayloadType::BatukaVideoProcessedUpload(payload.into()));
             }
+            "BatukaDownloadVideo" => {
+                let payload: VideoDownloadPayload = serde_json::from_str(&payload)?;
+                return Ok(PayloadType::BatukaDownloadVideo(payload));
+            }
             _ => Err("Invalid type field".into()),
         }
     }
@@ -103,6 +107,9 @@ impl QueueClient for SQSClient {
         &self,
         payload: PayloadType,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let json_payload = payload.to_json();
+        println!("Sending message: {}", json_payload);
+
         let sqs_message_request = SendMessageRequest {
             message_body: payload.to_json(),
             queue_url: self.queue_url.clone(),
