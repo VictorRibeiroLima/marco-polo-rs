@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use reqwest::Client;
 use serde_json::Value;
 
-use crate::internals::ServiceProvider;
+use crate::{internals::ServiceProvider, SyncError};
 
 use self::payload::{request::TranscribeRequestBody, response::TranscribeSentencesResponse};
 
@@ -43,7 +43,7 @@ impl AssemblyAiClient {
 }
 
 impl ServiceProvider for AssemblyAiClient {
-    fn id() -> i32 {
+    fn id(&self) -> i32 {
         return 3;
     }
 }
@@ -53,7 +53,7 @@ impl TranscriberClient for AssemblyAiClient {
     async fn get_transcription_sentences(
         &self,
         transcription_id: &str,
-    ) -> Result<Vec<Sentence>, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<Vec<Sentence>, SyncError> {
         let url = format!("{}/transcript/{}/sentences", self.api_url, transcription_id);
 
         let resp = self
@@ -76,10 +76,7 @@ impl TranscriberClient for AssemblyAiClient {
         return Ok(sentences);
     }
 
-    async fn transcribe(
-        &self,
-        media_url: &str,
-    ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
+    async fn transcribe(&self, media_url: &str) -> Result<String, SyncError> {
         let url = format!("{}/transcript", self.api_url);
 
         let client = Client::new();

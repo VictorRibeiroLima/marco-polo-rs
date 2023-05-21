@@ -1,6 +1,9 @@
-use crate::internals::cloud::{
-    models::payload::{PayloadType, VideoDownloadPayload},
-    traits::{QueueClient, QueueMessage},
+use crate::{
+    internals::cloud::{
+        models::payload::{PayloadType, VideoDownloadPayload},
+        traits::{QueueClient, QueueMessage},
+    },
+    SyncError,
 };
 use async_trait::async_trait;
 use rusoto_sqs::{
@@ -43,10 +46,7 @@ impl QueueMessage for Message {
 
     fn to_payload(
         &self,
-    ) -> Result<
-        crate::internals::cloud::models::payload::PayloadType,
-        Box<dyn std::error::Error + Send + Sync>,
-    > {
+    ) -> Result<crate::internals::cloud::models::payload::PayloadType, SyncError> {
         let body = match &self.body {
             Some(body) => body,
             None => return Err("No body found".into()),
@@ -89,9 +89,7 @@ impl QueueMessage for Message {
 #[async_trait]
 impl QueueClient for SQSClient {
     type M = Message;
-    async fn receive_message(
-        &self,
-    ) -> Result<Option<Vec<Self::M>>, Box<dyn std::error::Error + Send + Sync>> {
+    async fn receive_message(&self) -> Result<Option<Vec<Self::M>>, SyncError> {
         let request = ReceiveMessageRequest {
             queue_url: self.queue_url.clone(),
             max_number_of_messages: Some(10),
@@ -103,10 +101,7 @@ impl QueueClient for SQSClient {
         return Ok(output.messages);
     }
 
-    async fn send_message(
-        &self,
-        payload: PayloadType,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    async fn send_message(&self, payload: PayloadType) -> Result<(), SyncError> {
         let json_payload = payload.to_json();
         println!("Sending message: {}", json_payload);
 
@@ -121,10 +116,7 @@ impl QueueClient for SQSClient {
         return Ok(());
     }
 
-    async fn delete_message(
-        &self,
-        message: Self::M,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    async fn delete_message(&self, message: Self::M) -> Result<(), SyncError> {
         let receipt_handle = match message.receipt_handle {
             Some(receipt_handle) => receipt_handle,
             None => {
@@ -147,7 +139,7 @@ impl QueueClient for SQSClient {
         &self,
         message: &Self::M,
         visibility_timeout: usize,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<(), SyncError> {
         let receipt_handle = match message.receipt_handle.as_ref() {
             Some(receipt_handle) => receipt_handle.to_string(),
             None => {

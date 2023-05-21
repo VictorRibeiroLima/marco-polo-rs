@@ -19,7 +19,7 @@ impl LocalClient {
 }
 
 impl ServiceProvider for LocalClient {
-    fn id() -> i32 {
+    fn id(&self) -> i32 {
         1
     }
 }

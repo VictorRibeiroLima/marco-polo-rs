@@ -8,14 +8,12 @@ use marco_polo_rs_core::{
         transcriber::traits::TranscriberClient,
         ServiceProvider,
     },
+    SyncError,
 };
 
-use crate::{worker::Worker, TranscriberClientInUse};
+use crate::worker::Worker;
 
-pub async fn handle(
-    worker: &Worker,
-    payload: VideoPayload,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+pub async fn handle(worker: &Worker, payload: VideoPayload) -> Result<(), SyncError> {
     let bucket_client = worker.cloud_service.bucket_client();
 
     let signed_url = bucket_client
@@ -29,7 +27,7 @@ pub async fn handle(
         CreateTranscriptionDto {
             video_id: payload.video_id,
             transcription_id: transcribe_id,
-            transcriber_id: TranscriberClientInUse::id(),
+            transcriber_id: worker.transcriber_client.id(),
         },
     )
     .await?;

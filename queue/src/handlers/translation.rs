@@ -1,6 +1,6 @@
 use marco_polo_rs_core::{
     database::{
-        models::video_storage::{VideoFormat, VideoStage},
+        models::video_storage::{StorageVideoStage, VideoFormat},
         queries::{self, storage::CreateStorageDto},
     },
     internals::{
@@ -13,7 +13,7 @@ use marco_polo_rs_core::{
     },
 };
 
-use crate::{worker::Worker, CloudServiceInUse, Message};
+use crate::{worker::Worker, Message};
 
 pub struct Handler<'a> {
     worker: &'a Worker,
@@ -36,7 +36,7 @@ impl<'a> Handler<'a> {
         let video = queries::video::find_by_id_with_storage(
             &self.worker.pool,
             &payload.video_id,
-            VideoStage::Raw,
+            StorageVideoStage::Raw,
         )
         .await?;
 
@@ -54,10 +54,10 @@ impl<'a> Handler<'a> {
             &self.worker.pool,
             CreateStorageDto {
                 format: VideoFormat::Mkv,
-                storage_id: CloudServiceInUse::id(),
+                storage_id: self.worker.cloud_service.bucket_client.id(),
                 video_id: &payload.video_id,
                 video_uri: &video_uri,
-                stage: VideoStage::Processed,
+                stage: StorageVideoStage::Processed,
             },
         )
         .await?;

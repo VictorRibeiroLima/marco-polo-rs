@@ -1,13 +1,9 @@
 use std::sync::Arc;
 
 use marco_polo_rs_core::{
-    database::models::video,
-    internals::{
-        cloud::{
-            models::payload::PayloadType,
-            traits::{BucketClient, CloudService, QueueClient, QueueMessage},
-        },
-        yt_downloader::traits::YoutubeDownloader,
+    internals::cloud::{
+        models::payload::PayloadType,
+        traits::{CloudService, QueueClient, QueueMessage},
     },
     util::queue::Queue,
 };
@@ -94,45 +90,8 @@ impl Worker {
             }
             PayloadType::BatukaDownloadVideo(payload) => {
                 println!("Worker {} handling video download...", self.id);
-
-                let video_id = payload.video_id;
-                let format = payload.video_format.to_string();
-                let video_uri = format!("videos/raw/{}.{}", video_id, format);
-
-                let video_download_result = self.video_downloader.download(payload.into()).await;
-
-                let output_file = match video_download_result {
-                    Ok(output_file) => output_file,
-                    Err(e) => {
-                        println!("Worker {} video download error: {:?}", self.id, e);
-                        return;
-                    }
-                };
-
-                let upload_result = self
-                    .cloud_service
-                    .bucket_client
-                    .upload_file_from_path(&video_uri, &output_file)
-                    .await;
-
-                match upload_result {
-                    Ok(_) => {}
-                    Err(e) => {
-                        println!("Worker {} video upload error: {:?}", self.id, e);
-                        return;
-                    }
-                }
-
-                let remove_file_result = std::fs::remove_file(output_file);
-                match remove_file_result {
-                    Ok(_) => {}
-                    Err(e) => {
-                        println!("Worker {} video remove error: {:?}", self.id, e);
-                        return;
-                    }
-                }
-
-                Ok(())
+                let download_result = handlers::download_video::handle(payload, &self).await;
+                download_result
             }
         };
 

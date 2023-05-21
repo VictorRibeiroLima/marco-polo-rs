@@ -3,8 +3,9 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::database::models::{
+    user::VideoStage,
     video::{Video, VideoWithStorage},
-    video_storage::VideoStage,
+    video_storage::StorageVideoStage,
 };
 
 use super::storage;
@@ -36,6 +37,26 @@ pub async fn create(pool: &PgPool, dto: CreateVideoDto<'_>) -> Result<(), sqlx::
         dto.user_id,
         dto.channel_id,
         dto.language,
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn change_stage(
+    pool: &PgPool,
+    video_id: &Uuid,
+    stage: VideoStage,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"
+        UPDATE videos
+        SET stage = $1
+        WHERE id = $2
+        "#,
+        stage as VideoStage,
+        video_id,
     )
     .execute(pool)
     .await?;
@@ -128,7 +149,7 @@ pub async fn find_by_id(pool: &PgPool, id: &Uuid) -> Result<Video, sqlx::Error> 
 pub async fn find_by_id_with_storage(
     pool: &PgPool,
     id: &Uuid,
-    video_stage: VideoStage,
+    video_stage: StorageVideoStage,
 ) -> Result<VideoWithStorage, sqlx::Error> {
     let video = find_by_id(pool, id).await?;
     let storage = storage::find_by_video_id_and_stage(pool, id, video_stage).await?;

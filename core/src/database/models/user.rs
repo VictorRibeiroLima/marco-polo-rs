@@ -8,6 +8,17 @@ pub enum UserRole {
     User,
 }
 
+#[derive(Debug, Serialize, Deserialize, sqlx::Type)]
+#[sqlx(type_name = "videos_video_stage", rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum VideoStage {
+    Downloading,
+    Transcribing,
+    Translating,
+    Subtitling,
+    Done,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct User {
     pub id: i32,
     pub name: String,

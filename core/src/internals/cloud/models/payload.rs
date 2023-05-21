@@ -28,7 +28,7 @@ impl SrtPayload {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct VideoDownloadPayload {
     pub video_url: String,
     pub start_time: Option<String>,

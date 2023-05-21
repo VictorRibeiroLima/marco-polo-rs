@@ -13,7 +13,7 @@ use marco_polo_rs_core::{
     },
 };
 
-use crate::{srt, worker::Worker, CloudServiceInUse, TranscriberClientInUse};
+use crate::{srt, worker::Worker};
 
 pub struct Handler<'a> {
     worker: &'a Worker,
@@ -31,8 +31,8 @@ impl<'a> Handler<'a> {
         let worker = self.worker;
         let transcriber_client = &worker.transcriber_client;
         let bucket_client = &worker.cloud_service.bucket_client();
-        let translator_id = TranscriberClientInUse::id();
-        let bucket_id = <CloudServiceInUse as CloudService>::BC::id();
+        let translator_id = worker.translator_client.id();
+        let bucket_id = worker.cloud_service.bucket_client.id();
 
         let transcription =
             queries::transcription::find_by_video_id(&worker.pool, &payload.video_id).await?;

@@ -10,7 +10,10 @@ use rusoto_s3::{
 };
 use tokio::io::AsyncReadExt;
 
-use crate::internals::{cloud::traits::BucketClient, ServiceProvider};
+use crate::{
+    internals::{cloud::traits::BucketClient, ServiceProvider},
+    SyncError,
+};
 
 #[derive(Clone)]
 pub struct S3Client {
@@ -21,7 +24,7 @@ pub struct S3Client {
 }
 
 impl S3Client {
-    pub fn new() -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+    pub fn new() -> Result<Self, SyncError> {
         println!("Creating S3 client...");
         let region = rusoto_core::Region::SaEast1;
         let bucket_name = std::env::var("AWS_BUCKET_NAME")?;
@@ -38,18 +41,14 @@ impl S3Client {
 }
 
 impl ServiceProvider for S3Client {
-    fn id() -> i32 {
+    fn id(&self) -> i32 {
         2
     }
 }
 
 #[async_trait]
 impl BucketClient for S3Client {
-    async fn upload_file(
-        &self,
-        file_uri: &str,
-        file: Vec<u8>,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    async fn upload_file(&self, file_uri: &str, file: Vec<u8>) -> Result<(), SyncError> {
         let request = PutObjectRequest {
             bucket: self.bucket_name.clone(),
             key: file_uri.to_string(),
@@ -66,7 +65,7 @@ impl BucketClient for S3Client {
         &self,
         file_uri: &str,
         file_path: &str,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<(), SyncError> {
         const PART_SIZE: usize = 5 * 1024 * 1024; // 5MB
 
         // Create a new multipart upload
@@ -139,10 +138,7 @@ impl BucketClient for S3Client {
         Ok(())
     }
 
-    async fn create_signed_upload_url(
-        &self,
-        expiration: u16,
-    ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
+    async fn create_signed_upload_url(&self, expiration: u16) -> Result<String, SyncError> {
         let uuid = uuid::Uuid::new_v4().to_string();
         let file_name = format!("videos/raw/{}.mkv", uuid);
         return self
@@ -154,7 +150,7 @@ impl BucketClient for S3Client {
         &self,
         file_uri: &str,
         expiration: u16,
-    ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<String, SyncError> {
         let request = PutObjectRequest {
             bucket: self.bucket_name.clone(),
             key: file_uri.to_string(),
@@ -172,7 +168,7 @@ impl BucketClient for S3Client {
         &self,
         file_uri: &str,
         expiration: Option<u16>,
-    ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<String, SyncError> {
         let expiration = match expiration {
             Some(expiration) => std::time::Duration::from_secs(expiration as u64),
             None => std::time::Duration::from_secs(60 * 60 * 24 * 7),
@@ -190,10 +186,7 @@ impl BucketClient for S3Client {
         return Ok(url);
     }
 
-    async fn download_file(
-        &self,
-        file_path: &str,
-    ) -> Result<Vec<u8>, Box<dyn std::error::Error + Send + Sync>> {
+    async fn download_file(&self, file_path: &str) -> Result<Vec<u8>, SyncError> {
         let request = GetObjectRequest {
             bucket: self.bucket_name.clone(),
             key: file_path.to_string(),
@@ -217,7 +210,7 @@ impl BucketClient for S3Client {
         &self,
         file_path: &str,
         destination_path: &str,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<(), SyncError> {
         let request = GetObjectRequest {
             bucket: self.bucket_name.clone(),
             key: file_path.to_string(),

@@ -15,7 +15,7 @@ impl TestClient {
 }
 
 impl ServiceProvider for TestClient {
-    fn id() -> i32 {
+    fn id(&self) -> i32 {
         return 1;
     }
 }
@@ -166,7 +166,7 @@ impl TestCloudService {
 }
 
 impl ServiceProvider for TestCloudService {
-    fn id() -> i32 {
+    fn id(&self) -> i32 {
         return 1;
     }
 }

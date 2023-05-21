@@ -5,5 +5,5 @@ pub mod translator;
 pub mod yt_downloader;
 
 pub trait ServiceProvider {
-    fn id() -> i32;
+    fn id(&self) -> i32;
 }
