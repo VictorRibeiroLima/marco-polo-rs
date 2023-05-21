@@ -1,5 +1,3 @@
-use std::string;
-
 use crate::internals::cloud::{
     models::payload::PayloadType,
     traits::{QueueClient, QueueMessage},

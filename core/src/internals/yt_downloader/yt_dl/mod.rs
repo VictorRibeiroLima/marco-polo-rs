@@ -9,6 +9,12 @@ use uuid::Uuid;
 #[derive(Clone)]
 pub struct YtDl;
 
+impl YtDl {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
 #[async_trait]
 impl YoutubeDownloader for YtDl {
     async fn download(

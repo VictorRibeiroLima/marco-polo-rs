@@ -9,36 +9,19 @@ use marco_polo_rs_core::{
             traits::{CloudService, QueueClient},
         },
         subtitler::traits::SubtitlerClient,
-        transcriber::traits::TranscriberClient,
-        translator::traits::TranslatorClient,
+        ServiceProvider,
     },
 };
 
-use crate::worker::Worker;
+use crate::{worker::Worker, CloudServiceInUse, Message};
 
-pub struct Handler<'a, CS, TC, TLC, SC>
-where
-    CS: CloudService,
-    TC: TranscriberClient,
-    TLC: TranslatorClient,
-
-    SC: SubtitlerClient<CS::BC>,
-{
-    worker: &'a Worker<CS, TC, TLC, SC>,
-    message: &'a <<CS as CloudService>::QC as QueueClient>::M,
+pub struct Handler<'a> {
+    worker: &'a Worker,
+    message: &'a Message,
 }
 
-impl<'a, CS, TC, TLC, SC> Handler<'a, CS, TC, TLC, SC>
-where
-    CS: CloudService,
-    TC: TranscriberClient,
-    TLC: TranslatorClient,
-    SC: SubtitlerClient<CS::BC>,
-{
-    pub fn new(
-        worker: &'a Worker<CS, TC, TLC, SC>,
-        message: &'a <<CS as CloudService>::QC as QueueClient>::M,
-    ) -> Self {
+impl<'a> Handler<'a> {
+    pub fn new(worker: &'a Worker, message: &'a Message) -> Self {
         Self { worker, message }
     }
 
@@ -71,7 +54,7 @@ where
             &self.worker.pool,
             CreateStorageDto {
                 format: VideoFormat::Mkv,
-                storage_id: CS::id(),
+                storage_id: CloudServiceInUse::id(),
                 video_id: &payload.video_id,
                 video_uri: &video_uri,
                 stage: VideoStage::Processed,
