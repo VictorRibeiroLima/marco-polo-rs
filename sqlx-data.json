@@ -152,7 +152,7 @@
     },
     "query": "\n        SELECT \n            id,\n            name,\n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        FROM channels WHERE id = $1\n        "
   },
-  "48d66703c42081ca8127315a58338ac8c0c3939c42ead9d055eda737221d9515": {
+  "38dd3d61f8db48fef0909af654ef39d9539d4da662a76f4d48e00bad6612f24d": {
     "describe": {
       "columns": [
         {
@@ -193,7 +193,7 @@
           }
         },
         {
-          "name": "stage: VideoStage",
+          "name": "stage: StorageVideoStage",
           "ordinal": 5,
           "type_info": {
             "Custom": {
@@ -251,7 +251,7 @@
         ]
       }
     },
-    "query": "\n        SELECT \n            id,\n            video_id as \"video_id: Uuid\",\n            storage_id,\n            video_path,\n            format as \"format: VideoFormat\",\n            stage as \"stage: VideoStage\",\n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        FROM videos_storages\n            WHERE video_id = $1 AND stage = $2\n        "
+    "query": "\n        SELECT \n            id,\n            video_id as \"video_id: Uuid\",\n            storage_id,\n            video_path,\n            format as \"format: VideoFormat\",\n            stage as \"stage: StorageVideoStage\",\n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        FROM videos_storages\n            WHERE video_id = $1 AND stage = $2\n        "
   },
   "6f0e11a893c806cfe38096b7c95ac3c27333399cc32eb6863e66d35a546176ba": {
     "describe": {
@@ -488,6 +488,32 @@
       }
     },
     "query": "\n        SELECT \n            v.id as \"id: Uuid\", \n            v.title,\n            v.description,\n            v.url,\n            v.language,\n            v.user_id,\n            v.channel_id,\n            v.created_at as \"created_at: DateTime<Utc>\",\n            v.updated_at as \"updated_at: DateTime<Utc>\",\n            v.deleted_at as \"deleted_at: DateTime<Utc>\",\n            v.uploaded_at as \"uploaded_at: DateTime<Utc>\"\n        FROM \n            videos v\n        WHERE \n            v.id = $1\n    "
+  },
+  "b1ab23585c9c9541a7757e186033b913b745e3a58040265fdde13a14dbd881d4": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "DOWNLOADING",
+                  "TRANSCRIBING",
+                  "TRANSLATING",
+                  "SUBTITLING",
+                  "DONE"
+                ]
+              },
+              "name": "videos_video_stages"
+            }
+          },
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n        UPDATE videos\n        SET stage = $1\n        WHERE id = $2\n        "
   },
   "babea2c4398c8010f490603c2cf328ae398a13093d79253e5007b58fbea4628a": {
     "describe": {
