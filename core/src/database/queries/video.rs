@@ -191,4 +191,12 @@ mod test {
 
         assert_eq!(find_success.id, id);
     }
+
+    #[sqlx::test(migrations = "../migrations", fixtures("videos"))]
+    async fn test_not_found_by_video_id(pool: PgPool) {
+        let id = uuid::Uuid::from_str("4fa91b48-f370-11ed-a05b-0242ac120003").unwrap();
+        let find_not_success = super::find_by_id(&pool, &id).await;
+
+        assert!(find_not_success.is_err());
+    }
 }

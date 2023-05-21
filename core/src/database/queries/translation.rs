@@ -49,7 +49,8 @@ mod test {
             path: "../translation",
         };
 
-        create(&pool, dto).await;
+        let test = create(&pool, dto).await;
+        assert!(test.is_ok());
 
         let count = sqlx::query!(
             "SELECT COUNT(*) AS count FROM videos_translations WHERE video_id = $1",
