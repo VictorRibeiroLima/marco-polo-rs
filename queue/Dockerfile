@@ -63,9 +63,6 @@ RUN apk add openssl-dev
 # Install pkgconfig
 RUN apk add --no-cache pkgconfig
 
-# Install curl
-RUN apk add --no-cache curl
-
 # Install musl
 RUN apk add --no-cache musl
 
@@ -74,6 +71,12 @@ RUN apk add --no-cache ffmpeg
 
 # Install arial font
 RUN apk add --no-cache ttf-dejavu
+
+# Install yt-dlp
+RUN apk add --no-cache python3
+RUN apk add --no-cache py3-pip
+RUN pip3 install --upgrade pip
+RUN pip3 install yt-dlp
 
 # Copy .env file
 COPY .env .env
