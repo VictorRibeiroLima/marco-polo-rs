@@ -19,9 +19,18 @@ pub async fn write_to_temp_files<BC: BucketClient + Sync>(
     bucket_client
         .download_file_to_path(&video_uri, video_path.to_str().unwrap())
         .await?;
-    bucket_client
+    let result = bucket_client
         .download_file_to_path(&srt_uri, srt_path.to_str().unwrap())
-        .await?;
+        .await;
+
+    match result {
+        Ok(_) => {}
+        Err(e) => {
+            temp_file_paths.push(video_path);
+            delete_temp_files(temp_file_paths)?;
+            return Err(e);
+        }
+    }
 
     temp_file_paths.push(video_path);
     temp_file_paths.push(srt_path);
@@ -65,30 +74,15 @@ pub fn _read_output_file(
     Ok(output_bytes)
 }
 
-/*
-    This is just stupid.
-    For some reason when i try to use the bucket_client to upload the file directly it fails with:
-        HttpDispatch(HttpDispatchError { message: "Error during dispatch: connection closed before message completed" })
-    For now i'm just using curl to upload the file, but i'll have to fix this later.
-
-    ps: On a second run of the program it works on the file created on the first run, if i comment the ffmpeg call
-*/
 pub async fn upload_output_file<BC: BucketClient + Sync>(
     bucket_client: &BC,
     file: &PathBuf,
     video_id: &str,
 ) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
     let output_uri = format!("videos/processed/{}.{}", video_id, "mkv");
-    let url = bucket_client
-        .create_signed_upload_url_with_uri(&output_uri, 3600)
+    bucket_client
+        .upload_file_from_path(&output_uri, file.to_str().unwrap())
         .await?;
-
-    let curl_command = format!("curl -T {} '{}'", file.to_str().unwrap(), url);
-    let output = Command::new("sh").arg("-c").arg(curl_command).output()?;
-    if !output.status.success() {
-        println!("upload output {:?}", output);
-        return Err("Failed to upload file".into());
-    }
 
     Ok(())
 }

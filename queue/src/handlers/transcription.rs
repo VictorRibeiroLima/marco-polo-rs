@@ -1,7 +1,10 @@
 use futures::future::join_all;
 
 use marco_polo_rs_core::{
-    database::queries::{self, translation::CreateTranslationDto},
+    database::{
+        models::user::VideoStage,
+        queries::{self, translation::CreateTranslationDto},
+    },
     internals::{
         cloud::{
             models::payload::SrtPayload,
@@ -33,6 +36,9 @@ impl<'a> Handler<'a> {
         let bucket_client = &worker.cloud_service.bucket_client();
         let translator_id = worker.translator_client.id();
         let bucket_id = worker.cloud_service.bucket_client.id();
+
+        queries::video::change_stage(&worker.pool, &payload.video_id, VideoStage::Translating)
+            .await?;
 
         let transcription =
             queries::transcription::find_by_video_id(&worker.pool, &payload.video_id).await?;

@@ -40,12 +40,24 @@ impl<BC: BucketClient> SubtitlerClient<BC> for LocalClient {
         let temp_file_paths =
             util::write_to_temp_files(bucket_client, &temp_dir, &video_id).await?;
 
-        util::call_ffmpeg(
+        match util::call_ffmpeg(
             &temp_file_paths[0],
             &temp_file_paths[1],
             &temp_file_paths[2],
-        )?;
-        util::upload_output_file(bucket_client, &temp_file_paths[2], &video_id).await?;
+        ) {
+            Ok(_) => {}
+            Err(e) => {
+                util::delete_temp_files(temp_file_paths)?;
+                return Err(e);
+            }
+        }
+        match util::upload_output_file(bucket_client, &temp_file_paths[2], &video_id).await {
+            Ok(_) => {}
+            Err(e) => {
+                util::delete_temp_files(temp_file_paths)?;
+                return Err(e);
+            }
+        }
         util::delete_temp_files(temp_file_paths)?; // Invert this to delete first, then upload when the upload method start using a Vec<u8> instead of a PathBuf
         Ok(None)
     }

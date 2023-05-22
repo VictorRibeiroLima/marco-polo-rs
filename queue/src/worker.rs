@@ -90,7 +90,8 @@ impl Worker {
             }
             PayloadType::BatukaDownloadVideo(payload) => {
                 println!("Worker {} handling video download...", self.id);
-                let download_result = handlers::download_video::handle(payload, &self).await;
+                let download_result =
+                    handlers::download_video::handle(payload, &self, &message).await;
                 download_result
             }
         };

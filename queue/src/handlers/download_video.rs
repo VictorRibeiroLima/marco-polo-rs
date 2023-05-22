@@ -1,23 +1,36 @@
 use marco_polo_rs_core::{
     database::{
-        models::video_storage::StorageVideoStage,
+        models::{user::VideoStage, video_storage::StorageVideoStage},
         queries::{self, storage::CreateStorageDto},
     },
     internals::{
-        cloud::{models::payload::VideoDownloadPayload, traits::BucketClient},
+        cloud::{
+            models::payload::VideoDownloadPayload,
+            traits::{BucketClient, CloudService, QueueClient},
+        },
         yt_downloader::traits::YoutubeDownloader,
         ServiceProvider,
     },
     SyncError,
 };
 
-use crate::worker::Worker;
+use crate::{worker::Worker, Message};
 
-pub async fn handle(payload: VideoDownloadPayload, worker: &Worker) -> Result<(), SyncError> {
+pub async fn handle(
+    payload: VideoDownloadPayload,
+    worker: &Worker,
+    message: &Message,
+) -> Result<(), SyncError> {
     let video_id = payload.video_id;
     let format = payload.video_format.clone();
     let format_extension = format.to_string();
     let video_uri = format!("videos/raw/{}.{}", video_id, format_extension);
+
+    worker
+        .cloud_service
+        .queue_client()
+        .change_message_visibility(message, 4000) // TODO: Make this configurable
+        .await?;
 
     let output_file = worker.video_downloader.download(payload.into()).await?;
 
@@ -38,6 +51,8 @@ pub async fn handle(payload: VideoDownloadPayload, worker: &Worker) -> Result<()
     };
 
     queries::storage::create(&worker.pool, storage_dto).await?;
+
+    queries::video::change_stage(&worker.pool, &video_id, VideoStage::Transcribing).await?;
 
     Ok(())
 }
