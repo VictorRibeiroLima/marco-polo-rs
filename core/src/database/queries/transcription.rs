@@ -121,4 +121,23 @@ mod test {
 
         assert_eq!(test.id, id);
     }
+
+    #[sqlx::test(migrations = "../migrations", fixtures("videos"))]
+    async fn test_not_found_by_transcription_id(pool: PgPool) {
+        let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
+        let transcription_id = "Test";
+
+        let dto = super::CreateTranscriptionDto {
+            video_id: id,
+            transcription_id: transcription_id.to_string(),
+            transcriber_id: 1,
+        };
+
+        let result = super::create(&pool, dto).await;
+        assert!(result.is_ok());
+
+        let test = find_by_transcription_id(&pool, "Error").await;
+
+        assert!(test.is_err());
+    }
 }
