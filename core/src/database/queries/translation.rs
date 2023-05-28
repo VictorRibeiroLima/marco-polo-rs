@@ -62,4 +62,20 @@ mod test {
 
         assert_eq!(count.count.unwrap(), 1);
     }
+
+    #[sqlx::test(migrations = "../migrations")]
+    async fn test_create_translation_if_foreign_key(pool: PgPool) {
+        let id = Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
+
+        let dto = CreateTranslationDto {
+            video_id: &id,
+            translator_id: 1234,
+            translation_id: Some(String::from("id_translation")),
+            storage_id: 5678,
+            path: "../translation",
+        };
+
+        let test = create(&pool, dto).await;
+        assert!(test.is_err());
+    }
 }
