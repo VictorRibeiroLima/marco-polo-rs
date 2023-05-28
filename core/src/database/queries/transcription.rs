@@ -59,7 +59,7 @@ mod test {
 
     use sqlx::PgPool;
 
-    use crate::database::queries::{subtitling::find_by_video_id, video::find_by_transcription_id};
+    use crate::database::queries::video::find_by_transcription_id;
 
     #[sqlx::test(migrations = "../migrations", fixtures("videos"))]
     async fn test_create_transcription(pool: PgPool) {
@@ -122,9 +122,9 @@ mod test {
     )]
     async fn test_not_found_by_transcription_id(pool: PgPool) {
         let transcription_id = "Transcription_Test_Err";
-        let find_not_sucess = find_by_transcription_id(&pool, transcription_id).await;
+        let find_not_success = find_by_transcription_id(&pool, transcription_id).await;
 
-        assert!(find_not_sucess.is_err());
+        assert!(find_not_success.is_err());
     }
 
     #[sqlx::test(
@@ -136,5 +136,15 @@ mod test {
         let find_success = super::find_by_video_id(&pool, &id).await;
 
         assert!(find_success.is_ok());
+    }
+    #[sqlx::test(
+        migrations = "../migrations",
+        fixtures("videos", "videos_transcriptions")
+    )]
+    async fn test_not_found_transcription_by_video_id(pool: PgPool) {
+        let id = uuid::Uuid::from_str("805b57d2-f221-11ed-a05b-0242ac120003").unwrap();
+        let find_not_success = super::find_by_video_id(&pool, &id).await;
+
+        assert!(find_not_success.is_err());
     }
 }
