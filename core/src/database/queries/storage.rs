@@ -59,11 +59,13 @@ pub async fn find_by_video_id_and_stage(
 
     Ok(result)
 }
-
+#[cfg(test)]
 mod test {
-    use crate::database::models::video_storage::{VideoFormat, VideoStage};
-    use sqlx::PgPool;
     use std::str::FromStr;
+
+    use sqlx::PgPool;
+
+    use crate::database::models::video_storage::{VideoFormat, VideoStage};
 
     #[sqlx::test(migrations = "../migrations", fixtures("videos", "service_providers"))]
     async fn test_create_storage_mp4_raw(pool: PgPool) {

@@ -208,6 +208,7 @@ mod test {
         migrations = "../migrations",
         fixtures("videos", "service_providers", "video_storage")
     )]
+
     async fn test_find_by_id_with_storage(pool: PgPool) {
         let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
         let video_stage = VideoStage::Raw;

@@ -59,7 +59,9 @@ mod test {
 
     use sqlx::PgPool;
 
-    use crate::database::queries::video::find_by_transcription_id;
+    use crate::database::queries::video::{
+        find_by_transcription_id, update_transcription, UpdateVideoTranscriptionDto,
+    };
 
     #[sqlx::test(migrations = "../migrations", fixtures("videos"))]
     async fn test_create_transcription(pool: PgPool) {
@@ -146,5 +148,35 @@ mod test {
         let find_not_success = super::find_by_video_id(&pool, &id).await;
 
         assert!(find_not_success.is_err());
+    }
+
+    #[sqlx::test(
+        migrations = "../migrations",
+        fixtures("videos", "videos_transcriptions")
+    )]
+    async fn test_update_transcription(pool: PgPool) {
+        let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
+        let storage_id = 5678;
+        let path = "/new/path";
+
+        let dto = UpdateVideoTranscriptionDto {
+            video_id: id,
+            storage_id,
+            path: path.to_string(),
+        };
+
+        let result = update_transcription(&pool, dto).await;
+        assert!(result.is_ok());
+
+        let count = sqlx::query!(
+            "SELECT COUNT(*) FROM videos_transcriptions where storage_id = $1",
+            5678
+        )
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+
+        assert!(count.count.is_some());
+        assert_eq!(count.count.unwrap(), 1);
     }
 }
