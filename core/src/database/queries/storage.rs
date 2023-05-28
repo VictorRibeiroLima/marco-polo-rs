@@ -90,4 +90,15 @@ mod test {
 
         assert_eq!(count.count.unwrap(), 1);
     }
+
+    #[sqlx::test(
+        migrations = "../migrations",
+        fixtures("videos", "service_providers", "video_storage")
+    )]
+    async fn test_find_by_video_id_and_stage(pool: PgPool) {
+        let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
+
+        let find_success = super::find_by_video_id_and_stage(&pool, &id, VideoStage::Raw).await;
+        assert!(find_success.is_ok());
+    }
 }
