@@ -2,8 +2,7 @@ use futures::future::join_all;
 
 use marco_polo_rs_core::{
     database::{
-        models::user::VideoStage,
-        queries::{self, translation::CreateTranslationDto},
+        queries::{self, translation::CreateTranslationDto}, models::video::VideoStage,
     },
     internals::{
         cloud::{

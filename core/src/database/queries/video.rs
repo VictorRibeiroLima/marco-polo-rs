@@ -3,8 +3,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::database::models::{
-    user::VideoStage,
-    video::{Video, VideoWithStorage},
+    video::{Video, VideoWithStorage, VideoStage},
     video_storage::StorageVideoStage,
 };
 

@@ -1,6 +1,6 @@
 use marco_polo_rs_core::{
     database::{
-        models::{user::VideoStage, video_storage::StorageVideoStage},
+        models::{video_storage::StorageVideoStage, video::VideoStage},
         queries::{self, storage::CreateStorageDto},
     },
     internals::{

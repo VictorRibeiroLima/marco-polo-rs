@@ -23,3 +23,13 @@ pub struct VideoWithStorage {
     pub video: Video,
     pub storage: VideosStorage,
 }
+
+#[derive(Debug, Serialize, Deserialize, sqlx::Type)]
+#[sqlx(type_name = "videos_video_stages", rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum VideoStage {
+    Downloading,
+    Transcribing,
+    Translating,
+    Subtitling,
+    Done,
+}
