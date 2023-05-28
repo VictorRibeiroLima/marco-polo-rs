@@ -143,6 +143,10 @@ mod test {
 
     use sqlx::PgPool;
 
+    use crate::database::{
+        models::video_storage::VideoStage, queries::video::find_by_id_with_storage,
+    };
+
     #[sqlx::test(migrations = "../migrations", fixtures("user", "channel"))]
     async fn test_create_video(pool: PgPool) {
         let id = uuid::Uuid::new_v4();
@@ -198,5 +202,18 @@ mod test {
         let find_not_success = super::find_by_id(&pool, &id).await;
 
         assert!(find_not_success.is_err());
+    }
+
+    #[sqlx::test(
+        migrations = "../migrations",
+        fixtures("videos", "service_providers", "video_storage")
+    )]
+    async fn test_find_by_id_with_storage(pool: PgPool) {
+        let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
+        let video_stage = VideoStage::Raw;
+
+        let find_success = find_by_id_with_storage(&pool, &id, video_stage).await;
+
+        assert!(find_success.is_ok());
     }
 }
