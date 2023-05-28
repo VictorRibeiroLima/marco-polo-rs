@@ -67,7 +67,7 @@ mod test {
 
         let dto = super::CreateTranscriptionDto {
             video_id: id,
-            transcription_id: "Teste".to_string(),
+            transcription_id: "Transcription_Test_Ok".to_string(),
             transcriber_id: 1,
         };
 
@@ -93,7 +93,7 @@ mod test {
 
         let dto = super::CreateTranscriptionDto {
             video_id: id,
-            transcription_id: "Test".to_string(),
+            transcription_id: "Transcription_Test_Err".to_string(),
             transcriber_id: 1,
         };
 
@@ -101,43 +101,29 @@ mod test {
 
         assert!(result.is_err());
     }
-    #[sqlx::test(migrations = "../migrations", fixtures("videos"))]
+    #[sqlx::test(
+        migrations = "../migrations",
+        fixtures("videos", "videos_transcriptions")
+    )]
     async fn test_find_by_transcription_id(pool: PgPool) {
         let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
-        let transcription_id = "Test";
+        let transcription_id = "Transcription_Test_Ok";
 
-        let dto = super::CreateTranscriptionDto {
-            video_id: id,
-            transcription_id: transcription_id.to_string(),
-            transcriber_id: 1,
-        };
-
-        let result = super::create(&pool, dto).await;
-        assert!(result.is_ok());
-
-        let test = find_by_transcription_id(&pool, transcription_id)
+        let find_sucess = find_by_transcription_id(&pool, transcription_id)
             .await
             .unwrap();
 
-        assert_eq!(test.id, id);
+        assert_eq!(find_sucess.id, id);
     }
 
-    #[sqlx::test(migrations = "../migrations", fixtures("videos"))]
+    #[sqlx::test(
+        migrations = "../migrations",
+        fixtures("videos", "videos_transcriptions")
+    )]
     async fn test_not_found_by_transcription_id(pool: PgPool) {
-        let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
-        let transcription_id = "Test";
+        let transcription_id = "Transcription_Test_Err";
+        let find_not_sucess = find_by_transcription_id(&pool, transcription_id).await;
 
-        let dto = super::CreateTranscriptionDto {
-            video_id: id,
-            transcription_id: transcription_id.to_string(),
-            transcriber_id: 1,
-        };
-
-        let result = super::create(&pool, dto).await;
-        assert!(result.is_ok());
-
-        let test = find_by_transcription_id(&pool, "Error").await;
-
-        assert!(test.is_err());
+        assert!(find_not_sucess.is_err());
     }
 }
