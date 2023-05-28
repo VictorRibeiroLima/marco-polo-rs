@@ -84,7 +84,5 @@ COPY .env .env
 # Copy the binary from the builder container
 COPY --from=builder /target/release/marco-polo-rs-queue /usr/local/bin/marco-polo-rs-queue
 
-EXPOSE 8080
-
 # Run the binary
 CMD ["marco-polo-rs-queue"]
