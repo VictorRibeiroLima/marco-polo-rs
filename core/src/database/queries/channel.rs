@@ -63,16 +63,16 @@ mod test {
     }
 
     #[sqlx::test(migrations = "../migrations", fixtures("channel"))]
-    async fn find_by_channel_id(pool: PgPool) {
+    async fn test_find_by_id(pool: PgPool) {
         let channel_id = 666;
-        let find_sucess = find_by_id(&pool, channel_id).await;
+        let find_success = find_by_id(&pool, channel_id).await;
 
-        assert!(find_sucess.is_ok());
-        assert_eq!(find_sucess.unwrap().id, channel_id);
+        assert!(find_success.is_ok());
+        assert_eq!(find_success.unwrap().id, channel_id);
     }
 
     #[sqlx::test(migrations = "../migrations", fixtures("channel"))]
-    async fn find_by_invalid_channel_id(pool: PgPool) {
+    async fn test_not_find_by_id(pool: PgPool) {
         let invalid_channel_id = 999;
         let find_error = find_by_id(&pool, invalid_channel_id).await;
         assert!(find_error.is_err());

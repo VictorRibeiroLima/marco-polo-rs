@@ -68,12 +68,12 @@ mod test {
     use crate::database::models::video_storage::{VideoFormat, VideoStage};
 
     #[sqlx::test(migrations = "../migrations", fixtures("videos", "service_providers"))]
-    async fn test_create_storage_mp4_raw(pool: PgPool) {
+    async fn test_create_storage(pool: PgPool) {
         let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
 
         let dto = super::CreateStorageDto {
             video_id: &id,
-            video_uri: "https://example.com/video.mp4",
+            video_uri: "www.video.com",
             storage_id: 1234,
             format: VideoFormat::Mp4,
             stage: VideoStage::Raw,
