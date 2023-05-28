@@ -59,7 +59,7 @@ mod test {
 
     use sqlx::PgPool;
 
-    use crate::database::queries::video::find_by_transcription_id;
+    use crate::database::queries::{subtitling::find_by_video_id, video::find_by_transcription_id};
 
     #[sqlx::test(migrations = "../migrations", fixtures("videos"))]
     async fn test_create_transcription(pool: PgPool) {
@@ -125,5 +125,16 @@ mod test {
         let find_not_sucess = find_by_transcription_id(&pool, transcription_id).await;
 
         assert!(find_not_sucess.is_err());
+    }
+
+    #[sqlx::test(
+        migrations = "../migrations",
+        fixtures("videos", "videos_transcriptions")
+    )]
+    async fn test_find_transcription_by_video_id(pool: PgPool) {
+        let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
+        let find_success = super::find_by_video_id(&pool, &id).await;
+
+        assert!(find_success.is_ok());
     }
 }
