@@ -200,7 +200,7 @@ mod test {
     }
 
     #[sqlx::test(migrations = "../migrations", fixtures("videos"))]
-    async fn test_not_found_by_video_id(pool: PgPool) {
+    async fn test_not_find_by_video_id(pool: PgPool) {
         let id = uuid::Uuid::from_str("4fa91b48-f370-11ed-a05b-0242ac120003").unwrap();
         let find_not_success = super::find_by_id(&pool, &id).await;
 
@@ -240,7 +240,7 @@ mod test {
         migrations = "../migrations",
         fixtures("videos", "videos_transcriptions")
     )]
-    async fn test_not_found_by_transcription_id(pool: PgPool) {
+    async fn test_not_find_by_transcription_id(pool: PgPool) {
         let transcription_id = "Transcription_Test_Err";
         let find_not_success = super::find_by_transcription_id(&pool, transcription_id).await;
 
@@ -267,7 +267,7 @@ mod test {
 
         let count = sqlx::query!(
             "SELECT COUNT(*) FROM videos_transcriptions where storage_id = $1",
-            5678
+            storage_id
         )
         .fetch_one(&pool)
         .await
