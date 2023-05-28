@@ -9,7 +9,7 @@ use uuid::Uuid;
 use validator::Validate;
 
 lazy_static! {
-    static ref YOUTUBE_URL: Regex = Regex::new(r#"^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$"#).unwrap();
+    static ref YOUTUBE_URL: Regex = Regex::new(r#"^((?:https?:)?//)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(/(?:[\w\-]+\?v=|embed/|v/)?)([\w\-]+)(\S+)?$"#).unwrap();
 }
 
 #[derive(Debug, Validate, Deserialize, Serialize, Clone)]
