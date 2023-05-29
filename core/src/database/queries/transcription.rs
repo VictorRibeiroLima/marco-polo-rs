@@ -106,9 +106,9 @@ mod test {
     )]
     async fn test_find_by_video_id(pool: PgPool) {
         let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
-        let find_success = super::find_by_video_id(&pool, &id).await;
+        let find_success = super::find_by_video_id(&pool, &id).await.unwrap();
 
-        assert!(find_success.is_ok());
+        assert_eq!(find_success.video_id, id);
     }
     #[sqlx::test(
         migrations = "../migrations",
