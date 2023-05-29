@@ -122,4 +122,15 @@ mod test {
 
         assert_eq!(find_success.video_id, id);
     }
+
+    #[sqlx::test(
+        migrations = "../migrations",
+        fixtures("videos", "service_providers", "video_storage")
+    )]
+    async fn test_not_find_by_video_id_and_stage(pool: PgPool) {
+        let id = uuid::Uuid::from_str("805b57d2-f221-11ed-a05b-0242ac120003").unwrap(); //Invalid Uuid for the test
+        let find_error = super::find_by_video_id_and_stage(&pool, &id, VideoStage::Raw).await;
+
+        assert!(find_error.is_err());
+    }
 }

@@ -201,7 +201,7 @@ mod test {
 
     #[sqlx::test(migrations = "../migrations", fixtures("videos"))]
     async fn test_not_find_by_video_id(pool: PgPool) {
-        let id = uuid::Uuid::from_str("4fa91b48-f370-11ed-a05b-0242ac120003").unwrap();
+        let id = uuid::Uuid::from_str("4fa91b48-f370-11ed-a05b-0242ac120003").unwrap(); //Invalid Uuid for the test
         let find_not_success = super::find_by_id(&pool, &id).await;
 
         assert!(find_not_success.is_err());
@@ -231,9 +231,8 @@ mod test {
     )]
 
     async fn test_not_find_by_id_with_storage(pool: PgPool) {
-        let id = uuid::Uuid::from_str("805b57d2-f221-11ed-a05b-0242ac120003").unwrap();
+        let id = uuid::Uuid::from_str("805b57d2-f221-11ed-a05b-0242ac120003").unwrap(); //Invalid Uuid for the test
         let video_stage = VideoStage::Raw;
-        let storage_id = 1234;
 
         let find_error = find_by_id_with_storage(&pool, &id, video_stage).await;
 
