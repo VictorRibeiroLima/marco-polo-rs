@@ -215,10 +215,14 @@ mod test {
     async fn test_find_by_id_with_storage(pool: PgPool) {
         let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
         let video_stage = VideoStage::Raw;
+        let storage_id = 1234;
 
-        let find_success = find_by_id_with_storage(&pool, &id, video_stage).await;
+        let find_success = find_by_id_with_storage(&pool, &id, video_stage)
+            .await
+            .unwrap();
 
-        assert!(find_success.is_ok());
+        assert_eq!(find_success.video.id, id);
+        assert_eq!(find_success.storage.storage_id, storage_id);
     }
 
     #[sqlx::test(
@@ -229,11 +233,11 @@ mod test {
         let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
         let transcription_id = "Transcription_Test_Ok";
 
-        let find_sucess = super::find_by_transcription_id(&pool, transcription_id)
+        let find_success = super::find_by_transcription_id(&pool, transcription_id)
             .await
             .unwrap();
 
-        assert_eq!(find_sucess.id, id);
+        assert_eq!(find_success.id, id);
     }
 
     #[sqlx::test(

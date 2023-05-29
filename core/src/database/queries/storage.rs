@@ -93,6 +93,22 @@ mod test {
         assert_eq!(count.count.unwrap(), 1);
     }
 
+    #[sqlx::test(migrations = "../migrations")]
+    async fn test_create_storage_if_foreign_key(pool: PgPool) {
+        let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
+
+        let dto = super::CreateStorageDto {
+            video_id: &id,
+            video_uri: "www.video.com",
+            storage_id: 1234,
+            format: VideoFormat::Mp4,
+            stage: VideoStage::Raw,
+        };
+
+        let result = super::create(&pool, dto).await;
+        assert!(result.is_err());
+    }
+
     #[sqlx::test(
         migrations = "../migrations",
         fixtures("videos", "service_providers", "video_storage")
@@ -100,7 +116,10 @@ mod test {
     async fn test_find_by_video_id_and_stage(pool: PgPool) {
         let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
 
-        let find_success = super::find_by_video_id_and_stage(&pool, &id, VideoStage::Raw).await;
-        assert!(find_success.is_ok());
+        let find_success = super::find_by_video_id_and_stage(&pool, &id, VideoStage::Raw)
+            .await
+            .unwrap();
+
+        assert_eq!(find_success.video_id, id);
     }
 }
