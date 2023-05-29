@@ -227,6 +227,21 @@ mod test {
 
     #[sqlx::test(
         migrations = "../migrations",
+        fixtures("videos", "service_providers", "video_storage")
+    )]
+
+    async fn test_not_find_by_id_with_storage(pool: PgPool) {
+        let id = uuid::Uuid::from_str("805b57d2-f221-11ed-a05b-0242ac120003").unwrap();
+        let video_stage = VideoStage::Raw;
+        let storage_id = 1234;
+
+        let find_error = find_by_id_with_storage(&pool, &id, video_stage).await;
+
+        assert!(find_error.is_err());
+    }
+
+    #[sqlx::test(
+        migrations = "../migrations",
         fixtures("videos", "videos_transcriptions")
     )]
     async fn test_find_by_transcription_id(pool: PgPool) {
