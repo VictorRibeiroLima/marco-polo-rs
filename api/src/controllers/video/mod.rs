@@ -4,63 +4,47 @@ use actix_web::{
 };
 use marco_polo_rs_core::{
     database::queries,
-    internals::{
-        cloud::{aws::s3::S3Client, traits::BucketClient},
-        yt_downloader::{
-            traits::{YoutubeDownloader, YoutubeVideoConfig},
-            yt_dl::YtDl,
-        },
+    internals::cloud::{
+        aws::AwsCloudService,
+        traits::{CloudService, QueueClient},
     },
 };
 use validator::Validate;
 
-use crate::{middleware::jwt_token::TokenClaims, models::error::AppError, AppPool};
+use crate::{
+    middleware::jwt_token::TokenClaims, models::error::AppError, AppCloudService, AppPool,
+};
 
 use self::dtos::create::CreateVideo;
 
 mod dtos;
 mod service;
-mod state;
 
-async fn create_video<YD, BC>(
+async fn create_video<CS: CloudService>(
     pool: web::Data<AppPool>,
-    state: web::Data<state::State<YD, BC>>,
+    cloud_service: web::Data<AppCloudService<CS>>,
     jwt: TokenClaims,
     body: Json<CreateVideo>,
-) -> Result<impl Responder, AppError>
-where
-    YD: YoutubeDownloader,
-    BC: BucketClient,
-{
+) -> Result<impl Responder, AppError> {
     body.validate()?;
     let pool = &pool.pool;
     let body = body.into_inner();
     queries::channel::find_by_id(pool, body.channel_id).await?;
 
-    let config = YoutubeVideoConfig {
-        url: &body.video_url,
-        format: &body.format,
-        end_time: &body.end_time,
-        start_time: &body.start_time,
-    };
+    let video_id = uuid::Uuid::new_v4();
 
-    let (file, video_id) = state.youtube_downloader.download(config).await?;
+    let queue_client = cloud_service.client.queue_client();
+    queue_client
+        .send_message(body.clone().into(video_id))
+        .await?;
 
-    service::create_video(pool, body, &state.bucket_client, jwt.id, video_id, file).await?;
+    service::create_video(pool, &body, jwt.id, video_id).await?;
 
     return Ok(HttpResponse::Created().finish());
 }
 
 pub fn init_routes(config: &mut web::ServiceConfig) {
-    let bucket_client = S3Client::new().unwrap();
-    let youtube_downloader = YtDl;
-    let state = state::State {
-        bucket_client,
-        youtube_downloader,
-    };
-    let state = web::Data::new(state);
     let scope = web::scope("/video");
-    let scope = scope.app_data(state);
-    let scope = scope.route("/", post().to(create_video::<YtDl, S3Client>));
+    let scope = scope.route("/", post().to(create_video::<AwsCloudService>));
     config.service(scope);
 }

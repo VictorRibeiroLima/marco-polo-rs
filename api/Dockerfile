@@ -60,12 +60,8 @@ FROM alpine:latest as runtime
 # Install musl to run the binary
 RUN apk add --no-cache musl
 
-# Install yt-dlp
-RUN apk add --no-cache ffmpeg
-RUN apk add --no-cache python3
-RUN apk add --no-cache py3-pip
-RUN pip3 install --upgrade pip
-RUN pip3 install yt-dlp
+# Install libgcc
+RUN apk add --no-cache libgcc
 
 # Copy the binary from the builder container
 COPY --from=builder /target/release/marco-polo-rs-api /usr/local/bin/marco-polo-rs-api

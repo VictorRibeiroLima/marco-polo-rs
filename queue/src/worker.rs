@@ -1,48 +1,36 @@
 use std::sync::Arc;
 
 use marco_polo_rs_core::{
-    internals::{
-        cloud::{
-            models::payload::PayloadType,
-            traits::{CloudService, QueueClient, QueueMessage},
-        },
-        subtitler::traits::SubtitlerClient,
-        transcriber::traits::TranscriberClient,
-        translator::traits::TranslatorClient,
+    internals::cloud::{
+        models::payload::PayloadType,
+        traits::{CloudService, QueueClient, QueueMessage},
     },
     util::queue::Queue,
 };
 use tokio::sync::Mutex;
+
+use crate::{
+    CloudServiceInUse, Message, SubtitlerClientInUse, TranscriberClientInUse,
+    TranslatorClientInUse, VideoDownloaderInUse,
+};
 
 use super::handlers;
 
 /**
 * 1 - Upload the video to Youtube
 */
-
-pub struct Worker<CS, TC, TLC, SC>
-where
-    CS: CloudService,
-    TC: TranscriberClient,
-    TLC: TranslatorClient,
-    SC: SubtitlerClient<CS::BC>,
-{
+pub struct Worker {
     pub id: usize,
-    pub cloud_service: CS,
-    pub transcriber_client: TC,
-    pub translator_client: TLC,
-    pub subtitler_client: SC,
+    pub cloud_service: CloudServiceInUse,
+    pub transcriber_client: TranscriberClientInUse,
+    pub translator_client: TranslatorClientInUse,
+    pub subtitler_client: SubtitlerClientInUse,
     pub pool: Arc<sqlx::PgPool>,
-    pub message_pool: Arc<Mutex<Queue<<<CS as CloudService>::QC as QueueClient>::M>>>,
+    pub message_pool: Arc<Mutex<Queue<Message>>>,
+    pub video_downloader: VideoDownloaderInUse,
 }
 
-impl<CS, TC, TLC, SC> Worker<CS, TC, TLC, SC>
-where
-    CS: CloudService,
-    TC: TranscriberClient,
-    TLC: TranslatorClient,
-    SC: SubtitlerClient<CS::BC>,
-{
+impl Worker {
     pub async fn handle_queue(&self) {
         println!("Worker {} started", self.id);
         loop {
@@ -61,11 +49,20 @@ where
         }
     }
 
-    async fn handle_message(&self, message: <<CS as CloudService>::QC as QueueClient>::M) {
+    async fn handle_message(&self, message: Message) {
         let queue_client = self.cloud_service.queue_client();
         let payload_type = match message.to_payload() {
             Ok(payload) => payload,
-            Err(_) => {
+            Err(err) => {
+                println!("Worker {} payload error: {:?}", self.id, err);
+
+                let delete_result = queue_client.delete_message(message).await;
+                match delete_result {
+                    Ok(_) => {}
+                    Err(e) => {
+                        println!("Worker {} delete error: {:?}", self.id, e);
+                    }
+                }
                 return;
             }
         };
@@ -87,7 +84,16 @@ where
                 let sentences_result = handler.handle(payload).await;
                 sentences_result
             }
-            PayloadType::BatukaVideoProcessedUpload(_) => Ok(()),
+            PayloadType::BatukaVideoProcessedUpload(_) => {
+                println!("Worker {} handling processed upload...", self.id);
+                Ok(())
+            }
+            PayloadType::BatukaDownloadVideo(payload) => {
+                println!("Worker {} handling video download...", self.id);
+                let download_result =
+                    handlers::download_video::handle(payload, &self, &message).await;
+                download_result
+            }
         };
 
         match result {
@@ -98,7 +104,8 @@ where
             }
         }
 
-        let result = queue_client.delete_message(message).await; //TODO: see what to when delete fails
+        //TODO: see what to when delete fails
+        let result = queue_client.delete_message(message).await;
 
         match result {
             Ok(_) => {}

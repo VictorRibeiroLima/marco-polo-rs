@@ -25,6 +25,7 @@ regex = "1.5.4"
 jsonwebtoken = "8.3.0"
 bcrypt = "0.14.0"
 chrono = "0.4.24"
+uuid = { version = "1.2", features = ["v4","serde"] }
 
 [dev-dependencies]
 actix-http = "3.3.1"

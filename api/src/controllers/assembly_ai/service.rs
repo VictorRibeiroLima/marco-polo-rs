@@ -19,7 +19,7 @@ where
 {
     let api_key = std::env::var("ASSEMBLY_AI_API_KEY").unwrap();
     let base_url = std::env::var("ASSEMBLY_AI_BASE_URL").unwrap();
-    let storage_id = C::id();
+    let storage_id = bucket_client.id();
 
     let transcription_id = &req_body.transcript_id;
 

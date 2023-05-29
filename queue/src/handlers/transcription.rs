@@ -1,38 +1,28 @@
 use futures::future::join_all;
 
 use marco_polo_rs_core::{
-    database::queries::{self, translation::CreateTranslationDto},
+    database::{
+        queries::{self, translation::CreateTranslationDto}, models::video::VideoStage,
+    },
     internals::{
         cloud::{
             models::payload::SrtPayload,
             traits::{BucketClient, CloudService},
         },
-        subtitler::traits::SubtitlerClient,
         transcriber::traits::{Sentence, TranscriberClient},
         translator::traits::TranslatorClient,
+        ServiceProvider,
     },
 };
 
 use crate::{srt, worker::Worker};
 
-pub struct Handler<'a, CS, TC, TLC, SC>
-where
-    CS: CloudService,
-    TC: TranscriberClient,
-    TLC: TranslatorClient,
-    SC: SubtitlerClient<CS::BC>,
-{
-    worker: &'a Worker<CS, TC, TLC, SC>,
+pub struct Handler<'a> {
+    worker: &'a Worker,
 }
 
-impl<'a, CS, TC, TLC, SC> Handler<'a, CS, TC, TLC, SC>
-where
-    CS: CloudService,
-    TC: TranscriberClient,
-    TLC: TranslatorClient,
-    SC: SubtitlerClient<CS::BC>,
-{
-    pub fn new(worker: &'a Worker<CS, TC, TLC, SC>) -> Handler<'a, CS, TC, TLC, SC> {
+impl<'a> Handler<'a> {
+    pub fn new(worker: &'a Worker) -> Handler<'a> {
         Self { worker }
     }
 
@@ -43,8 +33,11 @@ where
         let worker = self.worker;
         let transcriber_client = &worker.transcriber_client;
         let bucket_client = &worker.cloud_service.bucket_client();
-        let translator_id = TLC::id();
-        let bucket_id = CS::id();
+        let translator_id = worker.translator_client.id();
+        let bucket_id = worker.cloud_service.bucket_client.id();
+
+        queries::video::change_stage(&worker.pool, &payload.video_id, VideoStage::Translating)
+            .await?;
 
         let transcription =
             queries::transcription::find_by_video_id(&worker.pool, &payload.video_id).await?;
@@ -79,11 +72,7 @@ where
     pub async fn translate(
         &self,
         sentences: Vec<Sentence>,
-    ) -> Result<(String, Option<String>), Box<dyn std::error::Error + Sync + Send>>
-    where
-        CS: CloudService,
-        TC: TranscriberClient,
-    {
+    ) -> Result<(String, Option<String>), Box<dyn std::error::Error + Sync + Send>> {
         let mut translation_futures = vec![];
 
         for sen in sentences {
@@ -106,10 +95,7 @@ where
     async fn get_translated_sentence(
         &self,
         payload: Sentence,
-    ) -> Result<Sentence, Box<dyn std::error::Error + Sync + Send>>
-    where
-        TLC: TranslatorClient,
-    {
+    ) -> Result<Sentence, Box<dyn std::error::Error + Sync + Send>> {
         let worker = &self.worker;
         let translator_client = &worker.translator_client;
 

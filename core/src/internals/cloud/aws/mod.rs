@@ -1,4 +1,4 @@
-use crate::internals::ServiceProvider;
+use crate::{internals::ServiceProvider, SyncError};
 
 use self::s3::S3Client;
 
@@ -15,7 +15,7 @@ pub struct AwsCloudService {
 }
 
 impl AwsCloudService {
-    pub fn new(queue_url: String) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+    pub fn new(queue_url: String) -> Result<Self, SyncError> {
         let bucket_client = S3Client::new()?;
         let queue_client = sqs::SQSClient::new(queue_url);
 
@@ -27,7 +27,7 @@ impl AwsCloudService {
 }
 
 impl ServiceProvider for AwsCloudService {
-    fn id() -> i32 {
+    fn id(&self) -> i32 {
         return 2;
     }
 }

@@ -2,7 +2,7 @@ use crate::internals::ServiceProvider;
 use async_trait::async_trait;
 
 use super::{
-    models::payload::SrtPayload,
+    models::payload::{PayloadType, SrtPayload},
     traits::{CloudService, QueueClient, QueueMessage},
 };
 
@@ -15,7 +15,7 @@ impl TestClient {
 }
 
 impl ServiceProvider for TestClient {
-    fn id() -> i32 {
+    fn id(&self) -> i32 {
         return 1;
     }
 }
@@ -24,8 +24,16 @@ impl ServiceProvider for TestClient {
 impl crate::internals::cloud::traits::BucketClient for TestClient {
     async fn upload_file(
         &self,
-        _file_path: &str,
+        _file_uri: &str,
         _file: Vec<u8>,
+    ) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
+        Ok(())
+    }
+
+    async fn upload_file_from_path(
+        &self,
+        _file_uri: &str,
+        _file_path: &str,
     ) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
         Ok(())
     }
@@ -119,7 +127,10 @@ impl QueueClient for TestClient {
         Ok(None)
     }
 
-    async fn send_message(&self) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
+    async fn send_message(
+        &self,
+        _payload: PayloadType,
+    ) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
         Ok(())
     }
 
@@ -155,7 +166,7 @@ impl TestCloudService {
 }
 
 impl ServiceProvider for TestCloudService {
-    fn id() -> i32 {
+    fn id(&self) -> i32 {
         return 1;
     }
 }

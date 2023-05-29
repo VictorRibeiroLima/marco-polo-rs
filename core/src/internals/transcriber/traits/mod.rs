@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
-use crate::internals::ServiceProvider;
+use crate::{internals::ServiceProvider, SyncError};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Sentence {
@@ -12,12 +12,9 @@ pub struct Sentence {
 
 #[async_trait]
 pub trait TranscriberClient: ServiceProvider {
-    async fn transcribe(
-        &self,
-        media_url: &str,
-    ) -> Result<String, Box<dyn std::error::Error + Send + Sync>>;
+    async fn transcribe(&self, media_url: &str) -> Result<String, SyncError>;
     async fn get_transcription_sentences(
         &self,
         transcription_id: &str,
-    ) -> Result<Vec<Sentence>, Box<dyn std::error::Error + Send + Sync>>;
+    ) -> Result<Vec<Sentence>, SyncError>;
 }

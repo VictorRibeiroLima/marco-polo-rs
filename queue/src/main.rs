@@ -11,6 +11,7 @@ use marco_polo_rs_core::{
         subtitler::local::LocalClient,
         transcriber::assembly_ai::AssemblyAiClient,
         translator::deepl::DeeplClient,
+        yt_downloader::yt_dl::YtDl,
     },
     util::queue::Queue,
 };
@@ -26,16 +27,24 @@ mod handlers;
 mod srt;
 mod worker;
 
+pub type CloudServiceInUse = AwsCloudService;
+pub type TranscriberClientInUse = AssemblyAiClient;
+pub type TranslatorClientInUse = DeeplClient;
+pub type SubtitlerClientInUse = LocalClient;
+pub type VideoDownloaderInUse = YtDl;
+
+pub type Message = <<CloudServiceInUse as CloudService>::QC as QueueClient>::M;
+
 #[tokio::main]
 async fn main() {
-    println!("Starting worker...");
+    println!("Starting workers...");
     dotenv::dotenv().ok();
     env::check_envs();
     let pool = create_pool().await;
     let pool = Arc::new(pool);
 
     let queue_url = std::env::var("AWS_QUEUE_URL").expect("QUEUE_URL not found");
-    let cloud_service = AwsCloudService::new(queue_url).unwrap();
+    let cloud_service = CloudServiceInUse::new(queue_url).unwrap();
 
     let message_pool = Queue::new();
     let message_pool = Arc::new(Mutex::new(message_pool));
@@ -66,22 +75,18 @@ async fn main() {
     }
 }
 
-fn spawn_workers<CS>(
+fn spawn_workers(
     pool: Arc<PgPool>,
     runtime: &Runtime,
-    cloud_service: CS,
-    message_pool: Arc<Mutex<Queue<<<CS as CloudService>::QC as QueueClient>::M>>>,
-) -> Vec<JoinHandle<()>>
-where
-    CS: 'static + CloudService + Clone + Sync + Send,
-    <CS as CloudService>::QC: Sync + Send,
-    <<CS as CloudService>::QC as QueueClient>::M: Send + Sync,
-{
+    cloud_service: CloudServiceInUse,
+    message_pool: Arc<Mutex<Queue<Message>>>,
+) -> Vec<JoinHandle<()>> {
     let handles: Vec<JoinHandle<()>> = (0..num_cpus::get())
         .map(|id| {
-            let transcriber_client = AssemblyAiClient::new();
-            let translator_client: DeeplClient = DeeplClient::new();
-            let subtitler_client = LocalClient::new();
+            let transcriber_client = TranscriberClientInUse::new();
+            let translator_client = TranslatorClientInUse::new();
+            let subtitler_client = SubtitlerClientInUse::new();
+            let video_downloader = VideoDownloaderInUse::new();
 
             let worker = Worker {
                 id,
@@ -91,6 +96,7 @@ where
                 translator_client,
                 subtitler_client,
                 message_pool: message_pool.clone(),
+                video_downloader,
             };
 
             runtime.spawn(async move {
