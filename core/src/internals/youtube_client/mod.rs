@@ -27,22 +27,19 @@ impl YoutubeClient {
 
     pub fn generate_url(&self) -> String {
         // Generate a PKCE challenge.
-        let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
+        let (pkce_challenge, _) = PkceCodeChallenge::new_random_sha256();
 
         // Generate the full authorization URL.
         let (auth_url, csrf_token) = self
             .oauth2_client
             .authorize_url(CsrfToken::new_random)
             // Set the desired scopes.
-            .add_scope(Scope::new("https://www.googleapis.com/auth/youtube".to_string()))
+            .add_scope(Scope::new(
+                "https://www.googleapis.com/auth/youtube".to_string(),
+            ))
             // Set the PKCE code challenge.
             .set_pkce_challenge(pkce_challenge)
             .url();
-
-        // This is the URL you should redirect the user to, in order to trigger the authorization
-        // process.
-        println!("Browse to: {}", auth_url);
-        println!("csrf token: {}", csrf_token.secret().as_str());
 
         return auth_url.to_string();
     }
