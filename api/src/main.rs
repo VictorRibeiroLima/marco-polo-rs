@@ -8,7 +8,10 @@ use actix_web::{
 use marco_polo_rs_core::{
     database::create_pool,
     env,
-    internals::cloud::{default_cloud_service, traits::CloudService},
+    internals::{
+        cloud::{default_cloud_service, traits::CloudService},
+        youtube_client::YoutubeClient,
+    },
 };
 use models::{error::AppError, result::AppResult};
 
@@ -34,6 +37,13 @@ async fn hello() -> impl Responder {
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     println!("Starting server...");
+
+    println!("Starting YoutubeClient ...");
+    let meopau = YoutubeClient::new();
+    meopau.generate_url();
+
+    println!("YoutubeClient called ...");
+
     dotenv::dotenv().ok();
     env::check_envs();
     let pool = create_pool().await;
