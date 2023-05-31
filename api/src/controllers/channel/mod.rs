@@ -3,30 +3,35 @@ use actix_web::{
     web::{self, Json},
     HttpResponse, Responder,
 };
-use marco_polo_rs_core::database::queries;
+use marco_polo_rs_core::{database::queries, internals::youtube_client};
 
-mod dtos;
+mod dto;
 #[cfg(test)]
 mod test;
 
-use crate::{middleware::jwt_token::TokenClaims, models::error::AppError, AppPool};
-
-use self::dtos::CreateChannel;
+use crate::{
+    middleware::jwt_token::TokenClaims,
+    models::{error::AppError, result::AppResult},
+    AppPool, AppYoutubeClient,
+};
 
 #[post("/")]
-async fn create_channel(
+async fn create_youtube_channel(
     pool: web::Data<AppPool>,
-    body: Json<CreateChannel>,
+    youtube_client: web::Data<AppYoutubeClient>,
     _jwt: TokenClaims,
 ) -> Result<impl Responder, AppError> {
     let pool = &pool.pool;
-    let body = body.into_inner();
-    queries::channel::create(pool, body.name).await?;
+    let client = &youtube_client.client;
+    let (url, csrf_token) = client.generate_url();
+    queries::channel::create(pool, csrf_token).await?;
 
-    return Ok(HttpResponse::Created().finish());
+    let app_response = AppResult::new(url);
+    return Ok(Json(app_response));
 }
 
 pub fn init_routes(config: &mut web::ServiceConfig) {
-    let scope = web::scope("/channel").service(create_channel);
-    config.service(scope);
+    let youtube_scope = web::scope("/youtube").service(create_youtube_channel);
+    let channel_scope = web::scope("/channel").service(youtube_scope);
+    config.service(channel_scope);
 }

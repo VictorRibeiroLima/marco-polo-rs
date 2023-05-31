@@ -9,7 +9,7 @@ use sqlx::PgPool;
 
 use crate::{
     auth::gen_token,
-    controllers::channel::{create_channel, dtos::CreateChannel},
+    controllers::channel::{create_youtube_channel, dtos::CreateChannel},
     AppPool,
 };
 
@@ -93,7 +93,9 @@ async fn innit_test_app(
 ) -> impl actix_web::dev::Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
     let pool = AppPool { pool };
     let web_data = web::Data::new(pool);
-    let app = App::new().app_data(web_data).service(create_channel);
+    let app = App::new()
+        .app_data(web_data)
+        .service(create_youtube_channel);
 
     let test_app = test::init_service(app).await;
 

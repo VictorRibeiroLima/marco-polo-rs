@@ -25,13 +25,13 @@ pub async fn find_by_id(pool: &PgPool, id: i32) -> Result<Channel, sqlx::Error> 
     return Ok(channel);
 }
 
-pub async fn create(pool: &PgPool, name: String) -> Result<(), sqlx::Error> {
+pub async fn create(pool: &PgPool, csrf_token: String) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
-    INSERT INTO channels (name) 
+    INSERT INTO channels (csrf_token) 
     VALUES ($1)
     "#,
-        name
+        csrf_token
     )
     .execute(pool)
     .await?;

@@ -24,6 +24,10 @@ struct AppPool {
     pool: Arc<sqlx::PgPool>,
 }
 
+struct AppYoutubeClient {
+    client: Arc<YoutubeClient>,
+}
+
 struct AppCloudService<CS: CloudService> {
     client: Arc<CS>,
 }
@@ -38,12 +42,8 @@ async fn hello() -> impl Responder {
 async fn main() -> std::io::Result<()> {
     println!("Starting server...");
 
-    println!("Starting YoutubeClient ...");
-    let meopau = YoutubeClient::new();
-    meopau.generate_url();
-
-    println!("YoutubeClient called ...");
-
+    let youtube_client = YoutubeClient::new();
+    let youtube_client = Arc::new(youtube_client);
     dotenv::dotenv().ok();
     env::check_envs();
     let pool = create_pool().await;
@@ -61,6 +61,9 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(AppPool { pool: pool.clone() }))
             .app_data(web::Data::new(AppCloudService {
                 client: cloud_service.clone(),
+            }))
+            .app_data(web::Data::new(AppYoutubeClient {
+                client: youtube_client.clone(),
             }))
             .service(hello)
             .configure(controllers::init_routes)
