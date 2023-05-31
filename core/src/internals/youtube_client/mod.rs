@@ -1,6 +1,10 @@
-use oauth2::{CsrfToken, PkceCodeChallenge, Scope};
+use oauth2::http::request;
+use oauth2::{AuthorizationCode, CsrfToken, PkceCodeChallenge, RefreshToken, Scope, TokenResponse};
+
 use std::fs::File;
 use std::io::Read;
+
+use crate::SyncError;
 
 use self::client_secret::ClientSecret;
 
@@ -40,5 +44,48 @@ impl YoutubeClient {
             .url();
 
         return (auth_url.to_string(), csrf_token.secret().to_string());
+    }
+
+    pub async fn get_refresh_token(&self, code: String) -> Result<String, SyncError> {
+        let token = self
+            .oauth2_client
+            .exchange_code(AuthorizationCode::new(code))
+            .request_async(oauth2::reqwest::async_http_client)
+            .await?;
+
+        let token = match token.refresh_token() {
+            Some(token) => token,
+            None => {
+                return Err("no refresh token".into());
+            }
+        };
+
+        return Ok(token.secret().to_string());
+    }
+
+    pub async fn get_channel_info(&self, refresh_token: String) -> Result<String, SyncError> {
+        let token = self.get_token(refresh_token).await?;
+
+        let client = reqwest::Client::new();
+        let response = client
+            .get("https://www.googleapis.com/youtube/v3/channels")
+            .bearer_auth(token)
+            .send()
+            .await?;
+
+        let response = response.text().await?;
+
+        println!("response: {}", response);
+        return Ok(response);
+    }
+
+    async fn get_token(&self, refresh_token: String) -> Result<String, SyncError> {
+        let token = self
+            .oauth2_client
+            .exchange_refresh_token(&RefreshToken::new(refresh_token))
+            .request_async(oauth2::reqwest::async_http_client)
+            .await?;
+
+        return Ok(token.access_token().secret().to_string());
     }
 }
