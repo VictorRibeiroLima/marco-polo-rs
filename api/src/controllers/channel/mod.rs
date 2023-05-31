@@ -1,12 +1,9 @@
 use actix_web::{
     post,
-    web::{self, Json},
+    web::{self},
     HttpResponse, Responder,
 };
-use marco_polo_rs_core::{
-    database::queries::{self, channel::UpdateChannelDto},
-    internals::youtube_client,
-};
+use marco_polo_rs_core::database::queries::{self, channel::UpdateChannelDto};
 
 mod dto;
 #[cfg(test)]
@@ -30,7 +27,7 @@ async fn create_youtube_channel(
     queries::channel::create(pool, csrf_token).await?;
 
     let app_response = AppResult::new(url);
-    return Ok(Json(app_response));
+    return Ok(HttpResponse::Created().json(app_response));
 }
 
 #[post("/oauth/callback")]

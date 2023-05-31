@@ -92,15 +92,18 @@ mod test {
 
     use crate::database::queries::channel::create;
 
+    const CSRF_TOKEN: &str = "123has_iuf12134";
+
     #[sqlx::test(migrations = "../migrations")]
     async fn test_create(pool: PgPool) {
-        let result = create(&pool, "ElonMuskCortes".to_string()).await;
+        let result = create(&pool, CSRF_TOKEN.to_string()).await;
 
         assert!(result.is_ok());
         let record = sqlx::query!(
             r#"
-            SELECT COUNT(*) FROM channels WHERE name = 'ElonMuskCortes'
-        "#
+            SELECT COUNT(*) FROM channels WHERE csrf_token = $1
+        "#,
+            CSRF_TOKEN
         )
         .fetch_one(&pool)
         .await

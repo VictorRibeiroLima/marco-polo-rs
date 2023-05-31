@@ -10,7 +10,7 @@ use marco_polo_rs_core::{
     env,
     internals::{
         cloud::{default_cloud_service, traits::CloudService},
-        youtube_client::YoutubeClient,
+        youtube_client::{client, traits},
     },
 };
 use models::{error::AppError, result::AppResult};
@@ -25,7 +25,7 @@ struct AppPool {
 }
 
 struct AppYoutubeClient {
-    client: Arc<YoutubeClient>,
+    client: Arc<dyn traits::YoutubeClient>,
 }
 
 struct AppCloudService<CS: CloudService> {
@@ -42,7 +42,7 @@ async fn hello() -> impl Responder {
 async fn main() -> std::io::Result<()> {
     println!("Starting server...");
 
-    let youtube_client = YoutubeClient::new();
+    let youtube_client = client::YoutubeClient::new();
     let youtube_client = Arc::new(youtube_client);
     dotenv::dotenv().ok();
     env::check_envs();
