@@ -10,6 +10,8 @@ pub async fn find_by_id(pool: &PgPool, id: i32) -> Result<Channel, sqlx::Error> 
         SELECT 
             id,
             name,
+            csrf_token,
+            refresh_token,
             created_at as "created_at: DateTime<Utc>",
             updated_at as "updated_at: DateTime<Utc>",
             deleted_at as "deleted_at: DateTime<Utc>"
