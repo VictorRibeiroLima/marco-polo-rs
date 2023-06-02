@@ -98,4 +98,19 @@ mod test {
         assert_eq!(user.email, email);
         assert!(bcrypt::verify("123456", &user.password).unwrap());
     }
+    #[sqlx::test(migrations = "../migrations", fixtures("user"))]
+    async fn test_find_email(pool: PgPool) {
+        let email = "teste@gmail.com";
+        let find_success = find_by_email(&pool, email).await.unwrap();
+
+        assert_eq!(find_success.unwrap().email, email);
+    }
+
+    #[sqlx::test(migrations = "../migrations", fixtures("user"))]
+    async fn test_not_find_email(pool: PgPool) {
+        let email = "invalid@gmail.com";
+        let find_result = find_by_email(&pool, email).await.unwrap();
+
+        assert!(find_result.is_none());
+    }
 }

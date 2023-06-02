@@ -90,7 +90,7 @@ mod test {
 
     use sqlx::PgPool;
 
-    use crate::database::queries::channel::create;
+    use crate::database::queries::channel::{create, find_by_id};
 
     const CSRF_TOKEN: &str = "123has_iuf12134";
 
@@ -112,5 +112,21 @@ mod test {
         assert!(record.count.is_some());
 
         assert_eq!(record.count.unwrap(), 1);
+    }
+
+    #[sqlx::test(migrations = "../migrations", fixtures("channel"))]
+    async fn test_find_by_id(pool: PgPool) {
+        let channel_id = 666;
+        let find_success = find_by_id(&pool, channel_id).await;
+
+        assert!(find_success.is_ok());
+        assert_eq!(find_success.unwrap().id, channel_id);
+    }
+
+    #[sqlx::test(migrations = "../migrations", fixtures("channel"))]
+    async fn test_not_find_by_id(pool: PgPool) {
+        let invalid_channel_id = 999;
+        let find_error = find_by_id(&pool, invalid_channel_id).await;
+        assert!(find_error.is_err());
     }
 }
