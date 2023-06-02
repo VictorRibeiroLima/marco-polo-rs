@@ -18,12 +18,6 @@ pub struct CreateVideoDto<'a> {
     pub language: &'a str,
 }
 
-pub struct UpdateVideoTranscriptionDto {
-    pub video_id: Uuid,
-    pub storage_id: i32,
-    pub path: String,
-}
-
 pub async fn create(pool: &PgPool, dto: CreateVideoDto<'_>) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
@@ -97,25 +91,6 @@ pub async fn find_by_transcription_id(
     Ok(video)
 }
 
-pub async fn update_transcription(
-    pool: &PgPool,
-    dto: UpdateVideoTranscriptionDto,
-) -> Result<(), sqlx::Error> {
-    sqlx::query!(
-        r#"
-            UPDATE videos_transcriptions SET storage_id = $1, path = $2, updated_at = NOW()
-            WHERE video_id = $3;
-        "#,
-        dto.storage_id,
-        dto.path,
-        dto.video_id
-    )
-    .execute(pool)
-    .await?;
-
-    Ok(())
-}
-
 pub async fn find_by_id(pool: &PgPool, id: &Uuid) -> Result<Video, sqlx::Error> {
     let video = sqlx::query_as!(
         Video,
@@ -164,10 +139,7 @@ mod test {
     use sqlx::PgPool;
 
     use crate::database::{
-        models::video_storage::StorageVideoStage,
-        queries::video::{
-            find_by_id_with_storage, update_transcription, UpdateVideoTranscriptionDto,
-        },
+        models::video_storage::StorageVideoStage, queries::video::find_by_id_with_storage,
     };
 
     #[sqlx::test(migrations = "../migrations", fixtures("user", "channel"))]
@@ -283,35 +255,5 @@ mod test {
         let find_not_success = super::find_by_transcription_id(&pool, transcription_id).await;
 
         assert!(find_not_success.is_err());
-    }
-
-    #[sqlx::test(
-        migrations = "../migrations",
-        fixtures("videos", "videos_transcriptions")
-    )]
-    async fn test_update_transcription(pool: PgPool) {
-        let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
-        let storage_id = 5678;
-        let path = "/new/path";
-
-        let dto = UpdateVideoTranscriptionDto {
-            video_id: id,
-            storage_id,
-            path: path.to_string(),
-        };
-
-        let result = update_transcription(&pool, dto).await;
-        assert!(result.is_ok());
-
-        let count = sqlx::query!(
-            "SELECT COUNT(*) FROM videos_transcriptions where storage_id = $1",
-            storage_id
-        )
-        .fetch_one(&pool)
-        .await
-        .unwrap();
-
-        assert!(count.count.is_some());
-        assert_eq!(count.count.unwrap(), 1);
     }
 }

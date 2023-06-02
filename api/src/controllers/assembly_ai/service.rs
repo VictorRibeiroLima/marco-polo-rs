@@ -1,7 +1,7 @@
 use sqlx::PgPool;
 
 use marco_polo_rs_core::{
-    database::queries::{self, video::UpdateVideoTranscriptionDto},
+    database::queries::{self, transcription::UpdateVideoTranscriptionDto},
     internals::cloud::traits::BucketClient,
 };
 
@@ -41,7 +41,7 @@ where
 
     bucket_client.upload_file(&file_name, body).await?;
 
-    queries::video::update_transcription(
+    queries::transcription::update(
         pool,
         UpdateVideoTranscriptionDto {
             video_id: video.id,
