@@ -69,6 +69,12 @@ COPY --from=builder /target/release/marco-polo-rs-api /usr/local/bin/marco-polo-
 # Copy .env file
 COPY .env .env
 
+# Copy D.O certificate
+COPY do-ca-certificate.crt do-ca-certificate.crt
+
+# Copy Youtube client secret
+COPY yt-client-secret.json yt-client-secret.json
+
 EXPOSE 8080
 
 # Run the binary

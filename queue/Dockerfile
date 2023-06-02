@@ -81,6 +81,12 @@ RUN pip3 install yt-dlp
 # Copy .env file
 COPY .env .env
 
+# Copy D.O certificate
+COPY do-ca-certificate.crt do-ca-certificate.crt
+
+# Copy Youtube client secret
+COPY yt-client-secret.json yt-client-secret.json
+
 # Copy the binary from the builder container
 COPY --from=builder /target/release/marco-polo-rs-queue /usr/local/bin/marco-polo-rs-queue
 

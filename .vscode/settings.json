@@ -8,6 +8,7 @@
     "dotenv",
     "dtos",
     "jsonwebtoken",
+    "pkce",
     "proto",
     "reqwest",
     "rusoto",

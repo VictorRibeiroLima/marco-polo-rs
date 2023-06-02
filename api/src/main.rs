@@ -8,7 +8,10 @@ use actix_web::{
 use marco_polo_rs_core::{
     database::create_pool,
     env,
-    internals::cloud::{default_cloud_service, traits::CloudService},
+    internals::{
+        cloud::{default_cloud_service, traits::CloudService},
+        youtube_client::{client, traits},
+    },
 };
 use models::{error::AppError, result::AppResult};
 
@@ -19,6 +22,10 @@ mod models;
 
 struct AppPool {
     pool: Arc<sqlx::PgPool>,
+}
+
+struct AppYoutubeClient {
+    client: Arc<dyn traits::YoutubeClient>,
 }
 
 struct AppCloudService<CS: CloudService> {
@@ -34,6 +41,9 @@ async fn hello() -> impl Responder {
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     println!("Starting server...");
+
+    let youtube_client = client::YoutubeClient::new();
+    let youtube_client = Arc::new(youtube_client);
     dotenv::dotenv().ok();
     env::check_envs();
     let pool = create_pool().await;
@@ -51,6 +61,9 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(AppPool { pool: pool.clone() }))
             .app_data(web::Data::new(AppCloudService {
                 client: cloud_service.clone(),
+            }))
+            .app_data(web::Data::new(AppYoutubeClient {
+                client: youtube_client.clone(),
             }))
             .service(hello)
             .configure(controllers::init_routes)
