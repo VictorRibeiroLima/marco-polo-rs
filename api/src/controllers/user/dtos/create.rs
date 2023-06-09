@@ -16,7 +16,7 @@ pub struct CreateUser {
     #[validate(
         custom(
             function = "validate_password",
-            message = "Must Contain At Least One Upper Case, Lower Case and Number. Dont use spaces."
+            message = "Must contain at least eight characters, including one uppercase letter, one lowercase letter, and one number. Dont use spaces."
         ),
         regex(
             path = "RE_SPECIAL_CHAR",
