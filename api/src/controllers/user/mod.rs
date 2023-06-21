@@ -13,6 +13,8 @@ use crate::models::{error::AppError, result::AppResult};
 use crate::{controllers::user::dtos::create::CreateUser, AppPool};
 
 mod dtos;
+#[cfg(test)]
+mod test;
 
 #[post("/")]
 async fn create_user(
