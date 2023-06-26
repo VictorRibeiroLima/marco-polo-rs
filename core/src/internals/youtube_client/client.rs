@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use oauth2::{AuthorizationCode, CsrfToken, PkceCodeChallenge, RefreshToken, Scope, TokenResponse};
+use oauth2::{AuthorizationCode, CsrfToken, RefreshToken, Scope, TokenResponse};
 
 use std::fs::File;
 use std::io::Read;
@@ -39,8 +39,6 @@ impl YoutubeClient {
 #[async_trait]
 impl super::traits::YoutubeClient for YoutubeClient {
     fn generate_url(&self) -> (String, String) {
-        let (pkce_challenge, _) = PkceCodeChallenge::new_random_sha256();
-
         let (auth_url, csrf_token) = self
             .oauth2_client
             .authorize_url(CsrfToken::new_random)
@@ -50,7 +48,6 @@ impl super::traits::YoutubeClient for YoutubeClient {
             .add_scope(Scope::new(
                 "https://www.googleapis.com/auth/youtube.readonly".to_string(),
             ))
-            .set_pkce_challenge(pkce_challenge)
             .url();
 
         return (auth_url.to_string(), csrf_token.secret().to_string());
