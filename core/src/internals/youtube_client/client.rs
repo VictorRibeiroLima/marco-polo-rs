@@ -58,6 +58,7 @@ impl super::traits::YoutubeClient for YoutubeClient {
         let token = self
             .oauth2_client
             .exchange_code(AuthorizationCode::new(code))
+            .add_extra_param("access_type", "offline")
             .request_async(oauth2::reqwest::async_http_client)
             .await?;
 
