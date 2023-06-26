@@ -849,6 +849,19 @@
     },
     "query": "\n        INSERT INTO users (name, email, password, role)\n        VALUES ($1, $2, $3, $4)\n        "
   },
+  "e17ea986722e92b58edcf3d36740b2823a02865ec7f97900631735ab568fdd07": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n        UPDATE videos\n        SET url = $1, stage = 'DONE', uploaded_at = NOW()\n        WHERE id = $2\n        "
+  },
   "e6c82bd3af457ed042c08baf5a8aeb9bc95cde104ca4b2137191a13d7ab2d2b9": {
     "describe": {
       "columns": [],
