@@ -7,6 +7,8 @@ use std::io::Read;
 use crate::internals::youtube_client::client_secret::ClientSecret;
 use crate::SyncError;
 
+use super::channel_info::ChannelInfo;
+
 pub struct YoutubeClient {
     oauth2_client: oauth2::basic::BasicClient,
 }
@@ -72,19 +74,25 @@ impl super::traits::YoutubeClient for YoutubeClient {
         return Ok(token.secret().to_string());
     }
 
-    async fn get_channel_info(&self, refresh_token: String) -> Result<String, SyncError> {
+    async fn get_channel_info(&self, refresh_token: String) -> Result<ChannelInfo, SyncError> {
         let token = self.get_token(refresh_token).await?;
+        let url =
+            "https://www.googleapis.com/youtube/v3/channels?part=snippet,contentDetails&mine=true";
 
         let client = reqwest::Client::new();
-        let response = client
-            .get("https://www.googleapis.com/youtube/v3/channels")
-            .bearer_auth(token)
-            .send()
-            .await?;
+        let response = client.get(url).bearer_auth(token).send().await?;
 
-        let response = response.text().await?;
+        if !response.status().is_success() {
+            let error = format!(
+                "request to {} error with status: {}",
+                url,
+                response.status()
+            );
+            return Err(error.into());
+        }
 
-        println!("response: {}", response);
+        let response = response.json().await?;
+
         return Ok(response);
     }
 }

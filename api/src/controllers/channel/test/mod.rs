@@ -5,7 +5,7 @@ use actix_web::{dev::ServiceResponse, http::header::ContentType, test, web, App}
 use chrono::{DateTime, Utc};
 use marco_polo_rs_core::{
     database::models::user::{User, UserRole},
-    internals::youtube_client::traits,
+    internals::youtube_client::{channel_info::ChannelInfo, traits},
     SyncError,
 };
 use reqwest::StatusCode;
@@ -32,8 +32,8 @@ impl traits::YoutubeClient for YoutubeClientMock {
         return Ok(String::from("refresh_token"));
     }
 
-    async fn get_channel_info(&self, _refresh_token: String) -> Result<String, SyncError> {
-        return Ok(String::from("channel_info"));
+    async fn get_channel_info(&self, _refresh_token: String) -> Result<ChannelInfo, SyncError> {
+        return Ok(ChannelInfo::default());
     }
 }
 
