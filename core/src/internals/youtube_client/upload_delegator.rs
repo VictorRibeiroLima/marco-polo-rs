@@ -21,7 +21,6 @@ impl Delegate for UploadDelegator {
     }
 
     fn store_upload_url(&mut self, url: Option<&str>) {
-        println!("store_upload_url: {:?}", url);
         self.upload_url = match url {
             Some(url) => Some(url.to_string()),
             None => None,

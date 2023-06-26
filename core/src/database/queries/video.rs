@@ -57,6 +57,22 @@ pub async fn change_stage(
     Ok(())
 }
 
+pub async fn set_url(pool: &PgPool, video_id: &Uuid, url: String) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"
+        UPDATE videos
+        SET url = $1, stage = 'DONE', uploaded_at = NOW()
+        WHERE id = $2
+        "#,
+        url,
+        video_id,
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
 pub async fn find_by_transcription_id(
     pool: &PgPool,
     transcription_id: &str,

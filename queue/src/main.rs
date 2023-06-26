@@ -11,6 +11,7 @@ use marco_polo_rs_core::{
         subtitler::local::LocalClient,
         transcriber::assembly_ai::AssemblyAiClient,
         translator::deepl::DeeplClient,
+        youtube_client::client::YoutubeClient,
         yt_downloader::yt_dl::YtDl,
     },
     util::queue::Queue,
@@ -32,6 +33,7 @@ pub type TranscriberClientInUse = AssemblyAiClient;
 pub type TranslatorClientInUse = DeeplClient;
 pub type SubtitlerClientInUse = LocalClient;
 pub type VideoDownloaderInUse = YtDl;
+pub type YoutubeClientInUse = YoutubeClient;
 
 pub type Message = <<CloudServiceInUse as CloudService>::QC as QueueClient>::M;
 
@@ -87,6 +89,7 @@ fn spawn_workers(
             let translator_client = TranslatorClientInUse::new();
             let subtitler_client = SubtitlerClientInUse::new();
             let video_downloader = VideoDownloaderInUse::new();
+            let youtube_client = YoutubeClientInUse::new();
 
             let worker = Worker {
                 id,
@@ -97,6 +100,7 @@ fn spawn_workers(
                 subtitler_client,
                 message_pool: message_pool.clone(),
                 video_downloader,
+                youtube_client,
             };
 
             runtime.spawn(async move {

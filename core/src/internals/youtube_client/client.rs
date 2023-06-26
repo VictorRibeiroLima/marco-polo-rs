@@ -165,6 +165,10 @@ impl super::traits::YoutubeClient for YoutubeClient {
             .into());
         }
 
+        if video_response.id.is_none() {
+            return Err("no video id".into());
+        }
+
         match std::fs::remove_file(path) {
             Ok(_) => {}
             Err(err) => {
