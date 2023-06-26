@@ -29,3 +29,4 @@ uuid = { version = "1.2", features = ["v4","serde"] }
 
 [dev-dependencies]
 actix-http = "3.3.1"
+google-youtube3 = "5.0.2"

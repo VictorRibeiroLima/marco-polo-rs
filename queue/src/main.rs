@@ -50,7 +50,7 @@ async fn main() {
     let message_pool = Arc::new(Mutex::new(message_pool));
 
     let runtime = Builder::new_multi_thread()
-        .worker_threads(num_cpus::get())
+        .worker_threads(num_cpus::get_physical())
         .enable_all()
         .build()
         .unwrap();

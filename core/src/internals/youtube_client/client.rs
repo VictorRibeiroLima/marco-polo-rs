@@ -1,4 +1,10 @@
+use crate::database::models::video::VideoWithStorageAndChannel;
+use crate::util::fs::create_temp_dir;
 use async_trait::async_trait;
+use google_youtube3::api::{Video, VideoSnippet, VideoStatus};
+use google_youtube3::hyper::{Body, Client};
+use google_youtube3::oauth2::AccessTokenAuthenticator;
+use hyper_tls::HttpsConnector;
 use oauth2::{AuthorizationCode, CsrfToken, RefreshToken, Scope, TokenResponse};
 
 use std::fs::File;
@@ -8,6 +14,7 @@ use crate::internals::youtube_client::client_secret::ClientSecret;
 use crate::SyncError;
 
 use super::channel_info::ChannelInfo;
+use super::upload_delegator::UploadDelegator;
 
 pub struct YoutubeClient {
     oauth2_client: oauth2::basic::BasicClient,
@@ -94,5 +101,77 @@ impl super::traits::YoutubeClient for YoutubeClient {
         let response = response.json().await?;
 
         return Ok(response);
+    }
+
+    async fn upload_video(&self, video: &VideoWithStorageAndChannel) -> Result<Video, SyncError> {
+        let chunk_size: u64 = 5 * 1024 * 1024; // 5MB
+
+        let storage = &video.storage;
+        let channel = &video.channel;
+        let video = &video.video;
+
+        let refresh_token = match &channel.refresh_token {
+            Some(refresh_token) => refresh_token.to_string(),
+            None => {
+                return Err("no refresh token".into());
+            }
+        };
+
+        let video_id = video.id.to_string();
+        let format = storage.format.to_string();
+
+        let temp_dir = create_temp_dir()?;
+        let path = format!("output_{}.{}", video_id, format);
+        let path = temp_dir.join(path);
+
+        let video_file = File::open(path.clone())?;
+        let reader = std::io::BufReader::new(video_file);
+
+        let token = self.get_token(refresh_token).await?;
+
+        let https = HttpsConnector::new();
+        let client = Client::builder().build::<_, Body>(https);
+
+        let authenticator = AccessTokenAuthenticator::builder(token).build().await?;
+        let hub = google_youtube3::YouTube::new(client, authenticator);
+
+        let video = Video {
+            snippet: Some(VideoSnippet {
+                title: Some(video.title.to_string()),
+                description: Some(video.description.to_string()),
+                ..Default::default()
+            }),
+            status: Some(VideoStatus {
+                privacy_status: Some("public".to_string()),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+
+        let mut delegate = UploadDelegator::new(chunk_size);
+
+        let insert_call = hub.videos().insert(video).delegate(&mut delegate);
+
+        let (response, video_response) = insert_call
+            .upload_resumable(reader, "application/octet-stream".parse().unwrap())
+            .await?;
+
+        if !response.status().is_success() {
+            return Err(format!(
+                "request to {} error with status: {}",
+                "Youtube API",
+                response.status()
+            )
+            .into());
+        }
+
+        match std::fs::remove_file(path) {
+            Ok(_) => {}
+            Err(err) => {
+                println!("failed to remove file: {}", err);
+            }
+        }
+
+        return Ok(video_response);
     }
 }

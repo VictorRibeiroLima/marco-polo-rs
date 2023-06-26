@@ -3,7 +3,7 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::database::models::{
-    video::{Video, VideoStage, VideoWithStorage},
+    video::{Video, VideoStage, VideoWithStorage, VideoWithStorageAndChannel},
     video_storage::StorageVideoStage,
 };
 
@@ -129,6 +129,24 @@ pub async fn find_by_id_with_storage(
     let storage = storage::find_by_video_id_and_stage(pool, id, video_stage).await?;
 
     Ok(VideoWithStorage { video, storage })
+}
+
+pub async fn find_by_id_with_storage_and_channel(
+    pool: &PgPool,
+    id: &Uuid,
+    video_stage: StorageVideoStage,
+) -> Result<VideoWithStorageAndChannel, sqlx::Error> {
+    let video_with_storage = find_by_id_with_storage(pool, id, video_stage).await?;
+    let channel =
+        crate::database::queries::channel::find_by_id(pool, video_with_storage.video.channel_id)
+            .await?;
+
+    let video_with_channel = VideoWithStorageAndChannel {
+        video: video_with_storage.video,
+        storage: video_with_storage.storage,
+        channel,
+    };
+    return Ok(video_with_channel);
 }
 
 #[cfg(test)]

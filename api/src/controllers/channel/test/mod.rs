@@ -1,3 +1,5 @@
+use google_youtube3::api::Video;
+use marco_polo_rs_core::database::models::video::VideoWithStorageAndChannel;
 use std::sync::Arc;
 
 use actix_http::Request;
@@ -34,6 +36,10 @@ impl traits::YoutubeClient for YoutubeClientMock {
 
     async fn get_channel_info(&self, _refresh_token: String) -> Result<ChannelInfo, SyncError> {
         return Ok(ChannelInfo::default());
+    }
+
+    async fn upload_video(&self, _: &VideoWithStorageAndChannel) -> Result<Video, SyncError> {
+        return Ok(Default::default());
     }
 }
 
