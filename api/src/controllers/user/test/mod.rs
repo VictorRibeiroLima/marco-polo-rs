@@ -16,7 +16,7 @@ async fn test_create_user_valid_email_and_password(pool: PgPool) {
 
     let create_user_dto = CreateUser {
         name: "Test".to_string(),
-        email: "test1233@gmail.com".to_string(),
+        email: "test123@gmail.com".to_string(),
         password: "12345aA!".to_string(),
         role: Some(UserRole::User),
     };
@@ -45,6 +45,29 @@ async fn test_create_user_valid_email_and_password(pool: PgPool) {
     assert!(record.count.is_some());
 
     assert_eq!(record.count.unwrap(), 1);
+}
+
+#[sqlx::test(migrations = "../migrations")]
+async fn test_create_user_invalid_email(pool: PgPool) {
+    let pool = Arc::new(pool);
+
+    let create_user_dto = CreateUser {
+        name: "Test".to_string(),
+        email: "Not_a_email".to_string(),
+        password: "12345aA!".to_string(),
+        role: Some(UserRole::User),
+    };
+
+    let test_app = innit_test_app(pool.clone()).await;
+
+    let request = test::TestRequest::post()
+        .uri("/")
+        .insert_header(ContentType::json())
+        .set_json(&create_user_dto)
+        .to_request();
+
+    let response = test::call_service(&test_app, request).await;
+    assert_eq!(response.status().as_u16(), StatusCode::BAD_REQUEST);
 }
 
 async fn innit_test_app(
