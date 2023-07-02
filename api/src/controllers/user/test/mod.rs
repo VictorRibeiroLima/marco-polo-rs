@@ -70,6 +70,29 @@ async fn test_create_user_invalid_email(pool: PgPool) {
     assert_eq!(response.status().as_u16(), StatusCode::BAD_REQUEST);
 }
 
+#[sqlx::test(migrations = "../migrations")]
+async fn test_create_user_invalid_password(pool: PgPool) {
+    let pool = Arc::new(pool);
+
+    let create_user_dto = CreateUser {
+        name: "Test".to_string(),
+        email: "test123@gmail.com".to_string(),
+        password: "123".to_string(),
+        role: Some(UserRole::User),
+    };
+
+    let test_app = innit_test_app(pool.clone()).await;
+
+    let request = test::TestRequest::post()
+        .uri("/")
+        .insert_header(ContentType::json())
+        .set_json(&create_user_dto)
+        .to_request();
+
+    let response = test::call_service(&test_app, request).await;
+    assert_eq!(response.status().as_u16(), StatusCode::BAD_REQUEST);
+}
+
 async fn innit_test_app(
     pool: Arc<PgPool>,
 ) -> impl actix_web::dev::Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
