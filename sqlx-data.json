@@ -752,6 +752,78 @@
     },
     "query": "\n        INSERT INTO videos (id, title, description, user_id, channel_id, language)\n        VALUES ($1, $2, $3, $4, $5, $6);\n        "
   },
+  "c06e68fa634f4d2f5b3d7b6fdeaf9bd4de11a328f5c185b0c04ebab60ec34c2c": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "email",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "password",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "role: UserRole",
+          "ordinal": 4,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "ADMIN",
+                  "USER"
+                ]
+              },
+              "name": "user_role"
+            }
+          }
+        },
+        {
+          "name": "created_at: DateTime<Utc>",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "updated_at: DateTime<Utc>",
+          "ordinal": 6,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "deleted_at: DateTime<Utc>",
+          "ordinal": 7,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n        SELECT \n            id,\n            name, \n            email,\n            password,\n            role as \"role: UserRole\", \n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        FROM \n            users \n        WHERE \n            id = $1 AND deleted_at IS NULL\n        "
+  },
   "c2801aabb735b0e3851eda6c2c84564f0b89ee5b51c28ac2597d8577e07afcc1": {
     "describe": {
       "columns": [
