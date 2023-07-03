@@ -8,12 +8,13 @@ use marco_polo_rs_core::database::queries::{self, user::CreateUserDto};
 
 use validator::Validate;
 
+use self::dtos::login::Login;
 use crate::models::{error::AppError, result::AppResult};
 use crate::{controllers::user::dtos::create::CreateUser, AppPool};
 
-use self::dtos::login::Login;
-
 mod dtos;
+#[cfg(test)]
+mod test;
 
 #[post("/")]
 async fn create_user(

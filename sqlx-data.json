@@ -493,6 +493,26 @@
     },
     "query": "\n    UPDATE channels SET \n        name = $1,\n        refresh_token = $2,\n        csrf_token = NULL,\n        updated_at = NOW()\n    WHERE id = $3\n    "
   },
+  "9698bee97616bd5605a0905999bf6c0486c281e1141aeff3dc898c9e176f89a2": {
+    "describe": {
+      "columns": [
+        {
+          "name": "count",
+          "ordinal": 0,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        SELECT COUNT(*) FROM users WHERE name = $1\n        "
+  },
   "a2942ce2cc35f204ded8852e2319cb460e1715d7e4dc17d70867abfaadabe83f": {
     "describe": {
       "columns": [
