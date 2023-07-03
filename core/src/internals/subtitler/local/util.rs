@@ -49,8 +49,6 @@ pub fn call_ffmpeg(
         .arg(&video_path)
         .arg("-vf")
         .arg(format!("subtitles={}", &srt_path.to_str().unwrap()))
-        .arg("-c:a copy")
-        .arg("-c:v copy")
         .arg(&output_path)
         .output()?;
 

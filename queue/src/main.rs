@@ -6,7 +6,8 @@ use marco_polo_rs_core::{
     internals::{
         cloud::{
             aws::AwsCloudService,
-            traits::{CloudService, QueueClient},
+            models::payload::PayloadType,
+            traits::{CloudService, QueueClient, QueueMessage},
         },
         subtitler::local::LocalClient,
         transcriber::assembly_ai::AssemblyAiClient,
@@ -22,11 +23,11 @@ use tokio::{
     sync::Mutex,
     task::JoinHandle,
 };
-use worker::Worker;
+use workers::{heavy::HeavyWorker, light::LightWorker, Worker};
 
 mod handlers;
 mod srt;
-mod worker;
+mod workers;
 
 pub type CloudServiceInUse = AwsCloudService;
 pub type TranscriberClientInUse = AssemblyAiClient;
@@ -42,22 +43,41 @@ async fn main() {
     println!("Starting workers...");
     dotenv::dotenv().ok();
     env::check_envs();
+
+    let thread_count = num_cpus::get_physical();
+
+    println!("Using {} threads", thread_count);
+
+    if thread_count < 2 {
+        panic!("Thread count must be at least 2");
+    }
+
     let pool = create_pool().await;
     let pool = Arc::new(pool);
 
     let queue_url = std::env::var("AWS_QUEUE_URL").expect("QUEUE_URL not found");
     let cloud_service = CloudServiceInUse::new(queue_url).unwrap();
 
-    let message_pool = Queue::new();
-    let message_pool = Arc::new(Mutex::new(message_pool));
+    let light_message_pool: Queue<(Message, PayloadType)> = Queue::new();
+    let light_message_pool = Arc::new(Mutex::new(light_message_pool));
+
+    let heavy_message_pool: Queue<(Message, PayloadType)> = Queue::new();
+    let heavy_message_pool = Arc::new(Mutex::new(heavy_message_pool));
 
     let runtime = Builder::new_multi_thread()
-        .worker_threads(num_cpus::get_physical())
+        .worker_threads(thread_count)
         .enable_all()
         .build()
         .unwrap();
 
-    spawn_workers(pool, &runtime, cloud_service.clone(), message_pool.clone());
+    spawn_workers(
+        thread_count,
+        pool,
+        &runtime,
+        cloud_service.clone(),
+        light_message_pool.clone(),
+        heavy_message_pool.clone(),
+    );
 
     let queue_client = cloud_service.queue_client();
     loop {
@@ -68,46 +88,92 @@ async fn main() {
                 continue;
             }
         };
-        let mut lock = message_pool.lock().await;
+
         println!("Enqueuing {} messages", messages.len());
         for message in messages {
-            lock.enqueue(message);
+            let (message, payload_type) = match get_payload(message, queue_client).await {
+                Ok((message, payload_type)) => (message, payload_type),
+                Err(_) => continue,
+            };
+            match payload_type {
+                PayloadType::BatukaSrtTranslationUpload(_) => {
+                    let mut lock = heavy_message_pool.lock().await;
+                    lock.enqueue((message, payload_type));
+                }
+                _ => {
+                    let mut lock = light_message_pool.lock().await;
+                    lock.enqueue((message, payload_type));
+                }
+            }
         }
-        drop(lock);
     }
 }
 
 fn spawn_workers(
+    thread_count: usize,
     pool: Arc<PgPool>,
     runtime: &Runtime,
     cloud_service: CloudServiceInUse,
-    message_pool: Arc<Mutex<Queue<Message>>>,
+    light_message_pool: Arc<Mutex<Queue<(Message, PayloadType)>>>,
+    heavy_message_pool: Arc<Mutex<Queue<(Message, PayloadType)>>>,
 ) -> Vec<JoinHandle<()>> {
-    let handles: Vec<JoinHandle<()>> = (0..num_cpus::get())
+    let handles: Vec<JoinHandle<()>> = (0..thread_count)
         .map(|id| {
-            let transcriber_client = TranscriberClientInUse::new();
-            let translator_client = TranslatorClientInUse::new();
-            let subtitler_client = SubtitlerClientInUse::new();
-            let video_downloader = VideoDownloaderInUse::new();
-            let youtube_client = YoutubeClientInUse::new();
+            if id == 0 {
+                let subtitler_client = SubtitlerClientInUse::new();
+                let heavy_worker = HeavyWorker {
+                    id,
+                    pool: pool.clone(),
+                    cloud_service: cloud_service.clone(),
+                    subtitler_client,
+                    message_pool: heavy_message_pool.clone(),
+                };
+                runtime.spawn(async move {
+                    heavy_worker.handle_queue().await;
+                })
+            } else {
+                let transcriber_client = TranscriberClientInUse::new();
+                let translator_client = TranslatorClientInUse::new();
 
-            let worker = Worker {
-                id,
-                pool: pool.clone(),
-                cloud_service: cloud_service.clone(),
-                transcriber_client,
-                translator_client,
-                subtitler_client,
-                message_pool: message_pool.clone(),
-                video_downloader,
-                youtube_client,
-            };
+                let video_downloader = VideoDownloaderInUse::new();
+                let youtube_client = YoutubeClientInUse::new();
 
-            runtime.spawn(async move {
-                worker.handle_queue().await;
-            })
+                let worker = LightWorker {
+                    id,
+                    pool: pool.clone(),
+                    cloud_service: cloud_service.clone(),
+                    transcriber_client,
+                    translator_client,
+                    message_pool: light_message_pool.clone(),
+                    video_downloader,
+                    youtube_client,
+                };
+
+                runtime.spawn(async move {
+                    worker.handle_queue().await;
+                })
+            }
         })
         .collect();
 
     return handles;
+}
+
+async fn get_payload<QC: QueueClient>(
+    message: QC::M,
+    queue_client: &QC,
+) -> Result<(QC::M, PayloadType), ()> {
+    let payload_result = message.to_payload();
+    let payload = match payload_result {
+        Ok(payload) => payload,
+        Err(_) => {
+            println!("Invalid payload");
+            let result = queue_client.delete_message(message).await;
+            if result.is_err() {
+                println!("Failed to delete message");
+            }
+            return Err(());
+        }
+    };
+    return Ok((message, payload));
 }
