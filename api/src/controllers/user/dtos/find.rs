@@ -1,8 +1,8 @@
 use chrono::{DateTime, Utc};
 use marco_polo_rs_core::database::models::user::{User, UserRole};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, PartialEq, Deserialize)]
 pub struct UserDTO {
     pub id: i32,
     pub name: String,
