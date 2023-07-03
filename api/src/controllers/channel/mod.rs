@@ -1,7 +1,7 @@
 use actix_web::{
-    post,
+    get, post,
     web::{self},
-    HttpResponse, Responder, get,
+    HttpResponse, Responder,
 };
 use marco_polo_rs_core::database::queries::{self, channel::UpdateChannelDto};
 
@@ -43,16 +43,21 @@ async fn oauth_youtube_callback(
     let code = params.code;
     let state = params.state;
 
-    queries::channel::find_by_csrf_token(pool, state).await?; //check if channel exists
+    let channel = queries::channel::find_by_csrf_token(pool, state).await?;
 
     let refresh_token = client.get_refresh_token(code).await?;
-    client.get_channel_info(refresh_token.clone()).await?;
+    let info = client.get_channel_info(refresh_token.clone()).await?;
+
+    let snippet = match info.items.get(0) {
+        Some(item) => &item.snippet,
+        None => return Err(AppError::internal_server_error()),
+    };
 
     queries::channel::update(
         pool,
         UpdateChannelDto {
-            id: 1,
-            name: "ElonMuskCortes".to_string(),
+            id: channel.id,
+            name: snippet.title.to_string(),
             refresh_token,
         },
     )

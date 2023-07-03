@@ -48,7 +48,7 @@ impl<'a> Handler<'a> {
 
         subtitler_client.subtitle(&video, bucket_client).await?;
 
-        let video_uri = format!("videos/processed/{}.{}", payload.video_id, "mkv");
+        let video_uri = format!("videos/processed/{}.{}", payload.video_id, "mkv"); //TODO: get format from video
 
         queries::storage::create(
             &self.worker.pool,

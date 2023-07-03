@@ -2,8 +2,9 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use super::video_storage::VideosStorage;
+use super::{channel::Channel, video_storage::VideosStorage};
 
+//TODO: add youtube_id
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Video {
     pub id: Uuid,
@@ -22,6 +23,12 @@ pub struct Video {
 pub struct VideoWithStorage {
     pub video: Video,
     pub storage: VideosStorage,
+}
+
+pub struct VideoWithStorageAndChannel {
+    pub video: Video,
+    pub storage: VideosStorage,
+    pub channel: Channel,
 }
 
 #[derive(Debug, Serialize, Deserialize, sqlx::Type)]

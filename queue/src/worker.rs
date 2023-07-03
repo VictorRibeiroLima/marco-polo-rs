@@ -11,7 +11,7 @@ use tokio::sync::Mutex;
 
 use crate::{
     CloudServiceInUse, Message, SubtitlerClientInUse, TranscriberClientInUse,
-    TranslatorClientInUse, VideoDownloaderInUse,
+    TranslatorClientInUse, VideoDownloaderInUse, YoutubeClientInUse,
 };
 
 use super::handlers;
@@ -28,6 +28,7 @@ pub struct Worker {
     pub pool: Arc<sqlx::PgPool>,
     pub message_pool: Arc<Mutex<Queue<Message>>>,
     pub video_downloader: VideoDownloaderInUse,
+    pub youtube_client: YoutubeClientInUse,
 }
 
 impl Worker {
@@ -84,9 +85,13 @@ impl Worker {
                 let sentences_result = handler.handle(payload).await;
                 sentences_result
             }
-            PayloadType::BatukaVideoProcessedUpload(_) => {
+            PayloadType::BatukaVideoProcessedUpload(payload) => {
                 println!("Worker {} handling processed upload...", self.id);
-                Ok(())
+                let result =
+                    handlers::processed_upload::handle(&self.pool, &self.youtube_client, payload)
+                        .await;
+
+                result
             }
             PayloadType::BatukaDownloadVideo(payload) => {
                 println!("Worker {} handling video download...", self.id);

@@ -58,7 +58,8 @@ impl<BC: BucketClient> SubtitlerClient<BC> for LocalClient {
                 return Err(e);
             }
         }
-        util::delete_temp_files(temp_file_paths)?; // Invert this to delete first, then upload when the upload method start using a Vec<u8> instead of a PathBuf
+        let to_delete = temp_file_paths[0..2].to_vec();
+        util::delete_temp_files(to_delete)?;
         Ok(None)
     }
 }
