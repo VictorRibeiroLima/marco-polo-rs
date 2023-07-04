@@ -1,5 +1,61 @@
 {
   "db": "PostgreSQL",
+  "22770f34d307a92aea0e3005fed4132e253492d0300bc8d25fb14ebb89fa24dd": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "csrf_token",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "refresh_token",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "created_at: DateTime<Utc>",
+          "ordinal": 4,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "updated_at: DateTime<Utc>",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "deleted_at: DateTime<Utc>",
+          "ordinal": 6,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        true,
+        true,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n        SELECT \n            id,\n            name,\n            csrf_token,\n            refresh_token,\n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        FROM channels WHERE id = $1 AND deleted_at IS NULL\n        "
+  },
   "2708118f5f0013141b538eea92742fcceea72939ce4d2bf882a4c5cbf64c6af7": {
     "describe": {
       "columns": [
@@ -220,62 +276,6 @@
       }
     },
     "query": "\n    INSERT INTO channels (csrf_token) \n    VALUES ($1)\n    "
-  },
-  "4ecbdf60815c9d8621f14a0cb1c78fa098da0a310a6324135081f1071cd17d59": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Int4"
-        },
-        {
-          "name": "name",
-          "ordinal": 1,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "csrf_token",
-          "ordinal": 2,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "refresh_token",
-          "ordinal": 3,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "created_at: DateTime<Utc>",
-          "ordinal": 4,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "updated_at: DateTime<Utc>",
-          "ordinal": 5,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "deleted_at: DateTime<Utc>",
-          "ordinal": 6,
-          "type_info": "Timestamp"
-        }
-      ],
-      "nullable": [
-        false,
-        true,
-        true,
-        true,
-        false,
-        false,
-        true
-      ],
-      "parameters": {
-        "Left": [
-          "Int4"
-        ]
-      }
-    },
-    "query": "\n        SELECT \n            id,\n            name,\n            csrf_token,\n            refresh_token,\n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        FROM channels WHERE id = $1\n        "
   },
   "5f1a5f32cb5854dc6d37daa8022aa0d69929eb5a5ad8ed80b28957fc5a480b82": {
     "describe": {
