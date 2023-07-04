@@ -6,12 +6,13 @@ use marco_polo_rs_core::database::models::user::{User, UserRole};
 use reqwest::StatusCode;
 use sqlx::PgPool;
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Utc, NaiveDate};
 
 use crate::auth::gen_token;
 use crate::controllers::user::dtos::create::CreateUser;
 
 use crate::controllers::user::dtos::find::UserDTO;
+use crate::utils::test::get_token;
 use crate::{controllers::user::create_user, AppPool};
 
 use super::{find_by_id, login};
@@ -116,26 +117,10 @@ async fn test_find_by_id_get_unauthorized(pool: PgPool) {
 
 #[sqlx::test(migrations = "../migrations", fixtures("user"))]
 async fn test_find_by_id_get_not_found(pool: PgPool) {
-    std::env::set_var("API_JSON_WEB_TOKEN_SECRET", "test_secret");
+
     let pool = Arc::new(pool);
 
-    let user = sqlx::query_as!(
-        User,
-        r#"SELECT id, 
-        name, 
-        email, 
-        password, 
-        role as "role: UserRole",
-        created_at as "created_at: DateTime <Utc>",
-        updated_at as "updated_at: DateTime <Utc>",
-        deleted_at as "deleted_at: DateTime <Utc>"
-        FROM users WHERE id = 666"#
-    )
-    .fetch_one(pool.as_ref())
-    .await
-    .unwrap();
-
-    let token = gen_token(user).await.unwrap();
+    let token = get_token!(pool.as_ref());
 
     let test_app = innit_test_app(pool.clone()).await;
 
@@ -151,26 +136,10 @@ async fn test_find_by_id_get_not_found(pool: PgPool) {
 
 #[sqlx::test(migrations = "../migrations", fixtures("user"))]
 async fn test_find_by_id_get_deleted(pool: PgPool) {
-    std::env::set_var("API_JSON_WEB_TOKEN_SECRET", "test_secret");
     let pool = Arc::new(pool);
 
-    let user = sqlx::query_as!(
-        User,
-        r#"SELECT id, 
-        name, 
-        email, 
-        password, 
-        role as "role: UserRole",
-        created_at as "created_at: DateTime <Utc>",
-        updated_at as "updated_at: DateTime <Utc>",
-        deleted_at as "deleted_at: DateTime <Utc>"
-        FROM users WHERE id = 666"#
-    )
-    .fetch_one(pool.as_ref())
-    .await
-    .unwrap();
 
-    let token = gen_token(user).await.unwrap();
+    let token = get_token!(pool.as_ref());
 
     let test_app = innit_test_app(pool.clone()).await;
 
@@ -186,27 +155,21 @@ async fn test_find_by_id_get_deleted(pool: PgPool) {
 
 #[sqlx::test(migrations = "../migrations", fixtures("user"))]
 async fn test_find_by_id_get_ok(pool: PgPool) {
-    std::env::set_var("API_JSON_WEB_TOKEN_SECRET", "test_secret");
     let pool = Arc::new(pool);
 
-    let user = sqlx::query_as!(
-        User,
-        r#"SELECT id, 
-        name, 
-        email, 
-        password, 
-        role as "role: UserRole",
-        created_at as "created_at: DateTime <Utc>",
-        updated_at as "updated_at: DateTime <Utc>",
-        deleted_at as "deleted_at: DateTime <Utc>"
-        FROM users WHERE id = 666"#
-    )
-    .fetch_one(pool.as_ref())
-    .await
-    .unwrap();
+    let token = get_token!(pool.as_ref());
 
-    let token = gen_token(user.clone()).await.unwrap();
-    let expected_dto: UserDTO = user.into();
+    let date = NaiveDate::from_ymd_opt(2022, 1, 1).unwrap().and_hms_opt(0, 0, 0).unwrap();
+    let datetime: DateTime<Utc> = DateTime::from_utc(date, Utc);
+
+    let expected_dto: UserDTO = UserDTO { 
+        id: 666, 
+        name: "TestUser".to_string(), 
+        email: "teste@gmail.com".to_string(), 
+        role: UserRole::User, 
+        created_at: datetime, 
+        updated_at: datetime 
+    };
 
     let test_app = innit_test_app(pool.clone()).await;
 

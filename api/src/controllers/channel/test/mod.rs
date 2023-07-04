@@ -14,7 +14,7 @@ use reqwest::StatusCode;
 use sqlx::PgPool;
 
 use crate::{
-    auth::gen_token, controllers::channel::create_youtube_channel, AppPool, AppYoutubeClient,
+    auth::gen_token, controllers::channel::create_youtube_channel, AppPool, AppYoutubeClient, utils::test::get_token,
 };
 
 const CSRF_TOKEN: &str = "111aaa11aa";
@@ -61,29 +61,12 @@ async fn test_create_channel_unauthorized(pool: PgPool) {
 
 #[sqlx::test(migrations = "../migrations", fixtures("user"))]
 async fn test_create_channel_authorized(pool: PgPool) {
-    std::env::set_var("API_JSON_WEB_TOKEN_SECRET", "test_secret");
     let pool = Arc::new(pool);
 
     let youtube_client = YoutubeClientMock;
     let youtube_client = Arc::new(youtube_client);
 
-    let user = sqlx::query_as!(
-        User,
-        r#"SELECT id, 
-        name, 
-        email, 
-        password, 
-        role as "role: UserRole",
-        created_at as "created_at: DateTime <Utc>",
-        updated_at as "updated_at: DateTime <Utc>",
-        deleted_at as "deleted_at: DateTime <Utc>"
-        FROM users WHERE id = 666"#
-    )
-    .fetch_one(pool.as_ref())
-    .await
-    .unwrap();
-
-    let token = gen_token(user).await.unwrap();
+    let token = get_token!(pool.as_ref());
 
     let test_app = innit_test_app(pool.clone(), youtube_client).await;
 
@@ -115,23 +98,7 @@ async fn test_create_channel_authorized(pool: PgPool) {
 async fn test_find_by_id_get_ok(pool: PgPool) {
     let pool = Arc::new(pool);
 
-    let user = sqlx::query_as!(
-        User,
-        r#"SELECT id, 
-        name, 
-        email, 
-        password, 
-        role as "role: UserRole",
-        created_at as "created_at: DateTime <Utc>",
-        updated_at as "updated_at: DateTime <Utc>",
-        deleted_at as "deleted_at: DateTime <Utc>"
-        FROM users WHERE id = 666"#
-    )
-    .fetch_one(pool.as_ref())
-    .await
-    .unwrap();
-
-    let token = gen_token(user).await.unwrap();
+    let token = get_token!(pool.as_ref());
 }
 
 async fn innit_test_app(
