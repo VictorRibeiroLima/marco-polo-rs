@@ -50,7 +50,7 @@ async fn test_create_channel_unauthorized(pool: PgPool) {
     let test_app = innit_test_app(Arc::new(pool), youtube_client).await;
 
     let request = test::TestRequest::post()
-        .uri("/")
+        .uri("/youtube")
         .insert_header(ContentType::json())
         .to_request();
 
@@ -88,7 +88,7 @@ async fn test_create_channel_authorized(pool: PgPool) {
     let test_app = innit_test_app(pool.clone(), youtube_client).await;
 
     let request = test::TestRequest::post()
-        .uri("/")
+        .uri("/youtube")
         .insert_header(ContentType::json())
         .insert_header(("Authorization", token))
         .to_request();
@@ -109,6 +109,29 @@ async fn test_create_channel_authorized(pool: PgPool) {
     assert!(record.count.is_some());
 
     assert_eq!(record.count.unwrap(), 1);
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("user"))]
+async fn test_find_by_id_get_ok(pool: PgPool) {
+    let pool = Arc::new(pool);
+
+    let user = sqlx::query_as!(
+        User,
+        r#"SELECT id, 
+        name, 
+        email, 
+        password, 
+        role as "role: UserRole",
+        created_at as "created_at: DateTime <Utc>",
+        updated_at as "updated_at: DateTime <Utc>",
+        deleted_at as "deleted_at: DateTime <Utc>"
+        FROM users WHERE id = 666"#
+    )
+    .fetch_one(pool.as_ref())
+    .await
+    .unwrap();
+
+    let token = gen_token(user).await.unwrap();
 }
 
 async fn innit_test_app(
