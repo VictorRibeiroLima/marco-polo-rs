@@ -36,6 +36,29 @@ pub async fn find_by_id(pool: &PgPool, id: i32) -> Result<User, sqlx::Error> {
     return Ok(user);
 }
 
+pub async fn find_all(pool: &PgPool) -> Result<Vec<User>, sqlx::Error> {
+    let all_user = sqlx::query_as!(
+        User,
+        r#"
+        SELECT 
+            id,
+            name, 
+            email,
+            password,
+            role as "role: UserRole", 
+            created_at as "created_at: DateTime<Utc>",
+            updated_at as "updated_at: DateTime<Utc>",
+            deleted_at as "deleted_at: DateTime<Utc>"
+        FROM 
+            users 
+        "#,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    return Ok(all_user);
+}
+
 pub async fn create(pool: &PgPool, dto: CreateUserDto<'_>) -> Result<(), sqlx::Error> {
     let password = bcrypt::hash(dto.password, bcrypt::DEFAULT_COST).unwrap();
     let role = dto.role.unwrap_or(&UserRole::User);
@@ -118,6 +141,15 @@ mod test {
         let user = user_result.unwrap();
 
         assert_eq!(user.id, id);
+    }
+
+    #[sqlx::test(migrations = "../migrations", fixtures("users"))]
+    async fn test_find_all(pool: Pool<Postgres>) {
+        let user_result = find_all(&pool).await;
+        let users = user_result.unwrap();
+        let user_length = users.len();
+
+        assert_eq!(user_length, 20)
     }
 
     #[sqlx::test(migrations = "../migrations", fixtures("user"))]
