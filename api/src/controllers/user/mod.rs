@@ -93,14 +93,8 @@ async fn find_by_id(
 }
 
 #[get("/")]
-async fn find_all(
-    id: web::Path<i32>,
-    pool: web::Data<AppPool>,
-    _jwt: TokenClaims,
-) -> Result<impl Responder, AppError> {
-    let id = id.into_inner();
+async fn find_all(pool: web::Data<AppPool>, _jwt: TokenClaims) -> Result<impl Responder, AppError> {
     let pool = &pool.pool;
-
     let users = queries::user::find_all(pool).await?;
 
     let dtos: Vec<UserDTO> = users.into_iter().map(|user| user.into()).collect();
@@ -112,6 +106,7 @@ pub fn init_routes(config: &mut web::ServiceConfig) {
     let scope = web::scope("/user")
         .service(create_user)
         .service(login)
-        .service(find_by_id);
+        .service(find_by_id)
+        .service(find_all);
     config.service(scope);
 }
