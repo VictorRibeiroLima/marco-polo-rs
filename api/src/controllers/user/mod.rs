@@ -92,6 +92,22 @@ async fn find_by_id(
     return Ok(Json(dto));
 }
 
+#[get("/")]
+async fn find_all(
+    id: web::Path<i32>,
+    pool: web::Data<AppPool>,
+    _jwt: TokenClaims,
+) -> Result<impl Responder, AppError> {
+    let id = id.into_inner();
+    let pool = &pool.pool;
+
+    let users = queries::user::find_all(pool).await?;
+
+    let dtos: Vec<UserDTO> = users.into_iter().map(|user| user.into()).collect();
+
+    return Ok(Json(dtos));
+}
+
 pub fn init_routes(config: &mut web::ServiceConfig) {
     let scope = web::scope("/user")
         .service(create_user)
