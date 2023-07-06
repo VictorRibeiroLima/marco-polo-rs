@@ -1,6 +1,9 @@
 use sqlx::PgPool;
 
-use crate::database::models::user::{User, UserRole};
+use crate::database::{
+    models::user::{User, UserPagination, UserRole},
+    queries::pagination::{Pagination, PaginationOrder},
+};
 use chrono::{DateTime, Utc};
 
 pub struct CreateUserDto<'a> {
@@ -37,6 +40,14 @@ pub async fn find_by_id(pool: &PgPool, id: i32) -> Result<User, sqlx::Error> {
 }
 
 pub async fn find_all(pool: &PgPool) -> Result<Vec<User>, sqlx::Error> {
+    let pagination: Pagination<User> = Pagination {
+        limit: None,
+        offset: None,
+        order_by: Some(UserPagination::Id),
+        order: Some(PaginationOrder::Asc),
+    };
+
+    println!("{:?}", pagination.order_by.unwrap().name());
     let all_user = sqlx::query_as!(
         User,
         r#"
