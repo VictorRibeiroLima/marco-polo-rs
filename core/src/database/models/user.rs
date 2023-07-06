@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use marco_polo_rs_macros::Pagination;
+use marco_polo_rs_macros::Paginate;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, sqlx::Type, Clone, PartialEq)]
@@ -9,7 +9,7 @@ pub enum UserRole {
     User,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Pagination)]
+#[derive(Debug, Serialize, Deserialize, Clone, Paginate)]
 pub struct User {
     pub id: i32,
     pub name: String,

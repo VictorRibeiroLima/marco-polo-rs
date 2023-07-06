@@ -5,8 +5,8 @@ use syn::Ident;
 
 mod utils;
 
-#[proc_macro_derive(Pagination)]
-pub fn pagination_enum(input: TokenStream) -> TokenStream {
+#[proc_macro_derive(Paginate, attributes(order_field_name))]
+pub fn ordination_enum(input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree
     let derive_input = syn::parse_macro_input!(input as syn::DeriveInput);
 
@@ -14,7 +14,7 @@ pub fn pagination_enum(input: TokenStream) -> TokenStream {
     let (visibility, ident) = (derive_input.vis, derive_input.ident);
 
     // Create the enum name
-    let enum_name = ident.to_string() + "Pagination";
+    let enum_name = ident.to_string() + "OrderFields";
     let enum_ident = Ident::new(&enum_name, Span::call_site());
 
     // Create the derives
@@ -39,12 +39,12 @@ pub fn pagination_enum(input: TokenStream) -> TokenStream {
             baz: String,
         }
 
-        enum FooPagination {
+        enum FooOrderFields {
             this lines--> Bar,
             this lines--> Baz,
         }
     */
-    let field_name_variants = struct_fields.iter().map(|(_, variant_ident)| {
+    let field_name_variants = struct_fields.iter().map(|(_, variant_ident, _)| {
         quote! {
             #variant_ident
         }
@@ -58,12 +58,12 @@ pub fn pagination_enum(input: TokenStream) -> TokenStream {
             baz: String,
         }
 
-        enum FooPagination {
+        enum FooOrderFields {
             Bar,
             Baz,
         }
 
-        impl FooPagination {
+        impl FooOrderFields {
             fn name(&self) -> &'static str {
                 match *self {
                 this lines-->    FooPagination::Bar => "bar",
@@ -72,12 +72,20 @@ pub fn pagination_enum(input: TokenStream) -> TokenStream {
             }
         }
     */
-    let field_name_to_strs = struct_fields.iter().map(|(field_ident, variant_ident)| {
-        let field_name = field_ident.to_string();
-        quote! {
-            #enum_ident::#variant_ident => #field_name
-        }
-    });
+    let field_name_to_strs = struct_fields
+        .iter()
+        .map(|(field_ident, variant_ident, meta_name)| {
+            // If the attribute #[order_field_name = "field_name"] is not present, the field name will be used
+            let field_name = if let Some(meta_name) = meta_name {
+                meta_name.to_string()
+            } else {
+                field_ident.to_string()
+            };
+
+            quote! {
+                #enum_ident::#variant_ident => #field_name
+            }
+        });
 
     let tokens = quote! {
         #derives
