@@ -11,7 +11,10 @@ pub fn ordination_enum(input: TokenStream) -> TokenStream {
     let derive_input = syn::parse_macro_input!(input as syn::DeriveInput);
 
     // Get the visibility and identifier of the struct
-    let (visibility, ident) = (derive_input.vis, derive_input.ident);
+    let (visibility, ident, generics) =
+        (derive_input.vis, derive_input.ident, derive_input.generics);
+
+    let (_, ty_generics, where_clause) = generics.split_for_impl();
 
     // Create the enum name
     let enum_name = ident.to_string() + "OrderFields";
@@ -101,7 +104,7 @@ pub fn ordination_enum(input: TokenStream) -> TokenStream {
             }
         }
 
-        impl crate::database::queries::pagination::Paginator for #ident {
+        impl #ty_generics crate::database::queries::pagination::Paginator for #ident #ty_generics #where_clause {
             type E = #enum_ident;
         }
     };
