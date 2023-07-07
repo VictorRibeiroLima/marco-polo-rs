@@ -67,7 +67,11 @@ where
             .subtitle(&video, bucket_client)
             .await?;
 
-        let video_uri = format!("videos/processed/{}.{}", payload.video_id, "mkv"); //TODO: get format from video
+        let video_uri = format!(
+            "videos/processed/{}.{}",
+            payload.video_id,
+            video.storage.format.to_string()
+        );
 
         queries::storage::create(
             &self.pool,

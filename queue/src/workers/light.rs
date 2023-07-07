@@ -67,6 +67,7 @@ impl LightWorker {
                     &self.cloud_service,
                     &self.transcriber_client,
                     &self.pool,
+                    &message,
                     payload,
                 )
                 .await;
