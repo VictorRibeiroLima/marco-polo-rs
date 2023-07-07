@@ -32,6 +32,33 @@ struct TestC<'a, 'b> {
     c: &'b str,
 }
 
+trait TestTraitA {}
+
+trait TestTraitB {}
+
+#[allow(dead_code)]
+#[derive(Paginate)]
+struct TestD<R, T>
+where
+    R: TestTraitA,
+    T: TestTraitB,
+{
+    a: i32,
+    b: String,
+    c: PhantomData<R>,
+    d: PhantomData<T>,
+}
+
+#[allow(dead_code)]
+#[derive(Paginate)]
+struct TestE<'a, R: TestTraitA, T: TestTraitB> {
+    a: i32,
+    b: String,
+    c: &'a str,
+    d: PhantomData<R>,
+    e: PhantomData<T>,
+}
+
 #[test]
 fn test_enum_creation() {
     let field = TestOrderFields::A;
