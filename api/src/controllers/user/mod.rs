@@ -1,5 +1,5 @@
 use actix_web::{
-    post,
+    get, post,
     web::{self, Json},
     HttpResponse, Responder,
 };
@@ -8,12 +8,19 @@ use marco_polo_rs_core::database::queries::{self, user::CreateUserDto};
 
 use validator::Validate;
 
-use crate::models::{error::AppError, result::AppResult};
-use crate::{controllers::user::dtos::create::CreateUser, AppPool};
-
 use self::dtos::login::Login;
+use crate::{
+    controllers::user::dtos::{create::CreateUser, find::UserDTO},
+    AppPool,
+};
+use crate::{
+    middleware::jwt_token::TokenClaims,
+    models::{error::AppError, result::AppResult},
+};
 
 mod dtos;
+#[cfg(test)]
+mod test;
 
 #[post("/")]
 async fn create_user(
@@ -70,7 +77,36 @@ async fn login(
     return Ok(Json(response));
 }
 
+#[get("/{id}")]
+async fn find_by_id(
+    id: web::Path<i32>,
+    pool: web::Data<AppPool>,
+    _jwt: TokenClaims,
+) -> Result<impl Responder, AppError> {
+    let id = id.into_inner();
+    let pool = &pool.pool;
+
+    let user = queries::user::find_by_id(pool, id).await?;
+    let dto: UserDTO = user.into();
+
+    return Ok(Json(dto));
+}
+
+#[get("/")]
+async fn find_all(pool: web::Data<AppPool>, _jwt: TokenClaims) -> Result<impl Responder, AppError> {
+    let pool = &pool.pool;
+    let users = queries::user::find_all(pool).await?;
+
+    let dtos: Vec<UserDTO> = users.into_iter().map(|user| user.into()).collect();
+
+    return Ok(Json(dtos));
+}
+
 pub fn init_routes(config: &mut web::ServiceConfig) {
-    let scope = web::scope("/user").service(create_user).service(login);
+    let scope = web::scope("/user")
+        .service(create_user)
+        .service(login)
+        .service(find_by_id)
+        .service(find_all);
     config.service(scope);
 }

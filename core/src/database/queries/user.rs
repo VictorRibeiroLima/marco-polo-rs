@@ -10,6 +10,55 @@ pub struct CreateUserDto<'a> {
     pub role: Option<&'a UserRole>,
 }
 
+pub async fn find_by_id(pool: &PgPool, id: i32) -> Result<User, sqlx::Error> {
+    let user = sqlx::query_as!(
+        User,
+        r#"
+        SELECT 
+            id,
+            name, 
+            email,
+            password,
+            role as "role: UserRole", 
+            created_at as "created_at: DateTime<Utc>",
+            updated_at as "updated_at: DateTime<Utc>",
+            deleted_at as "deleted_at: DateTime<Utc>"
+        FROM 
+            users 
+        WHERE 
+            id = $1 AND deleted_at IS NULL
+        "#,
+        id
+    )
+    .fetch_one(pool)
+    .await?;
+
+    return Ok(user);
+}
+
+pub async fn find_all(pool: &PgPool) -> Result<Vec<User>, sqlx::Error> {
+    let all_user = sqlx::query_as!(
+        User,
+        r#"
+        SELECT 
+            id,
+            name, 
+            email,
+            password,
+            role as "role: UserRole", 
+            created_at as "created_at: DateTime<Utc>",
+            updated_at as "updated_at: DateTime<Utc>",
+            deleted_at as "deleted_at: DateTime<Utc>"
+        FROM 
+            users 
+        "#,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    return Ok(all_user);
+}
+
 pub async fn create(pool: &PgPool, dto: CreateUserDto<'_>) -> Result<(), sqlx::Error> {
     let password = bcrypt::hash(dto.password, bcrypt::DEFAULT_COST).unwrap();
     let role = dto.role.unwrap_or(&UserRole::User);
@@ -55,6 +104,8 @@ pub async fn find_by_email(pool: &PgPool, email: &str) -> Result<Option<User>, s
 
 #[cfg(test)]
 mod test {
+    use core::panic;
+
     use super::*;
 
     use sqlx::{Pool, Postgres};
@@ -78,6 +129,59 @@ mod test {
 
         assert_eq!(user.email, email);
         assert!(bcrypt::verify("123456", &user.password).unwrap());
+    }
+
+    #[sqlx::test(migrations = "../migrations", fixtures("user"))]
+    async fn test_find_by_id(pool: Pool<Postgres>) {
+        let id = 666;
+
+        let user_result = find_by_id(&pool, id).await;
+        assert!(user_result.is_ok());
+
+        let user = user_result.unwrap();
+
+        assert_eq!(user.id, id);
+    }
+
+    #[sqlx::test(migrations = "../migrations", fixtures("users"))]
+    async fn test_find_all(pool: Pool<Postgres>) {
+        let user_result = find_all(&pool).await;
+        let users = user_result.unwrap();
+        let user_length = users.len();
+
+        assert_eq!(user_length, 20)
+    }
+
+    #[sqlx::test(migrations = "../migrations", fixtures("user"))]
+    async fn test_not_find_by_id(pool: Pool<Postgres>) {
+        let id = 665;
+
+        let user_result = find_by_id(&pool, id).await;
+        let err2 = match user_result {
+            Ok(_) => panic!("User should not be found"),
+            Err(err) => err,
+        };
+
+        match err2 {
+            sqlx::Error::RowNotFound => {}
+            _ => panic!("Expected Row not found error"),
+        };
+    }
+
+    #[sqlx::test(migrations = "../migrations", fixtures("user"))]
+    async fn test_not_find_by_id_deleted_at(pool: Pool<Postgres>) {
+        let id = 667;
+
+        let user_result = find_by_id(&pool, id).await;
+        let err2 = match user_result {
+            Ok(_) => panic!("User should not be found"),
+            Err(err) => err,
+        };
+
+        match err2 {
+            sqlx::Error::RowNotFound => {}
+            _ => panic!("Expected Row not found error"),
+        };
     }
 
     #[sqlx::test(migrations = "../migrations")]
