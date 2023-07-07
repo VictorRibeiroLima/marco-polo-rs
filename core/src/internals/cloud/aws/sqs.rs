@@ -94,6 +94,7 @@ impl QueueClient for SQSClient {
             queue_url: self.queue_url.clone(),
             max_number_of_messages: Some(10),
             wait_time_seconds: Some(20),
+            visibility_timeout: Some(100),
             ..Default::default()
         };
 
