@@ -1,6 +1,6 @@
 {
   "db": "PostgreSQL",
-  "2708118f5f0013141b538eea92742fcceea72939ce4d2bf882a4c5cbf64c6af7": {
+  "22770f34d307a92aea0e3005fed4132e253492d0300bc8d25fb14ebb89fa24dd": {
     "describe": {
       "columns": [
         {
@@ -14,61 +14,47 @@
           "type_info": "Varchar"
         },
         {
-          "name": "email",
+          "name": "csrf_token",
           "ordinal": 2,
           "type_info": "Varchar"
         },
         {
-          "name": "password",
+          "name": "refresh_token",
           "ordinal": 3,
           "type_info": "Varchar"
         },
         {
-          "name": "role: UserRole",
+          "name": "created_at: DateTime<Utc>",
           "ordinal": 4,
-          "type_info": {
-            "Custom": {
-              "kind": {
-                "Enum": [
-                  "ADMIN",
-                  "USER"
-                ]
-              },
-              "name": "user_role"
-            }
-          }
+          "type_info": "Timestamp"
         },
         {
-          "name": "created_at: DateTime <Utc>",
+          "name": "updated_at: DateTime<Utc>",
           "ordinal": 5,
           "type_info": "Timestamp"
         },
         {
-          "name": "updated_at: DateTime <Utc>",
+          "name": "deleted_at: DateTime<Utc>",
           "ordinal": 6,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "deleted_at: DateTime <Utc>",
-          "ordinal": 7,
           "type_info": "Timestamp"
         }
       ],
       "nullable": [
         false,
-        false,
-        false,
-        false,
-        false,
+        true,
+        true,
+        true,
         false,
         false,
         true
       ],
       "parameters": {
-        "Left": []
+        "Left": [
+          "Int4"
+        ]
       }
     },
-    "query": "SELECT id, \n        name, \n        email, \n        password, \n        role as \"role: UserRole\",\n        created_at as \"created_at: DateTime <Utc>\",\n        updated_at as \"updated_at: DateTime <Utc>\",\n        deleted_at as \"deleted_at: DateTime <Utc>\"\n        FROM users WHERE id = 666"
+    "query": "\n        SELECT \n            id,\n            name,\n            csrf_token,\n            refresh_token,\n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        FROM channels WHERE id = $1 AND deleted_at IS NULL\n        "
   },
   "28c3cc46ca261ddac740d6ab35f44aa23388d21086872102df103dc19437c28b": {
     "describe": {
@@ -220,62 +206,6 @@
       }
     },
     "query": "\n    INSERT INTO channels (csrf_token) \n    VALUES ($1)\n    "
-  },
-  "4ecbdf60815c9d8621f14a0cb1c78fa098da0a310a6324135081f1071cd17d59": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Int4"
-        },
-        {
-          "name": "name",
-          "ordinal": 1,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "csrf_token",
-          "ordinal": 2,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "refresh_token",
-          "ordinal": 3,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "created_at: DateTime<Utc>",
-          "ordinal": 4,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "updated_at: DateTime<Utc>",
-          "ordinal": 5,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "deleted_at: DateTime<Utc>",
-          "ordinal": 6,
-          "type_info": "Timestamp"
-        }
-      ],
-      "nullable": [
-        false,
-        true,
-        true,
-        true,
-        false,
-        false,
-        true
-      ],
-      "parameters": {
-        "Left": [
-          "Int4"
-        ]
-      }
-    },
-    "query": "\n        SELECT \n            id,\n            name,\n            csrf_token,\n            refresh_token,\n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        FROM channels WHERE id = $1\n        "
   },
   "5f1a5f32cb5854dc6d37daa8022aa0d69929eb5a5ad8ed80b28957fc5a480b82": {
     "describe": {
@@ -752,6 +682,78 @@
     },
     "query": "\n        INSERT INTO videos (id, title, description, user_id, channel_id, language)\n        VALUES ($1, $2, $3, $4, $5, $6);\n        "
   },
+  "c06e68fa634f4d2f5b3d7b6fdeaf9bd4de11a328f5c185b0c04ebab60ec34c2c": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "email",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "password",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "role: UserRole",
+          "ordinal": 4,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "ADMIN",
+                  "USER"
+                ]
+              },
+              "name": "user_role"
+            }
+          }
+        },
+        {
+          "name": "created_at: DateTime<Utc>",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "updated_at: DateTime<Utc>",
+          "ordinal": 6,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "deleted_at: DateTime<Utc>",
+          "ordinal": 7,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n        SELECT \n            id,\n            name, \n            email,\n            password,\n            role as \"role: UserRole\", \n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        FROM \n            users \n        WHERE \n            id = $1 AND deleted_at IS NULL\n        "
+  },
   "c2801aabb735b0e3851eda6c2c84564f0b89ee5b51c28ac2597d8577e07afcc1": {
     "describe": {
       "columns": [
@@ -881,6 +883,76 @@
       }
     },
     "query": "\n        UPDATE videos\n        SET url = $1, stage = 'DONE', uploaded_at = NOW()\n        WHERE id = $2\n        "
+  },
+  "e1cc7ed1d21cd026f17a4ae741c4e67a38c3d28de38f2911e15be544112d7e09": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "email",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "password",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "role: UserRole",
+          "ordinal": 4,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "ADMIN",
+                  "USER"
+                ]
+              },
+              "name": "user_role"
+            }
+          }
+        },
+        {
+          "name": "created_at: DateTime<Utc>",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "updated_at: DateTime<Utc>",
+          "ordinal": 6,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "deleted_at: DateTime<Utc>",
+          "ordinal": 7,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "\n        SELECT \n            id,\n            name, \n            email,\n            password,\n            role as \"role: UserRole\", \n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        FROM \n            users \n        "
   },
   "e6c82bd3af457ed042c08baf5a8aeb9bc95cde104ca4b2137191a13d7ab2d2b9": {
     "describe": {
@@ -1017,5 +1089,75 @@
       }
     },
     "query": "\n        SELECT \n            id,\n            name,\n            csrf_token,\n            refresh_token,\n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        FROM channels WHERE csrf_token = $1\n        "
+  },
+  "ffad0a977069a8d9f0c8fae0418f98873309161d55fc05a5c0bccc4c5e043be7": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "email",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "password",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "role: UserRole",
+          "ordinal": 4,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "ADMIN",
+                  "USER"
+                ]
+              },
+              "name": "user_role"
+            }
+          }
+        },
+        {
+          "name": "created_at: DateTime <Utc>",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "updated_at: DateTime <Utc>",
+          "ordinal": 6,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "deleted_at: DateTime <Utc>",
+          "ordinal": 7,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "SELECT id, \n                name, \n                email, \n                password, \n                role as \"role: UserRole\",\n                created_at as \"created_at: DateTime <Utc>\",\n                updated_at as \"updated_at: DateTime <Utc>\",\n                deleted_at as \"deleted_at: DateTime <Utc>\"\n                FROM users WHERE id = 666"
   }
 }

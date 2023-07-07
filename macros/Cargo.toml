@@ -1,0 +1,15 @@
+[package]
+name = "marco-polo-rs-macros"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "marco_polo_rs_macros"
+path = "src/lib.rs"
+proc-macro = true
+
+[dependencies]
+syn = { version = "2", features = ["derive", "printing", "extra-traits"] }
+quote = "1"
+proc-macro2 = "1.0.63"
+heck = "0.4.1"

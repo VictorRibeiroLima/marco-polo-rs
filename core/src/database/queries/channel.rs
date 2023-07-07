@@ -21,7 +21,7 @@ pub async fn find_by_id(pool: &PgPool, id: i32) -> Result<Channel, sqlx::Error> 
             created_at as "created_at: DateTime<Utc>",
             updated_at as "updated_at: DateTime<Utc>",
             deleted_at as "deleted_at: DateTime<Utc>"
-        FROM channels WHERE id = $1
+        FROM channels WHERE id = $1 AND deleted_at IS NULL
         "#,
         id
     )

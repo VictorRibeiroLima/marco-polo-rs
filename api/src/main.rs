@@ -19,6 +19,7 @@ mod auth;
 mod controllers;
 mod middleware;
 mod models;
+mod utils;
 
 struct AppPool {
     pool: Arc<sqlx::PgPool>,
