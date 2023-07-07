@@ -61,7 +61,7 @@ async fn main() {
     let light_message_pool: Queue<(Message, PayloadType)> = Queue::new();
     let light_message_pool = Arc::new(Mutex::new(light_message_pool));
 
-    let heavy_message_pool: Queue<(Message, PayloadType)> = Queue::new();
+    let heavy_message_pool: Queue<(Message, PayloadType)> = Queue::with_capacity(1);
     let heavy_message_pool = Arc::new(Mutex::new(heavy_message_pool));
 
     let runtime = Builder::new_multi_thread()
