@@ -1455,6 +1455,7 @@ dependencies = [
  "heck",
  "proc-macro2",
  "quote",
+ "serde",
  "syn 2.0.15",
 ]
 

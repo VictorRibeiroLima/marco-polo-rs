@@ -13,3 +13,7 @@ syn = { version = "2", features = ["derive", "printing", "extra-traits"] }
 quote = "1"
 proc-macro2 = "1.0.63"
 heck = "0.4.1"
+
+
+[dev-dependencies]
+serde = { version = "1.0", features = ["derive"] }
