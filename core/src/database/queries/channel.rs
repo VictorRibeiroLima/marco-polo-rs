@@ -17,6 +17,7 @@ pub async fn find_by_id(pool: &PgPool, id: i32) -> Result<Channel, sqlx::Error> 
             id,
             name,
             csrf_token,
+            creator_id,
             refresh_token,
             created_at as "created_at: DateTime<Utc>",
             updated_at as "updated_at: DateTime<Utc>",
@@ -31,13 +32,14 @@ pub async fn find_by_id(pool: &PgPool, id: i32) -> Result<Channel, sqlx::Error> 
     return Ok(channel);
 }
 
-pub async fn create(pool: &PgPool, csrf_token: String) -> Result<(), sqlx::Error> {
+pub async fn create(pool: &PgPool, csrf_token: String, creator_id: i32) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
-    INSERT INTO channels (csrf_token) 
-    VALUES ($1)
+    INSERT INTO channels (csrf_token,creator_id) 
+    VALUES ($1,$2)
     "#,
-        csrf_token
+        csrf_token,
+        creator_id
     )
     .execute(pool)
     .await?;
@@ -51,6 +53,7 @@ pub async fn find_by_csrf_token(pool: &PgPool, csrf_token: String) -> Result<Cha
         SELECT 
             id,
             name,
+            creator_id,
             csrf_token,
             refresh_token,
             created_at as "created_at: DateTime<Utc>",
@@ -94,9 +97,10 @@ mod test {
 
     const CSRF_TOKEN: &str = "123has_iuf12134";
 
-    #[sqlx::test(migrations = "../migrations")]
+    #[sqlx::test(migrations = "../migrations", fixtures("user"))]
     async fn test_create(pool: PgPool) {
-        let result = create(&pool, CSRF_TOKEN.to_string()).await;
+        let fixture_user_id = 666;
+        let result = create(&pool, CSRF_TOKEN.to_string(), fixture_user_id).await;
 
         assert!(result.is_ok());
         let record = sqlx::query!(

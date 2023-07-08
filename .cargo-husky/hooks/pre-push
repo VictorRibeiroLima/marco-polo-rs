@@ -12,7 +12,7 @@ cargo sqlx prepare --merged -- --all-targets --all-features
 git add sqlx-data.json
 
 # Check if there are changes to commit
-if [ -n "$(git status --porcelain)" ]; then
+if [ -n "$(git status --porcelain sqlx-data.json)" ]; then
   # Commit the changes
   git commit -m "chore: Generated SQLx file"
   

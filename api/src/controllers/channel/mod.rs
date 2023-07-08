@@ -20,12 +20,14 @@ use crate::{
 async fn create_youtube_channel(
     pool: web::Data<AppPool>,
     youtube_client: web::Data<AppYoutubeClient>,
-    _jwt: TokenClaims,
+    jwt: TokenClaims,
 ) -> Result<impl Responder, AppError> {
     let pool = &pool.pool;
     let client = &youtube_client.client;
     let (url, csrf_token) = client.generate_url();
-    queries::channel::create(pool, csrf_token).await?;
+    let user_id = jwt.id;
+
+    queries::channel::create(pool, csrf_token, user_id).await?;
 
     let app_response = AppResult::new(url);
     return Ok(HttpResponse::Created().json(app_response));
