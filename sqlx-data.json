@@ -1,5 +1,18 @@
 {
   "db": "PostgreSQL",
+  "1c103849145de2e73e893b8d3b159a338c86341484843e854fe31a07ca8d9393": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n    INSERT INTO channels (csrf_token,creator_id) \n    VALUES ($1,$2)\n    "
+  },
   "22770f34d307a92aea0e3005fed4132e253492d0300bc8d25fb14ebb89fa24dd": {
     "describe": {
       "columns": [
@@ -194,18 +207,6 @@
       }
     },
     "query": "\n        SELECT \n            id,\n            video_id as \"video_id: Uuid\",\n            storage_id,\n            video_path,\n            format as \"format: VideoFormat\",\n            stage as \"stage: StorageVideoStage\",\n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        FROM videos_storages\n            WHERE video_id = $1 AND stage = $2\n        "
-  },
-  "44fb512f5fe6ef1e52a8790c4532ab16a9b4cc0bcb7bc48d7db636fa39701674": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Left": [
-          "Varchar"
-        ]
-      }
-    },
-    "query": "\n    INSERT INTO channels (csrf_token) \n    VALUES ($1)\n    "
   },
   "5f1a5f32cb5854dc6d37daa8022aa0d69929eb5a5ad8ed80b28957fc5a480b82": {
     "describe": {
