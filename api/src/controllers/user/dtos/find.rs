@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::NaiveDateTime;
 use marco_polo_rs_core::database::models::user::{User, UserRole};
 use serde::{Deserialize, Serialize};
 
@@ -8,8 +8,8 @@ pub struct UserDTO {
     pub name: String,
     pub email: String,
     pub role: UserRole,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
 }
 
 impl From<User> for UserDTO {

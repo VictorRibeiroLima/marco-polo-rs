@@ -9,15 +9,15 @@ macro_rules! get_token {
                 email, 
                 password, 
                 role as "role: UserRole",
-                created_at as "created_at: DateTime <Utc>",
-                updated_at as "updated_at: DateTime <Utc>",
-                deleted_at as "deleted_at: DateTime <Utc>"
+                created_at as "created_at: chrono::NaiveDateTime",
+                updated_at as "updated_at: chrono::NaiveDateTime",
+                deleted_at as "deleted_at: chrono::NaiveDateTime"
                 FROM users WHERE id = 666"#
             )
             .fetch_one($pool)
             .await
             .unwrap();
-        
+
             let token = gen_token(user).await.unwrap();
             token
         }

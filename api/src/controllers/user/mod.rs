@@ -6,11 +6,7 @@ use actix_web::{
 
 use marco_polo_rs_core::database::{
     models::user::User,
-    queries::{
-        self,
-        pagination::{self, Pagination},
-        user::CreateUserDto,
-    },
+    queries::{self, pagination::Pagination, user::CreateUserDto},
 };
 
 use validator::Validate;

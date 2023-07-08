@@ -6,7 +6,7 @@ use marco_polo_rs_core::database::models::user::{User, UserRole};
 use reqwest::StatusCode;
 use sqlx::PgPool;
 
-use chrono::{DateTime, Utc, NaiveDate};
+use chrono::NaiveDate;
 
 use crate::auth::gen_token;
 use crate::controllers::user::dtos::create::CreateUser;
@@ -117,7 +117,6 @@ async fn test_find_by_id_get_unauthorized(pool: PgPool) {
 
 #[sqlx::test(migrations = "../migrations", fixtures("user"))]
 async fn test_find_by_id_get_not_found(pool: PgPool) {
-
     let pool = Arc::new(pool);
 
     let token = get_token!(pool.as_ref());
@@ -137,7 +136,6 @@ async fn test_find_by_id_get_not_found(pool: PgPool) {
 #[sqlx::test(migrations = "../migrations", fixtures("user"))]
 async fn test_find_by_id_get_deleted(pool: PgPool) {
     let pool = Arc::new(pool);
-
 
     let token = get_token!(pool.as_ref());
 
@@ -159,16 +157,18 @@ async fn test_find_by_id_get_ok(pool: PgPool) {
 
     let token = get_token!(pool.as_ref());
 
-    let date = NaiveDate::from_ymd_opt(2022, 1, 1).unwrap().and_hms_opt(0, 0, 0).unwrap();
-    let datetime: DateTime<Utc> = DateTime::from_utc(date, Utc);
+    let date = NaiveDate::from_ymd_opt(2022, 1, 1)
+        .unwrap()
+        .and_hms_opt(0, 0, 0)
+        .unwrap();
 
-    let expected_dto: UserDTO = UserDTO { 
-        id: 666, 
-        name: "TestUser".to_string(), 
-        email: "teste@gmail.com".to_string(), 
-        role: UserRole::User, 
-        created_at: datetime, 
-        updated_at: datetime 
+    let expected_dto: UserDTO = UserDTO {
+        id: 666,
+        name: "TestUser".to_string(),
+        email: "teste@gmail.com".to_string(),
+        role: UserRole::User,
+        created_at: date,
+        updated_at: date,
     };
 
     let test_app = innit_test_app(pool.clone()).await;
