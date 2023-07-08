@@ -5,6 +5,7 @@ pub trait Paginator {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum PaginationOrder {
     Asc,
     Desc,

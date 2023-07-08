@@ -64,7 +64,8 @@ pub async fn find_all(
 
     let sql = format!(
         r#"
-        SELECT *
+        SELECT 
+            *
         FROM 
             users 
         ORDER BY 

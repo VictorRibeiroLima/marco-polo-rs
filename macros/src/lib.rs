@@ -23,6 +23,7 @@ pub fn ordination_enum(input: TokenStream) -> TokenStream {
     // Create the derives
     let derives = quote! {
         #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+        #[serde(rename_all = "camelCase")]
     };
 
     // Get the fields of the struct
