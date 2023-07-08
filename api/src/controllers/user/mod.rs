@@ -6,7 +6,11 @@ use actix_web::{
 
 use marco_polo_rs_core::database::{
     models::user::User,
-    queries::{self, pagination::Pagination, user::CreateUserDto},
+    queries::{
+        self,
+        pagination::{self, Pagination},
+        user::CreateUserDto,
+    },
 };
 
 use validator::Validate;
@@ -101,10 +105,9 @@ async fn find_all(
     pagination: web::Query<Pagination<User>>,
     _jwt: TokenClaims,
 ) -> Result<impl Responder, AppError> {
+    let pagination = pagination.into_inner();
     let pool = &pool.pool;
-    let users = queries::user::find_all(pool).await?;
-
-    println!("{:?}", pagination);
+    let users = queries::user::find_all(pool, pagination).await?;
 
     let dtos: Vec<UserDTO> = users.into_iter().map(|user| user.into()).collect();
 

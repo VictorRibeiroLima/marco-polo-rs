@@ -10,6 +10,15 @@ pub enum PaginationOrder {
     Desc,
 }
 
+impl PaginationOrder {
+    pub fn name(&self) -> String {
+        match self {
+            PaginationOrder::Asc => "ASC".to_string(),
+            PaginationOrder::Desc => "DESC".to_string(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
 pub struct Pagination<T: Paginator> {
     pub offset: Option<i64>,
