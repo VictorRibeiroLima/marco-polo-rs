@@ -13,62 +13,6 @@
     },
     "query": "\n    INSERT INTO channels (csrf_token,creator_id) \n    VALUES ($1,$2)\n    "
   },
-  "22770f34d307a92aea0e3005fed4132e253492d0300bc8d25fb14ebb89fa24dd": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Int4"
-        },
-        {
-          "name": "name",
-          "ordinal": 1,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "csrf_token",
-          "ordinal": 2,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "refresh_token",
-          "ordinal": 3,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "created_at: DateTime<Utc>",
-          "ordinal": 4,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "updated_at: DateTime<Utc>",
-          "ordinal": 5,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "deleted_at: DateTime<Utc>",
-          "ordinal": 6,
-          "type_info": "Timestamp"
-        }
-      ],
-      "nullable": [
-        false,
-        true,
-        true,
-        true,
-        false,
-        false,
-        true
-      ],
-      "parameters": {
-        "Left": [
-          "Int4"
-        ]
-      }
-    },
-    "query": "\n        SELECT \n            id,\n            name,\n            csrf_token,\n            refresh_token,\n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        FROM channels WHERE id = $1 AND deleted_at IS NULL\n        "
-  },
   "28c3cc46ca261ddac740d6ab35f44aa23388d21086872102df103dc19437c28b": {
     "describe": {
       "columns": [],
@@ -290,6 +234,68 @@
     },
     "query": "\n            SELECT COUNT(*) FROM channels WHERE csrf_token = $1\n        "
   },
+  "6e6471afb4a029043489ab96afaa8ea54605b5cdc00a86aed712c81f3c7eff10": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "csrf_token",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "creator_id",
+          "ordinal": 3,
+          "type_info": "Int4"
+        },
+        {
+          "name": "refresh_token",
+          "ordinal": 4,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "created_at: DateTime<Utc>",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "updated_at: DateTime<Utc>",
+          "ordinal": 6,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "deleted_at: DateTime<Utc>",
+          "ordinal": 7,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        true,
+        false,
+        true,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n        SELECT \n            id,\n            name,\n            csrf_token,\n            creator_id,\n            refresh_token,\n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        FROM channels WHERE id = $1 AND deleted_at IS NULL\n        "
+  },
   "6f0e11a893c806cfe38096b7c95ac3c27333399cc32eb6863e66d35a546176ba": {
     "describe": {
       "columns": [
@@ -389,6 +395,68 @@
       }
     },
     "query": "SELECT COUNT(*) AS count FROM videos_translations WHERE video_id = $1"
+  },
+  "90de0884a039cb3c37991cfccfce14ec22979ab5798edf812f9b1ad220c1f9f0": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "creator_id",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "csrf_token",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "refresh_token",
+          "ordinal": 4,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "created_at: DateTime<Utc>",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "updated_at: DateTime<Utc>",
+          "ordinal": 6,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "deleted_at: DateTime<Utc>",
+          "ordinal": 7,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        false,
+        true,
+        true,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        SELECT \n            id,\n            name,\n            creator_id,\n            csrf_token,\n            refresh_token,\n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        FROM channels WHERE csrf_token = $1\n        "
   },
   "92084c04d89928521716f5dc3dd519fb8ba3d1fb4af752e3f7383b19c03e5987": {
     "describe": {
@@ -1034,62 +1102,6 @@
       }
     },
     "query": "\n        SELECT\n          video_id as \"video_id: Uuid\",\n          subtitler_id,\n          subtitling_id,\n          created_at as \"created_at: DateTime<Utc>\",\n          updated_at as \"updated_at: DateTime<Utc>\",\n          deleted_at as \"deleted_at: DateTime<Utc>\"\n         FROM videos_subtitlings vs\n        WHERE video_id = $1\n        "
-  },
-  "ea4f23a0fa93a4a90887b8425e1f2243d0a80813c45cb67e89ab8b1c3f578768": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Int4"
-        },
-        {
-          "name": "name",
-          "ordinal": 1,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "csrf_token",
-          "ordinal": 2,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "refresh_token",
-          "ordinal": 3,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "created_at: DateTime<Utc>",
-          "ordinal": 4,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "updated_at: DateTime<Utc>",
-          "ordinal": 5,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "deleted_at: DateTime<Utc>",
-          "ordinal": 6,
-          "type_info": "Timestamp"
-        }
-      ],
-      "nullable": [
-        false,
-        true,
-        true,
-        true,
-        false,
-        false,
-        true
-      ],
-      "parameters": {
-        "Left": [
-          "Text"
-        ]
-      }
-    },
-    "query": "\n        SELECT \n            id,\n            name,\n            csrf_token,\n            refresh_token,\n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        FROM channels WHERE csrf_token = $1\n        "
   },
   "ffad0a977069a8d9f0c8fae0418f98873309161d55fc05a5c0bccc4c5e043be7": {
     "describe": {
