@@ -17,6 +17,7 @@ pub async fn find_by_id(pool: &PgPool, id: i32) -> Result<Channel, sqlx::Error> 
             id,
             name,
             csrf_token,
+            creator_id,
             refresh_token,
             created_at as "created_at: DateTime<Utc>",
             updated_at as "updated_at: DateTime<Utc>",
@@ -52,6 +53,7 @@ pub async fn find_by_csrf_token(pool: &PgPool, csrf_token: String) -> Result<Cha
         SELECT 
             id,
             name,
+            creator_id,
             csrf_token,
             refresh_token,
             created_at as "created_at: DateTime<Utc>",
