@@ -8,7 +8,7 @@ on:
 env:
   AWS-REGION: sa-east-1
 
-  ECS_TASK_DEFINITION: ./.aws/api_ecs_task_definition.json
+  ECS_TASK_DEFINITION: .aws/api-ecs-task-definition.json
   ECS_SERVICE: marco-polo-api-prod-service
   ECS_CLUSTER: marco-polo-api-prod
   ECS_CONTAINER_NAME: marco-polo-api-prod
