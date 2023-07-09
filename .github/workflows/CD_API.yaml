@@ -3,7 +3,7 @@ name: Deploy API to ECR
 on:
   push:
     branches:
-      - main
+      - master
 
 env:
   AWS-REGION: sa-east-1
