@@ -24,6 +24,9 @@ jobs:
       steps:
         - name: Checkout repository
           uses: actions/checkout@v3
+
+        - name: Write .env
+          run: npx dotenvenc -o ./.env -i ./env/.env.esc -d ${{ secrets.DOT_ENV_PASSWORD }}
   
         - name: Configure AWS credentials
           uses: aws-actions/configure-aws-credentials@v2
