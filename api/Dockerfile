@@ -22,15 +22,28 @@ COPY ./migrations ./migrations
 # Copy the Cargo files for dependency resolution
 COPY Cargo.lock Cargo.lock
 COPY Cargo.toml Cargo.toml
+COPY ./macros/Cargo.toml ./macros/Cargo.toml
 COPY ./core/Cargo.toml ./core/Cargo.toml
 COPY ./api/Cargo.toml ./api/Cargo.toml
 COPY ./queue/Cargo.toml ./queue/Cargo.toml
 
 #Create dummy files to trick cargo into building the dependencies
+RUN mkdir ./macros/src && echo "" > ./macros/src/lib.rs
 RUN mkdir ./core/src && echo "" > ./core/src/lib.rs
 RUN mkdir ./api/src && echo "fn main() {}" > ./api/src/main.rs
 
 # Build the dependencies
+RUN cargo build --release --package marco-polo-rs-api --bin marco-polo-rs-api
+
+# Remove dummy files of macros and copy the actual files
+RUN rm -rf ./macros/src
+COPY ./macros/src ./macros/src
+
+# Remove dummy macros files compilation artifacts
+RUN rm ./target/release/deps/marco_polo_rs_macros*
+RUN rm ./target/release/deps/libmarco_polo_rs_macros*
+
+# Build the macros
 RUN cargo build --release --package marco-polo-rs-api --bin marco-polo-rs-api
 
 # Remove dummy files of core and copy the actual files
