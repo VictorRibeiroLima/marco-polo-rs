@@ -4,6 +4,16 @@ on:
   push:
     branches:
       - master
+    paths:
+      - 'api/**'
+      - 'env/**'
+      - 'core/**'
+      - 'macros/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'sa-east-1-bundle.pem'
+      - 'yt-client-secret.json'
+      - '.aws/api-ecs-task-definition.json'
 
 env:
   AWS-REGION: sa-east-1
