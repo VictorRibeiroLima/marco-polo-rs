@@ -27,7 +27,7 @@ impl ServiceProvider for LocalClient {
 #[async_trait]
 impl<BC: BucketClient> SubtitlerClient<BC> for LocalClient {
     fn estimate_time(&self, _: &VideoWithStorage, _: &BC) -> u32 {
-        1000
+        5000
     }
 
     async fn subtitle(

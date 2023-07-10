@@ -1,8 +1,11 @@
+use std::sync::Arc;
+
 use futures::future::join_all;
 
 use marco_polo_rs_core::{
     database::{
-        queries::{self, translation::CreateTranslationDto}, models::video::VideoStage,
+        models::video::VideoStage,
+        queries::{self, translation::CreateTranslationDto},
     },
     internals::{
         cloud::{
@@ -15,32 +18,54 @@ use marco_polo_rs_core::{
     },
 };
 
-use crate::{srt, worker::Worker};
+use crate::srt;
 
-pub struct Handler<'a> {
-    worker: &'a Worker,
+pub struct Handler<'a, TC, CS, TLC>
+where
+    TC: TranscriberClient,
+    CS: CloudService,
+    TLC: TranslatorClient,
+{
+    transcriber_client: &'a TC,
+    cloud_service: &'a CS,
+    translator_client: &'a TLC,
+    pool: Arc<sqlx::PgPool>,
 }
 
-impl<'a> Handler<'a> {
-    pub fn new(worker: &'a Worker) -> Handler<'a> {
-        Self { worker }
+impl<'a, TC, CS, TLC> Handler<'a, TC, CS, TLC>
+where
+    TC: TranscriberClient,
+    CS: CloudService,
+    TLC: TranslatorClient,
+{
+    pub fn new(
+        transcriber_client: &'a TC,
+        cloud_service: &'a CS,
+        translator_client: &'a TLC,
+        pool: Arc<sqlx::PgPool>,
+    ) -> Handler<'a, TC, CS, TLC> {
+        Self {
+            transcriber_client,
+            cloud_service,
+            translator_client,
+            pool,
+        }
     }
 
     pub async fn handle(
         &self,
         payload: SrtPayload,
     ) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
-        let worker = self.worker;
-        let transcriber_client = &worker.transcriber_client;
-        let bucket_client = &worker.cloud_service.bucket_client();
-        let translator_id = worker.translator_client.id();
-        let bucket_id = worker.cloud_service.bucket_client.id();
+        let transcriber_client = self.transcriber_client;
+        let bucket_client = self.cloud_service.bucket_client();
+        let translator_id = self.translator_client.id();
+        let bucket_id = bucket_client.id();
 
-        queries::video::change_stage(&worker.pool, &payload.video_id, VideoStage::Translating)
+        queries::video::change_stage(&self.pool, &payload.video_id, VideoStage::Translating)
             .await?;
 
         let transcription =
-            queries::transcription::find_by_video_id(&worker.pool, &payload.video_id).await?;
+            queries::transcription::find_by_video_id(&self.pool, &payload.video_id).await?;
 
         let transcription_sentences = transcriber_client
             .get_transcription_sentences(&transcription.transcription_id)
@@ -55,7 +80,7 @@ impl<'a> Handler<'a> {
             .await?;
 
         queries::translation::create(
-            &worker.pool,
+            &self.pool,
             CreateTranslationDto {
                 video_id: &payload.video_id,
                 translator_id,
@@ -96,8 +121,7 @@ impl<'a> Handler<'a> {
         &self,
         payload: Sentence,
     ) -> Result<Sentence, Box<dyn std::error::Error + Sync + Send>> {
-        let worker = &self.worker;
-        let translator_client = &worker.translator_client;
+        let translator_client = &self.translator_client;
 
         let translation = translator_client.translate_sentence(payload.text).await?;
         let sentence = Sentence {

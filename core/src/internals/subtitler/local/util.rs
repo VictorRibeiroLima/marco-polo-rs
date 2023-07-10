@@ -51,8 +51,6 @@ pub fn call_ffmpeg(
         .arg(format!("subtitles={}", &srt_path.to_str().unwrap()))
         .arg("-c:a")
         .arg("copy")
-        .arg("-c:v")
-        .arg("copy")
         .arg(&output_path)
         .output()?;
 
