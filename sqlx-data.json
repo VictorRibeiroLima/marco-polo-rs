@@ -306,68 +306,6 @@
     },
     "query": "\n        SELECT \n            id,\n            name, \n            email,\n            password,\n            role as \"role: UserRole\", \n            created_at as \"created_at: NaiveDateTime\",\n            updated_at as \"updated_at: NaiveDateTime\",\n            deleted_at as \"deleted_at: NaiveDateTime\"\n        FROM \n            users \n        WHERE \n            id = $1 AND deleted_at IS NULL\n        "
   },
-  "6e6471afb4a029043489ab96afaa8ea54605b5cdc00a86aed712c81f3c7eff10": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Int4"
-        },
-        {
-          "name": "name",
-          "ordinal": 1,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "csrf_token",
-          "ordinal": 2,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "creator_id",
-          "ordinal": 3,
-          "type_info": "Int4"
-        },
-        {
-          "name": "refresh_token",
-          "ordinal": 4,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "created_at: DateTime<Utc>",
-          "ordinal": 5,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "updated_at: DateTime<Utc>",
-          "ordinal": 6,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "deleted_at: DateTime<Utc>",
-          "ordinal": 7,
-          "type_info": "Timestamp"
-        }
-      ],
-      "nullable": [
-        false,
-        true,
-        true,
-        false,
-        true,
-        false,
-        false,
-        true
-      ],
-      "parameters": {
-        "Left": [
-          "Int4"
-        ]
-      }
-    },
-    "query": "\n        SELECT \n            id,\n            name,\n            csrf_token,\n            creator_id,\n            refresh_token,\n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        FROM channels WHERE id = $1 AND deleted_at IS NULL\n        "
-  },
   "6f0e11a893c806cfe38096b7c95ac3c27333399cc32eb6863e66d35a546176ba": {
     "describe": {
       "columns": [
@@ -468,68 +406,6 @@
     },
     "query": "SELECT COUNT(*) AS count FROM videos_translations WHERE video_id = $1"
   },
-  "90de0884a039cb3c37991cfccfce14ec22979ab5798edf812f9b1ad220c1f9f0": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Int4"
-        },
-        {
-          "name": "name",
-          "ordinal": 1,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "creator_id",
-          "ordinal": 2,
-          "type_info": "Int4"
-        },
-        {
-          "name": "csrf_token",
-          "ordinal": 3,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "refresh_token",
-          "ordinal": 4,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "created_at: DateTime<Utc>",
-          "ordinal": 5,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "updated_at: DateTime<Utc>",
-          "ordinal": 6,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "deleted_at: DateTime<Utc>",
-          "ordinal": 7,
-          "type_info": "Timestamp"
-        }
-      ],
-      "nullable": [
-        false,
-        true,
-        false,
-        true,
-        true,
-        false,
-        false,
-        true
-      ],
-      "parameters": {
-        "Left": [
-          "Text"
-        ]
-      }
-    },
-    "query": "\n        SELECT \n            id,\n            name,\n            creator_id,\n            csrf_token,\n            refresh_token,\n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        FROM channels WHERE csrf_token = $1\n        "
-  },
   "92084c04d89928521716f5dc3dd519fb8ba3d1fb4af752e3f7383b19c03e5987": {
     "describe": {
       "columns": [
@@ -583,6 +459,68 @@
       }
     },
     "query": "\n        SELECT COUNT(*) FROM users WHERE name = $1\n        "
+  },
+  "99f823121449704ac947640fad60e231e1b09d729960db0fcbc0b89f64a17d40": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "creator_id",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "csrf_token",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "refresh_token",
+          "ordinal": 4,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "created_at: chrono::NaiveDateTime",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "updated_at: chrono::NaiveDateTime",
+          "ordinal": 6,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "deleted_at: chrono::NaiveDateTime",
+          "ordinal": 7,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        false,
+        true,
+        true,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        SELECT \n            id,\n            name,\n            creator_id,\n            csrf_token,\n            refresh_token,\n            created_at as \"created_at: chrono::NaiveDateTime\",\n            updated_at as \"updated_at: chrono::NaiveDateTime\",\n            deleted_at as \"deleted_at: chrono::NaiveDateTime\"\n        FROM channels WHERE csrf_token = $1\n        "
   },
   "a1c10b0716bfaa99da8bcf97c0c49eeae1accf3de0ec3012817c55b5baa9db52": {
     "describe": {
@@ -964,6 +902,68 @@
       }
     },
     "query": "\n        INSERT INTO videos (id, title, description, user_id, channel_id, language)\n        VALUES ($1, $2, $3, $4, $5, $6);\n        "
+  },
+  "c4f6565616cd20dc9821ed96c0be0da68641105429434b121e62f46ddee7814b": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "csrf_token",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "creator_id",
+          "ordinal": 3,
+          "type_info": "Int4"
+        },
+        {
+          "name": "refresh_token",
+          "ordinal": 4,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "created_at: chrono::NaiveDateTime",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "updated_at: chrono::NaiveDateTime",
+          "ordinal": 6,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "deleted_at: chrono::NaiveDateTime",
+          "ordinal": 7,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        true,
+        false,
+        true,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n        SELECT \n            id,\n            name,\n            csrf_token,\n            creator_id,\n            refresh_token,\n            created_at as \"created_at: chrono::NaiveDateTime\",\n            updated_at as \"updated_at: chrono::NaiveDateTime\",\n            deleted_at as \"deleted_at: chrono::NaiveDateTime\"\n        FROM channels WHERE id = $1 AND deleted_at IS NULL\n        "
   },
   "c63d015969ef0ed31e8f314a6a7a5b1ccb4c578773e5d70ee40eba67218d697f": {
     "describe": {
