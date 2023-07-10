@@ -53,24 +53,4 @@ macro_rules! find_all {
     };
 }
 
-macro_rules! test_find_all {
-    ($table:ty,$find_all:ident,$fixture_name:expr) => {
-        #[sqlx::test(migrations = "../migrations", fixtures($fixture_name))]
-        async fn test_find_all(pool: Pool<sqlx::Postgres>) {
-            let pagination = crate::database::queries::pagination::Pagination {
-                offset: None,
-                limit: None,
-                order_by: None,
-                order: None,
-            };
-            let result = $find_all(&pool, pagination).await;
-            let list = result.unwrap();
-            let list_len = list.len();
-
-            assert_eq!(list_len, 10)
-        }
-    };
-}
-
 pub(crate) use find_all;
-pub(crate) use test_find_all;
