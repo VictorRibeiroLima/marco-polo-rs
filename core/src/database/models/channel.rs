@@ -1,7 +1,8 @@
 use chrono::{DateTime, Utc};
+use marco_polo_rs_macros::Paginate;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Paginate)]
 pub struct Channel {
     pub id: i32,
     pub creator_id: i32,
