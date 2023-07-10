@@ -4,7 +4,10 @@ use actix_web::{
     HttpResponse, Responder,
 };
 
-use marco_polo_rs_core::database::queries::{self, user::CreateUserDto};
+use marco_polo_rs_core::database::{
+    models::user::User,
+    queries::{self, pagination::Pagination, user::CreateUserDto},
+};
 
 use validator::Validate;
 
@@ -93,9 +96,14 @@ async fn find_by_id(
 }
 
 #[get("/")]
-async fn find_all(pool: web::Data<AppPool>, _jwt: TokenClaims) -> Result<impl Responder, AppError> {
+async fn find_all(
+    pool: web::Data<AppPool>,
+    pagination: web::Query<Pagination<User>>,
+    _jwt: TokenClaims,
+) -> Result<impl Responder, AppError> {
+    let pagination = pagination.into_inner();
     let pool = &pool.pool;
-    let users = queries::user::find_all(pool).await?;
+    let users = queries::user::find_all(pool, pagination).await?;
 
     let dtos: Vec<UserDTO> = users.into_iter().map(|user| user.into()).collect();
 

@@ -1,7 +1,7 @@
 use core::fmt;
 
 use actix_web::{
-    error::{JsonPayloadError, ResponseError},
+    error::{JsonPayloadError, QueryPayloadError, ResponseError},
     http::StatusCode,
     HttpResponse,
 };
@@ -151,6 +151,12 @@ impl From<jsonwebtoken::errors::Error> for AppError {
 
 impl From<JsonPayloadError> for AppError {
     fn from(value: JsonPayloadError) -> Self {
+        return Self::new(AppErrorType::BadRequest, value.to_string());
+    }
+}
+
+impl From<QueryPayloadError> for AppError {
+    fn from(value: QueryPayloadError) -> Self {
         return Self::new(AppErrorType::BadRequest, value.to_string());
     }
 }

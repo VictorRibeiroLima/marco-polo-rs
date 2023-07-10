@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use actix_web::{
     get,
-    web::{self, Json, JsonConfig},
+    web::{self, Json, JsonConfig, QueryConfig},
     App, HttpServer, Responder,
 };
 use marco_polo_rs_core::{
@@ -56,6 +56,10 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(JsonConfig::default().error_handler(|err, _req| {
+                let error = AppError::from(err);
+                return error.into();
+            }))
+            .app_data(QueryConfig::default().error_handler(|err, _req| {
                 let error = AppError::from(err);
                 return error.into();
             }))
