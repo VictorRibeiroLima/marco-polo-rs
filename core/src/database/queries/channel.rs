@@ -2,13 +2,18 @@ use sqlx::PgPool;
 
 use crate::database::models::channel::{Channel, ChannelOrderFields};
 
-use super::macros::find_all;
+use super::{
+    macros::find_all,
+    pagination::{Pagination, PaginationOrder},
+};
 
 pub struct UpdateChannelDto {
     pub id: i32,
     pub name: String,
     pub refresh_token: String,
 }
+
+find_all!(Channel, ChannelOrderFields::Id, "channels");
 
 pub async fn find_by_id(pool: &PgPool, id: i32) -> Result<Channel, sqlx::Error> {
     let channel = sqlx::query_as!(
@@ -89,4 +94,56 @@ pub async fn update(pool: &PgPool, dto: UpdateChannelDto) -> Result<(), sqlx::Er
     Ok(())
 }
 
-find_all!(Channel, ChannelOrderFields::Id, "channels");
+pub async fn find_all_by_owner(
+    pool: &PgPool,
+    owner_id: i32,
+    pagination: Pagination<Channel>,
+) -> Result<Vec<Channel>, sqlx::Error> {
+    let offset = match pagination.offset {
+        Some(offset) => offset,
+        None => 0,
+    };
+
+    let limit = match pagination.limit {
+        Some(limit) => limit,
+        None => 10,
+    };
+
+    let order = match pagination.order {
+        Some(order) => order,
+        None => PaginationOrder::Asc,
+    };
+
+    let order_by = match pagination.order_by {
+        Some(order_by) => order_by,
+        None => ChannelOrderFields::Id,
+    };
+
+    let sql = format!(
+        r#"
+        SELECT 
+            *
+        FROM 
+            channels 
+        WHERE
+            creator_id = $1 AND deleted_at IS NULL
+        ORDER BY 
+            {} {}
+        LIMIT
+            $2
+        OFFSET 
+            $3
+        "#,
+        order_by.name(),
+        order.name()
+    );
+
+    let channels: Vec<Channel> = sqlx::query_as(&sql)
+        .bind(owner_id)
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(pool)
+        .await?;
+
+    return Ok(channels);
+}
