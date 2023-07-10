@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::NaiveDateTime;
 use marco_polo_rs_macros::Paginate;
 use serde::{Deserialize, Serialize};
 
@@ -9,7 +9,7 @@ pub struct Channel {
     pub name: Option<String>,
     pub csrf_token: Option<String>,
     pub refresh_token: Option<String>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-    pub deleted_at: Option<DateTime<Utc>>,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+    pub deleted_at: Option<NaiveDateTime>,
 }

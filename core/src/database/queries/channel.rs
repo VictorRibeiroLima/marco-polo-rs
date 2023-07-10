@@ -1,4 +1,3 @@
-use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 
 use crate::database::models::channel::Channel;
@@ -19,9 +18,9 @@ pub async fn find_by_id(pool: &PgPool, id: i32) -> Result<Channel, sqlx::Error> 
             csrf_token,
             creator_id,
             refresh_token,
-            created_at as "created_at: DateTime<Utc>",
-            updated_at as "updated_at: DateTime<Utc>",
-            deleted_at as "deleted_at: DateTime<Utc>"
+            created_at as "created_at: chrono::NaiveDateTime",
+            updated_at as "updated_at: chrono::NaiveDateTime",
+            deleted_at as "deleted_at: chrono::NaiveDateTime"
         FROM channels WHERE id = $1 AND deleted_at IS NULL
         "#,
         id
@@ -56,9 +55,9 @@ pub async fn find_by_csrf_token(pool: &PgPool, csrf_token: String) -> Result<Cha
             creator_id,
             csrf_token,
             refresh_token,
-            created_at as "created_at: DateTime<Utc>",
-            updated_at as "updated_at: DateTime<Utc>",
-            deleted_at as "deleted_at: DateTime<Utc>"
+            created_at as "created_at: chrono::NaiveDateTime",
+            updated_at as "updated_at: chrono::NaiveDateTime",
+            deleted_at as "deleted_at: chrono::NaiveDateTime"
         FROM channels WHERE csrf_token = $1
         "#,
         csrf_token

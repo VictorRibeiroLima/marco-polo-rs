@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::NaiveDateTime;
 use marco_polo_rs_core::database::models::channel::Channel;
 use serde::{Deserialize, Serialize};
 
@@ -13,8 +13,8 @@ pub struct OauthQueryParams {
 pub struct ChannelDTO {
     pub id: i32,
     pub name: Option<String>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
 }
 
 impl From<Channel> for ChannelDTO {

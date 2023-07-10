@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use actix_http::Request;
 use actix_web::{dev::ServiceResponse, http::header::ContentType, test, web, App};
-use chrono::{DateTime, NaiveDate, Utc};
+use chrono::NaiveDate;
 use marco_polo_rs_core::{
     database::models::user::{User, UserRole},
     internals::youtube_client::{channel_info::ChannelInfo, traits},
@@ -133,13 +133,12 @@ async fn test_find_by_id_get_ok(pool: PgPool) {
         .unwrap()
         .and_hms_opt(0, 0, 0)
         .unwrap();
-    let datetime: DateTime<Utc> = DateTime::from_utc(date, Utc);
 
     let expected_dto: ChannelDTO = ChannelDTO {
         id: 1,
         name: Some("Test Channel".to_string()),
-        created_at: datetime,
-        updated_at: datetime,
+        created_at: date,
+        updated_at: date,
     };
 
     let test_app = innit_test_app(pool.clone(), youtube_client).await;
