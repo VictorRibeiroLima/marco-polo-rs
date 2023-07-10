@@ -1,6 +1,11 @@
 use sqlx::PgPool;
 
-use crate::database::queries::channel::{create, find_by_id};
+use crate::database::{
+    models::channel::ChannelOrderFields,
+    queries::channel::{create, find_all, find_by_id},
+};
+
+use super::macros::test_find_all;
 
 const CSRF_TOKEN: &str = "123has_iuf12134";
 
@@ -40,3 +45,5 @@ async fn test_not_find_by_id(pool: PgPool) {
     let find_error = find_by_id(&pool, invalid_channel_id).await;
     assert!(find_error.is_err());
 }
+
+test_find_all!(Channel, ChannelOrderFields, find_all, "channels");

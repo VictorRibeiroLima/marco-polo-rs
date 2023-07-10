@@ -4,11 +4,12 @@ use sqlx::{PgPool, Pool, Postgres};
 
 use crate::database::{
     models::user::{UserOrderFields, UserRole},
-    queries::{
-        pagination::{Pagination, PaginationOrder},
-        user::*,
-    },
+    queries::user::*,
 };
+
+use super::macros::test_find_all;
+
+test_find_all!(User, UserOrderFields, find_all, "users");
 
 #[sqlx::test(migrations = "../migrations")]
 async fn test_create_with_role(pool: Pool<Postgres>) {
@@ -39,109 +40,6 @@ async fn test_find_by_id(pool: Pool<Postgres>) {
     let user = user_result.unwrap();
 
     assert_eq!(user.id, id);
-}
-
-#[sqlx::test(migrations = "../migrations", fixtures("users"))]
-async fn test_find_all(pool: Pool<Postgres>) {
-    let pagination = Pagination {
-        offset: None,
-        limit: None,
-        order_by: None,
-        order: None,
-    };
-    let user_result = find_all(&pool, pagination).await;
-    let users = user_result.unwrap();
-    let user_length = users.len();
-
-    assert_eq!(user_length, 10)
-}
-
-#[sqlx::test(migrations = "../migrations", fixtures("users"))]
-async fn test_find_all_limit_20(pool: Pool<Postgres>) {
-    let pagination = Pagination {
-        offset: None,
-        limit: Some(20),
-        order_by: None,
-        order: None,
-    };
-    let user_result = find_all(&pool, pagination).await;
-    let users = user_result.unwrap();
-    let user_length = users.len();
-
-    assert_eq!(user_length, 20)
-}
-
-#[sqlx::test(migrations = "../migrations", fixtures("users"))]
-async fn test_find_all_order_by_id_desc(pool: Pool<Postgres>) {
-    let pagination = Pagination {
-        offset: None,
-        limit: None,
-        order_by: Some(UserOrderFields::Id),
-        order: Some(PaginationOrder::Desc),
-    };
-    let user_result = find_all(&pool, pagination).await;
-    let users = user_result.unwrap();
-    let user_length = users.len();
-
-    assert_eq!(user_length, 10);
-    let mut base_id: i32 = 0;
-    for (index, user) in users.into_iter().enumerate() {
-        if index == 0 {
-            base_id = user.id;
-        } else {
-            assert!(user.id < base_id);
-            base_id = user.id;
-        }
-    }
-}
-
-#[sqlx::test(migrations = "../migrations", fixtures("users"))]
-async fn test_find_all_order_by_id_asc(pool: Pool<Postgres>) {
-    let pagination = Pagination {
-        offset: None,
-        limit: None,
-        order_by: Some(UserOrderFields::Id),
-        order: Some(PaginationOrder::Asc),
-    };
-    let user_result = find_all(&pool, pagination).await;
-    let users = user_result.unwrap();
-    let user_length = users.len();
-
-    assert_eq!(user_length, 10);
-    let mut base_id: i32 = 0;
-    for (index, user) in users.into_iter().enumerate() {
-        if index == 0 {
-            base_id = user.id;
-        } else {
-            assert!(user.id > base_id);
-            base_id = user.id;
-        }
-    }
-}
-
-#[sqlx::test(migrations = "../migrations", fixtures("users"))]
-async fn test_offset(pool: Pool<Postgres>) {
-    let pagination = Pagination {
-        offset: None,
-        limit: None,
-        order_by: Some(UserOrderFields::Id),
-        order: Some(PaginationOrder::Asc),
-    };
-
-    let mut user_result = find_all(&pool, pagination).await.unwrap();
-    let last_user = user_result.pop().unwrap();
-
-    let pagination = Pagination {
-        offset: Some(10),
-        limit: None,
-        order_by: Some(UserOrderFields::Id),
-        order: Some(PaginationOrder::Asc),
-    };
-
-    let user_result = find_all(&pool, pagination).await.unwrap();
-    let user = &user_result[0];
-
-    assert_eq!(user.id, last_user.id + 1)
 }
 
 #[sqlx::test(migrations = "../migrations", fixtures("user"))]

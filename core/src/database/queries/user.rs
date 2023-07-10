@@ -12,6 +12,8 @@ pub struct CreateUserDto<'a> {
     pub role: Option<&'a UserRole>,
 }
 
+find_all!(User, UserOrderFields::Id, "users");
+
 pub async fn find_by_id(pool: &PgPool, id: i32) -> Result<User, sqlx::Error> {
     let user = sqlx::query_as!(
         User,
@@ -37,8 +39,6 @@ pub async fn find_by_id(pool: &PgPool, id: i32) -> Result<User, sqlx::Error> {
 
     return Ok(user);
 }
-
-find_all!(User, UserOrderFields::Id, "users");
 
 pub async fn create(pool: &PgPool, dto: CreateUserDto<'_>) -> Result<(), sqlx::Error> {
     let password = bcrypt::hash(dto.password, bcrypt::DEFAULT_COST).unwrap();

@@ -5,3 +5,5 @@ mod transcription;
 mod translation;
 mod user;
 mod video;
+
+mod macros;
