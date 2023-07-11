@@ -1,0 +1,2 @@
+INSERT INTO USERS (id, name, email, password, role,created_at,updated_at) 
+VALUES (1000, 'TestUser', 'teste@gmail.com', '$2b$12$.jvb858VF4tanKNd11Vp4eDYyhg.KuFgOG8AhgJCvj/cJV47Sqtby', 'ADMIN','2022-01-01','2022-01-01'); --99020711Aa@

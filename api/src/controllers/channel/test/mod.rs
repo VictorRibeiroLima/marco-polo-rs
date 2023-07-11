@@ -20,7 +20,7 @@ use crate::{
     AppPool, AppYoutubeClient,
 };
 
-use super::find_by_id;
+use super::{find_all, find_by_id};
 
 const CSRF_TOKEN: &str = "111aaa11aa";
 
@@ -194,6 +194,115 @@ async fn test_find_by_id_get_unauthorized(pool: PgPool) {
     assert_eq!(response.status().as_u16(), StatusCode::UNAUTHORIZED);
 }
 
+#[sqlx::test(migrations = "../migrations", fixtures("admin", "channels"))]
+async fn test_find_all_admin(pool: PgPool) {
+    let pool = Arc::new(pool);
+    let admin_id = 1000;
+
+    let mut expected_channels_ids = vec![];
+    for i in 1..=45 {
+        expected_channels_ids.push(i);
+    }
+
+    let youtube_client = YoutubeClientMock;
+    let youtube_client = Arc::new(youtube_client);
+
+    let token = get_token!(pool.as_ref(), admin_id);
+
+    let test_app = innit_test_app(pool.clone(), youtube_client).await;
+
+    let request = test::TestRequest::get()
+        .uri("/?order_by=id&order=asc&limit=45")
+        .insert_header(("Authorization", token))
+        .insert_header(ContentType::json())
+        .to_request();
+
+    let response = test::call_service(&test_app, request).await;
+    assert_eq!(response.status().as_u16(), StatusCode::OK);
+    let actual_dto: Vec<ChannelDTO> = test::read_body_json(response).await;
+    assert_eq!(actual_dto.len(), 45);
+    let actual_channels_ids: Vec<i32> = actual_dto.iter().map(|channel| channel.id).collect();
+    assert_eq!(actual_channels_ids, expected_channels_ids);
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("admin", "channels"))]
+async fn test_find_all_admin_offset(pool: PgPool) {
+    let pool = Arc::new(pool);
+    let admin_id = 1000;
+
+    let mut expected_channels_ids_first = vec![];
+    for i in 1..=20 {
+        expected_channels_ids_first.push(i);
+    }
+
+    let mut expected_channels_ids_second = vec![];
+    for i in 21..=40 {
+        expected_channels_ids_second.push(i);
+    }
+
+    let youtube_client = YoutubeClientMock;
+    let youtube_client = Arc::new(youtube_client);
+
+    let token = get_token!(pool.as_ref(), admin_id);
+
+    let test_app = innit_test_app(pool.clone(), youtube_client).await;
+
+    let request = test::TestRequest::get()
+        .uri("/?order_by=id&order=asc&limit=20&offset=0")
+        .insert_header(("Authorization", token.clone()))
+        .insert_header(ContentType::json())
+        .to_request();
+
+    let response = test::call_service(&test_app, request).await;
+    assert_eq!(response.status().as_u16(), StatusCode::OK);
+    let actual_dto: Vec<ChannelDTO> = test::read_body_json(response).await;
+    assert_eq!(actual_dto.len(), 20);
+    let actual_channels_ids: Vec<i32> = actual_dto.iter().map(|channel| channel.id).collect();
+    assert_eq!(actual_channels_ids, expected_channels_ids_first);
+
+    let request = test::TestRequest::get()
+        .uri("/?order_by=id&order=asc&limit=20&offset=20")
+        .insert_header(("Authorization", token))
+        .insert_header(ContentType::json())
+        .to_request();
+
+    let response = test::call_service(&test_app, request).await;
+    assert_eq!(response.status().as_u16(), StatusCode::OK);
+    let actual_dto: Vec<ChannelDTO> = test::read_body_json(response).await;
+    assert_eq!(actual_dto.len(), 20);
+    let actual_channels_ids: Vec<i32> = actual_dto.iter().map(|channel| channel.id).collect();
+    assert_eq!(actual_channels_ids, expected_channels_ids_second);
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("channels"))]
+async fn test_find_all_user(pool: PgPool) {
+    let pool = Arc::new(pool);
+    let user_id = 1;
+
+    let expected_channels_ids = vec![1, 4, 7, 10, 13, 16, 19, 22, 25, 28];
+
+    let youtube_client = YoutubeClientMock;
+    let youtube_client = Arc::new(youtube_client);
+
+    let token = get_token!(pool.as_ref(), user_id);
+
+    let test_app = innit_test_app(pool.clone(), youtube_client).await;
+
+    let request = test::TestRequest::get()
+        .uri("/?order=asc&order_by=id")
+        .insert_header(("Authorization", token))
+        .insert_header(ContentType::json())
+        .to_request();
+
+    let response = test::call_service(&test_app, request).await;
+    assert_eq!(response.status().as_u16(), StatusCode::OK);
+    let actual_dto: Vec<ChannelDTO> = test::read_body_json(response).await;
+    assert_eq!(actual_dto.len(), 10);
+
+    let actual_channels_ids: Vec<i32> = actual_dto.iter().map(|channel| channel.id).collect();
+    assert_eq!(actual_channels_ids, expected_channels_ids);
+}
+
 async fn innit_test_app(
     pool: Arc<PgPool>,
     youtube_client: Arc<YoutubeClientMock>,
@@ -207,7 +316,8 @@ async fn innit_test_app(
         .app_data(web_data)
         .app_data(web::Data::new(youtube_client))
         .service(create_youtube_channel)
-        .service(find_by_id);
+        .service(find_by_id)
+        .service(find_all);
 
     let test_app = test::init_service(app).await;
 
