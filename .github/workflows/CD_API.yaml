@@ -28,7 +28,6 @@ env:
 
 jobs:
   deploy:
-    if: !contains(github.event.head_commit.message, '[no-deploy]')
     runs-on: ubuntu-latest
 
     steps:
