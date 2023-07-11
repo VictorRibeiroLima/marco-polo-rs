@@ -152,46 +152,56 @@
     },
     "query": "\n        SELECT \n            id,\n            video_id as \"video_id: Uuid\",\n            storage_id,\n            video_path,\n            format as \"format: VideoFormat\",\n            stage as \"stage: StorageVideoStage\",\n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        FROM videos_storages\n            WHERE video_id = $1 AND stage = $2\n        "
   },
-  "5f1a5f32cb5854dc6d37daa8022aa0d69929eb5a5ad8ed80b28957fc5a480b82": {
+  "4536639bfd85118ac238229f0ca4179668653d20819b53db687cbe2d464d095f": {
     "describe": {
       "columns": [
         {
-          "name": "video_id: Uuid",
+          "name": "id",
           "ordinal": 0,
-          "type_info": "Uuid"
-        },
-        {
-          "name": "transcriber_id",
-          "ordinal": 1,
           "type_info": "Int4"
         },
         {
-          "name": "transcription_id",
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "email",
           "ordinal": 2,
           "type_info": "Varchar"
         },
         {
-          "name": "storage_id",
+          "name": "password",
           "ordinal": 3,
-          "type_info": "Int4"
-        },
-        {
-          "name": "path",
-          "ordinal": 4,
           "type_info": "Varchar"
         },
         {
-          "name": "created_at: DateTime<Utc>",
+          "name": "role: UserRole",
+          "ordinal": 4,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "ADMIN",
+                  "USER"
+                ]
+              },
+              "name": "user_role"
+            }
+          }
+        },
+        {
+          "name": "created_at: chrono::NaiveDateTime",
           "ordinal": 5,
           "type_info": "Timestamp"
         },
         {
-          "name": "updated_at: DateTime<Utc>",
+          "name": "updated_at: chrono::NaiveDateTime",
           "ordinal": 6,
           "type_info": "Timestamp"
         },
         {
-          "name": "deleted_at: DateTime<Utc>",
+          "name": "deleted_at: chrono::NaiveDateTime",
           "ordinal": 7,
           "type_info": "Timestamp"
         }
@@ -200,19 +210,19 @@
         false,
         false,
         false,
-        true,
-        true,
+        false,
+        false,
         false,
         false,
         true
       ],
       "parameters": {
         "Left": [
-          "Uuid"
+          "Int4"
         ]
       }
     },
-    "query": "\n            SELECT\n              video_id as \"video_id: Uuid\",\n              transcriber_id,\n              transcription_id,\n              storage_id,\n              path,\n              created_at as \"created_at: DateTime<Utc>\",\n              updated_at as \"updated_at: DateTime<Utc>\",\n              deleted_at as \"deleted_at: DateTime<Utc>\"\n             FROM videos_transcriptions vt\n            WHERE video_id = $1\n            "
+    "query": "SELECT id, \n                name, \n                email, \n                password, \n                role as \"role: UserRole\",\n                created_at as \"created_at: chrono::NaiveDateTime\",\n                updated_at as \"updated_at: chrono::NaiveDateTime\",\n                deleted_at as \"deleted_at: chrono::NaiveDateTime\"\n                FROM users WHERE id = $1"
   },
   "6494ab199b653c16012cd3c48c700cecf1c2d1f8708a17796ef9867b57a41b73": {
     "describe": {
