@@ -35,7 +35,6 @@ struct AppCloudService<CS: CloudService> {
 
 #[get("/")]
 async fn hello() -> impl Responder {
-    //coment
     let result: AppResult<String> = AppResult::new("I'm alive".to_string());
     return Json(result);
 }
