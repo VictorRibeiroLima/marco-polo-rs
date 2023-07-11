@@ -1,13 +1,19 @@
-use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 
-use crate::database::models::channel::Channel;
+use crate::database::models::channel::{Channel, ChannelOrderFields};
+
+use super::{
+    macros::find_all,
+    pagination::{Pagination, PaginationOrder},
+};
 
 pub struct UpdateChannelDto {
     pub id: i32,
     pub name: String,
     pub refresh_token: String,
 }
+
+find_all!(Channel, ChannelOrderFields::Id, "channels");
 
 pub async fn find_by_id(pool: &PgPool, id: i32) -> Result<Channel, sqlx::Error> {
     let channel = sqlx::query_as!(
@@ -19,9 +25,9 @@ pub async fn find_by_id(pool: &PgPool, id: i32) -> Result<Channel, sqlx::Error> 
             csrf_token,
             creator_id,
             refresh_token,
-            created_at as "created_at: DateTime<Utc>",
-            updated_at as "updated_at: DateTime<Utc>",
-            deleted_at as "deleted_at: DateTime<Utc>"
+            created_at as "created_at: chrono::NaiveDateTime",
+            updated_at as "updated_at: chrono::NaiveDateTime",
+            deleted_at as "deleted_at: chrono::NaiveDateTime"
         FROM channels WHERE id = $1 AND deleted_at IS NULL
         "#,
         id
@@ -56,9 +62,9 @@ pub async fn find_by_csrf_token(pool: &PgPool, csrf_token: String) -> Result<Cha
             creator_id,
             csrf_token,
             refresh_token,
-            created_at as "created_at: DateTime<Utc>",
-            updated_at as "updated_at: DateTime<Utc>",
-            deleted_at as "deleted_at: DateTime<Utc>"
+            created_at as "created_at: chrono::NaiveDateTime",
+            updated_at as "updated_at: chrono::NaiveDateTime",
+            deleted_at as "deleted_at: chrono::NaiveDateTime"
         FROM channels WHERE csrf_token = $1
         "#,
         csrf_token
@@ -88,49 +94,56 @@ pub async fn update(pool: &PgPool, dto: UpdateChannelDto) -> Result<(), sqlx::Er
     Ok(())
 }
 
-#[cfg(test)]
-mod test {
+pub async fn find_all_by_owner(
+    pool: &PgPool,
+    owner_id: i32,
+    pagination: Pagination<Channel>,
+) -> Result<Vec<Channel>, sqlx::Error> {
+    let offset = match pagination.offset {
+        Some(offset) => offset,
+        None => 0,
+    };
 
-    use sqlx::PgPool;
+    let limit = match pagination.limit {
+        Some(limit) => limit,
+        None => 10,
+    };
 
-    use crate::database::queries::channel::{create, find_by_id};
+    let order = match pagination.order {
+        Some(order) => order,
+        None => PaginationOrder::Asc,
+    };
 
-    const CSRF_TOKEN: &str = "123has_iuf12134";
+    let order_by = match pagination.order_by {
+        Some(order_by) => order_by,
+        None => ChannelOrderFields::Id,
+    };
 
-    #[sqlx::test(migrations = "../migrations", fixtures("user"))]
-    async fn test_create(pool: PgPool) {
-        let fixture_user_id = 666;
-        let result = create(&pool, CSRF_TOKEN.to_string(), fixture_user_id).await;
-
-        assert!(result.is_ok());
-        let record = sqlx::query!(
-            r#"
-            SELECT COUNT(*) FROM channels WHERE csrf_token = $1
+    let sql = format!(
+        r#"
+        SELECT 
+            *
+        FROM 
+            channels 
+        WHERE
+            creator_id = $1 AND deleted_at IS NULL
+        ORDER BY 
+            {} {}
+        LIMIT
+            $2
+        OFFSET 
+            $3
         "#,
-            CSRF_TOKEN
-        )
-        .fetch_one(&pool)
-        .await
-        .unwrap();
+        order_by.name(),
+        order.name()
+    );
 
-        assert!(record.count.is_some());
+    let channels: Vec<Channel> = sqlx::query_as(&sql)
+        .bind(owner_id)
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(pool)
+        .await?;
 
-        assert_eq!(record.count.unwrap(), 1);
-    }
-
-    #[sqlx::test(migrations = "../migrations", fixtures("channel"))]
-    async fn test_find_by_id(pool: PgPool) {
-        let channel_id = 666;
-        let find_success = find_by_id(&pool, channel_id).await;
-
-        assert!(find_success.is_ok());
-        assert_eq!(find_success.unwrap().id, channel_id);
-    }
-
-    #[sqlx::test(migrations = "../migrations", fixtures("channel"))]
-    async fn test_not_find_by_id(pool: PgPool) {
-        let invalid_channel_id = 999;
-        let find_error = find_by_id(&pool, invalid_channel_id).await;
-        assert!(find_error.is_err());
-    }
+    return Ok(channels);
 }

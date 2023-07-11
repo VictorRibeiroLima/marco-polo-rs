@@ -3,7 +3,10 @@ use actix_web::{
     web::{self, Json},
     HttpResponse, Responder,
 };
-use marco_polo_rs_core::database::queries::{self, channel::UpdateChannelDto};
+use marco_polo_rs_core::database::{
+    models::{channel::Channel, user::UserRole},
+    queries::{self, channel::UpdateChannelDto, pagination::Pagination},
+};
 
 mod dto;
 #[cfg(test)]
@@ -48,6 +51,28 @@ async fn find_by_id(
     return Ok(Json(dto));
 }
 
+#[get("/")]
+async fn find_all(
+    pool: web::Data<AppPool>,
+    pagination: web::Query<Pagination<Channel>>,
+    jwt: TokenClaims,
+) -> Result<impl Responder, AppError> {
+    let pool = &pool.pool;
+    let pagination = pagination.into_inner();
+
+    let channels = match jwt.role {
+        UserRole::Admin => queries::channel::find_all(pool, pagination).await,
+        UserRole::User => {
+            let user_id = jwt.id;
+            queries::channel::find_all_by_owner(pool, user_id, pagination).await
+        }
+    }?;
+
+    let dto: Vec<ChannelDTO> = channels.into_iter().map(|c| c.into()).collect();
+
+    return Ok(Json(dto));
+}
+
 #[get("youtube/oauth/callback")]
 async fn oauth_youtube_callback(
     pool: web::Data<AppPool>,
@@ -88,6 +113,8 @@ pub fn init_routes(config: &mut web::ServiceConfig) {
     let channel_scope = web::scope("/channel")
         .service(create_youtube_channel)
         .service(oauth_youtube_callback)
-        .service(find_by_id);
+        .service(find_by_id)
+        .service(find_all);
+
     config.service(channel_scope);
 }
