@@ -10,7 +10,7 @@ pub struct UpdateChannelDto {
     pub refresh_token: String,
 }
 
-find_all!(Channel, ChannelOrderFields::Id, "channels");
+find_all!(Channel, "channels");
 
 pub async fn find_by_id(pool: &PgPool, id: i32) -> Result<Channel, sqlx::Error> {
     let channel = sqlx::query_as!(

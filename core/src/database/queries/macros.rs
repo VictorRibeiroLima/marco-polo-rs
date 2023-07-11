@@ -1,5 +1,5 @@
 macro_rules! find_all {
-    ($table:ty,$enum_default:expr,$table_name:expr) => {
+    ($table:ty,$table_name:expr) => {
         pub async fn find_all(
             pool: &sqlx::PgPool,
             pagination: crate::database::queries::pagination::Pagination<$table>,

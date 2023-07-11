@@ -12,7 +12,7 @@ pub struct CreateUserDto<'a> {
     pub role: Option<&'a UserRole>,
 }
 
-find_all!(User, UserOrderFields::Id, "users");
+find_all!(User, "users");
 
 pub async fn find_by_id(pool: &PgPool, id: i32) -> Result<User, sqlx::Error> {
     let user = sqlx::query_as!(
