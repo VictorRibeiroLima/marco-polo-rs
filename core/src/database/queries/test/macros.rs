@@ -2,12 +2,8 @@ macro_rules! test_find_all {
     ($table:ty,$enum:ty,$find_all:ident,$fixture_name:expr) => {
         #[sqlx::test(migrations = "../migrations", fixtures($fixture_name))]
         async fn test_find_all(pool: sqlx::PgPool) {
-            let pagination = crate::database::queries::pagination::Pagination {
-                offset: None,
-                limit: None,
-                order_by: None,
-                order: None,
-            };
+            let pagination = crate::database::queries::pagination::Pagination::default();
+
             let result = $find_all(&pool, pagination).await;
             let list = result.unwrap();
             let list_len = list.len();

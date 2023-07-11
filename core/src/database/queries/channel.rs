@@ -1,11 +1,8 @@
 use sqlx::PgPool;
 
-use crate::database::models::channel::{Channel, ChannelOrderFields};
+use crate::database::models::channel::Channel;
 
-use super::{
-    macros::find_all,
-    pagination::{Pagination, PaginationOrder},
-};
+use super::{macros::find_all, pagination::Pagination};
 
 pub struct UpdateChannelDto {
     pub id: i32,
@@ -99,25 +96,7 @@ pub async fn find_all_by_owner(
     owner_id: i32,
     pagination: Pagination<Channel>,
 ) -> Result<Vec<Channel>, sqlx::Error> {
-    let offset = match pagination.offset {
-        Some(offset) => offset,
-        None => 0,
-    };
-
-    let limit = match pagination.limit {
-        Some(limit) => limit,
-        None => 10,
-    };
-
-    let order = match pagination.order {
-        Some(order) => order,
-        None => PaginationOrder::Asc,
-    };
-
-    let order_by = match pagination.order_by {
-        Some(order_by) => order_by,
-        None => ChannelOrderFields::Id,
-    };
+    let (offset, limit, order, order_by) = pagination.to_tuple();
 
     let sql = format!(
         r#"
