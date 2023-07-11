@@ -4,25 +4,7 @@ macro_rules! find_all {
             pool: &sqlx::PgPool,
             pagination: crate::database::queries::pagination::Pagination<$table>,
         ) -> Result<Vec<$table>, sqlx::Error> {
-            let offset = match pagination.offset {
-                Some(offset) => offset,
-                None => 0,
-            };
-
-            let limit = match pagination.limit {
-                Some(limit) => limit,
-                None => 10,
-            };
-
-            let order = match pagination.order {
-                Some(order) => order,
-                None => crate::database::queries::pagination::PaginationOrder::Asc,
-            };
-
-            let order_by = match pagination.order_by {
-                Some(order_by) => order_by,
-                None => $enum_default,
-            };
+            let (offset, limit, order, order_by) = pagination.to_tuple();
 
             let sql = format!(
                 r#"

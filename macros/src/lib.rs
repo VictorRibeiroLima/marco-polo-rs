@@ -22,7 +22,7 @@ pub fn ordination_enum(input: TokenStream) -> TokenStream {
 
     // Create the derives
     let derives = quote! {
-        #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+        #[derive(Debug, Clone, Copy, PartialEq, Default, Eq, serde::Deserialize, serde::Serialize)]
         #[serde(rename_all = "camelCase")]
     };
 
@@ -48,11 +48,21 @@ pub fn ordination_enum(input: TokenStream) -> TokenStream {
             this lines--> Baz,
         }
     */
-    let field_name_variants = struct_fields.iter().map(|(_, variant_ident, _)| {
-        quote! {
-            #variant_ident
-        }
-    });
+    let field_name_variants = struct_fields
+        .iter()
+        .enumerate()
+        .map(|(i, (_, variant_ident, _))| {
+            if i == 0 {
+                quote! {
+                    #[default]
+                    #variant_ident
+                }
+            } else {
+                quote! {
+                    #variant_ident
+                }
+            }
+        });
 
     /* Create the match arms
 

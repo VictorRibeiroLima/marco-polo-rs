@@ -1,6 +1,6 @@
 use sqlx::PgPool;
 
-use crate::database::models::user::{User, UserOrderFields, UserRole};
+use crate::database::models::user::{User, UserRole};
 use chrono::NaiveDateTime;
 
 use super::macros::find_all;
