@@ -28,7 +28,21 @@ Description:
 
 Check the services that will be affected by this PR.
 - [ ] API
-- [ ] Worker
+- [ ] Queue
+
+In case that the PR only affects one of the services, please add the label `no-deploy-api` or `no-deploy-queue` to it accordingly.
+
+**Example of 'no-deploy-api' label:**
+```bash	
+feat: new worker. [no-deploy-api]
+```	
+
+**Example of 'no-deploy-queue' label:**
+```bash	
+feat: new endpoint. [no-deploy-queue]
+```	
+
+The label should be added at the end of the PR title, between brackets.
 
 ## Zoom Link
 

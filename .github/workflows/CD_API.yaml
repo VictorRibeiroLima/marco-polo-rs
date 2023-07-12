@@ -28,7 +28,7 @@ env:
 
 jobs:
   deploy:
-    if: ${{ !contains(github.event.head_commit.message, '[no-deploy]') }}
+    if: ${{ (!contains(github.event.head_commit.message, '[no-deploy]')||!contains(github.event.head_commit.message, '[no-deploy-api]')) }}
     runs-on: ubuntu-latest
 
     steps:
