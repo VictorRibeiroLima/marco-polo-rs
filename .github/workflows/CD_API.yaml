@@ -20,7 +20,7 @@ env:
   AWS-REGION: sa-east-1
 
   ECS_TASK_DEFINITION: .aws/api-ecs-task-definition.json
-  ECS_SERVICE: marco-polo-api-prod-service
+  ECS_SERVICE: mp-api-prod-service
   ECS_CLUSTER: mp-api-prod-clster
   ECS_CONTAINER_NAME: mp-api-prod-container
 
@@ -84,5 +84,6 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
