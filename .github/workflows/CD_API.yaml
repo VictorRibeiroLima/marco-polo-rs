@@ -14,7 +14,7 @@ on:
       - "sa-east-1-bundle.pem"
       - "yt-client-secret.json"
       - ".aws/api-ecs-task-definition.json"
-      - ".github/workflows/CD_API.yml"
+      - ".github/workflows/CD_API.yaml"
 
 env:
   AWS-REGION: sa-east-1
