@@ -21,7 +21,7 @@ env:
 
   ECS_TASK_DEFINITION: .aws/api-ecs-task-definition.json
   ECS_SERVICE: mp-api-prod-service
-  ECS_CLUSTER: mp-api-prod-clster
+  ECS_CLUSTER: mp-api-prod-cluster
   ECS_CONTAINER_NAME: mp-api-prod-container
 
   ECR_REPOSITORY: marco-polo-api
