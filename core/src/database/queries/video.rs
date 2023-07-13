@@ -1,4 +1,5 @@
-use chrono::{DateTime, Utc};
+use chrono::NaiveDateTime;
+
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -88,10 +89,10 @@ pub async fn find_by_transcription_id(
             v.language,
             v.user_id,
             v.channel_id,
-            v.created_at as "created_at: DateTime<Utc>",
-            v.updated_at as "updated_at: DateTime<Utc>",
-            v.deleted_at as "deleted_at: DateTime<Utc>",
-            v.uploaded_at as "uploaded_at: DateTime<Utc>"
+            v.created_at as "created_at: NaiveDateTime",
+            v.updated_at as "updated_at: NaiveDateTime",
+            v.deleted_at as "deleted_at: NaiveDateTime",
+            v.uploaded_at as "uploaded_at: NaiveDateTime"
         FROM 
             videos v
         INNER JOIN 
@@ -119,10 +120,10 @@ pub async fn find_by_id(pool: &PgPool, id: &Uuid) -> Result<Video, sqlx::Error> 
             v.language,
             v.user_id,
             v.channel_id,
-            v.created_at as "created_at: DateTime<Utc>",
-            v.updated_at as "updated_at: DateTime<Utc>",
-            v.deleted_at as "deleted_at: DateTime<Utc>",
-            v.uploaded_at as "uploaded_at: DateTime<Utc>"
+            v.created_at as "created_at: NaiveDateTime",
+            v.updated_at as "updated_at: NaiveDateTime",
+            v.deleted_at as "deleted_at: NaiveDateTime",
+            v.uploaded_at as "uploaded_at: NaiveDateTime"
         FROM 
             videos v
         WHERE 

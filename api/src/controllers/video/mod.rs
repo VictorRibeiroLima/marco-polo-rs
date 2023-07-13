@@ -1,24 +1,29 @@
 use actix_web::{
+    get,
     web::{self, post, Json},
     HttpResponse, Responder,
 };
+
 use marco_polo_rs_core::{
-    database::queries,
+    database::queries::{self},
     internals::cloud::{
         aws::AwsCloudService,
         traits::{CloudService, QueueClient},
     },
 };
+use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
     middleware::jwt_token::TokenClaims, models::error::AppError, AppCloudService, AppPool,
 };
 
-use self::dtos::create::CreateVideo;
+use self::dtos::create::{CreateVideo, VideoDTO};
 
 mod dtos;
 mod service;
+#[cfg(test)]
+mod test;
 
 async fn create_video<CS: CloudService>(
     pool: web::Data<AppPool>,
@@ -43,8 +48,25 @@ async fn create_video<CS: CloudService>(
     return Ok(HttpResponse::Created().finish());
 }
 
+#[get("/{id}")]
+async fn find_by_id(
+    id: web::Path<Uuid>,
+    pool: web::Data<AppPool>,
+    _jwt: TokenClaims,
+) -> Result<impl Responder, AppError> {
+    let id = id.into_inner();
+    let pool = &pool.pool;
+
+    let user = queries::video::find_by_id(pool, &id).await?;
+    let dto: VideoDTO = user.into();
+
+    return Ok(Json(dto));
+}
+
 pub fn init_routes(config: &mut web::ServiceConfig) {
     let scope = web::scope("/video");
-    let scope = scope.route("/", post().to(create_video::<AwsCloudService>));
+    let scope = scope
+        .route("/", post().to(create_video::<AwsCloudService>))
+        .service(find_by_id);
     config.service(scope);
 }
