@@ -16,7 +16,6 @@ on:
       - ".aws/api-ecs-task-definition.json"
       - ".github/workflows/CD_API.yaml"
 
-##force deploy
 env:
   AWS-REGION: sa-east-1
 
