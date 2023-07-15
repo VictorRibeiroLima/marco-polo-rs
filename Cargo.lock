@@ -1423,6 +1423,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "marco-polo-rs-cli"
+version = "0.1.0"
+dependencies = [
+ "marco-polo-rs-core",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-util",
+]
+
+[[package]]
 name = "marco-polo-rs-core"
 version = "0.1.0"
 dependencies = [
