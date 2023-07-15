@@ -13,6 +13,86 @@
     },
     "query": "\n    INSERT INTO channels (csrf_token,creator_id) \n    VALUES ($1,$2)\n    "
   },
+  "1f683513bab9daa85eda17532482ec8830bf680fad8539c4d441d622ae004122": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id: Uuid",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "title",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "description",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "url",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "language",
+          "ordinal": 4,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "user_id",
+          "ordinal": 5,
+          "type_info": "Int4"
+        },
+        {
+          "name": "channel_id",
+          "ordinal": 6,
+          "type_info": "Int4"
+        },
+        {
+          "name": "created_at: NaiveDateTime",
+          "ordinal": 7,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "updated_at: NaiveDateTime",
+          "ordinal": 8,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "deleted_at: NaiveDateTime",
+          "ordinal": 9,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "uploaded_at: NaiveDateTime",
+          "ordinal": 10,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n        SELECT \n            v.id as \"id: Uuid\", \n            v.title,\n            v.description,\n            v.url,\n            v.language,\n            v.user_id,\n            v.channel_id,\n            v.created_at as \"created_at: NaiveDateTime\",\n            v.updated_at as \"updated_at: NaiveDateTime\",\n            v.deleted_at as \"deleted_at: NaiveDateTime\",\n            v.uploaded_at as \"uploaded_at: NaiveDateTime\"\n        FROM \n            videos v\n        WHERE \n            v.id = $1 AND deleted_at IS NULL\n    "
+  },
   "28c3cc46ca261ddac740d6ab35f44aa23388d21086872102df103dc19437c28b": {
     "describe": {
       "columns": [],
@@ -395,86 +475,6 @@
       }
     },
     "query": "\n        SELECT \n            id,\n            name, \n            email,\n            password,\n            role as \"role: UserRole\", \n            created_at as \"created_at: NaiveDateTime\",\n            updated_at as \"updated_at: NaiveDateTime\",\n            deleted_at as \"deleted_at: NaiveDateTime\"\n        FROM \n            users \n        WHERE \n            id = $1 AND deleted_at IS NULL\n        "
-  },
-  "6cbdecc324ac978da49ede22ead6a9439b21a5e26acc773c43c8c8df31b3da0d": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id: Uuid",
-          "ordinal": 0,
-          "type_info": "Uuid"
-        },
-        {
-          "name": "title",
-          "ordinal": 1,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "description",
-          "ordinal": 2,
-          "type_info": "Text"
-        },
-        {
-          "name": "url",
-          "ordinal": 3,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "language",
-          "ordinal": 4,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "user_id",
-          "ordinal": 5,
-          "type_info": "Int4"
-        },
-        {
-          "name": "channel_id",
-          "ordinal": 6,
-          "type_info": "Int4"
-        },
-        {
-          "name": "created_at: NaiveDateTime",
-          "ordinal": 7,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "updated_at: NaiveDateTime",
-          "ordinal": 8,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "deleted_at: NaiveDateTime",
-          "ordinal": 9,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "uploaded_at: NaiveDateTime",
-          "ordinal": 10,
-          "type_info": "Timestamp"
-        }
-      ],
-      "nullable": [
-        false,
-        false,
-        false,
-        true,
-        false,
-        false,
-        false,
-        false,
-        false,
-        true,
-        true
-      ],
-      "parameters": {
-        "Left": [
-          "Uuid"
-        ]
-      }
-    },
-    "query": "\n        SELECT \n            v.id as \"id: Uuid\", \n            v.title,\n            v.description,\n            v.url,\n            v.language,\n            v.user_id,\n            v.channel_id,\n            v.created_at as \"created_at: NaiveDateTime\",\n            v.updated_at as \"updated_at: NaiveDateTime\",\n            v.deleted_at as \"deleted_at: NaiveDateTime\",\n            v.uploaded_at as \"uploaded_at: NaiveDateTime\"\n        FROM \n            videos v\n        WHERE \n            v.id = $1\n    "
   },
   "7ee07024cf6ce7ffe40ff47a48623cbe94952b22bb7cd39f711e789c035e0b4b": {
     "describe": {
