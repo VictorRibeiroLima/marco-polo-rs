@@ -129,7 +129,7 @@ pub async fn find_by_id(pool: &PgPool, id: &Uuid) -> Result<Video, sqlx::Error> 
         FROM 
             videos v
         WHERE 
-            v.id = $1
+            v.id = $1 AND deleted_at IS NULL
     "#,
         id
     )
