@@ -1,6 +1,24 @@
 # Marco Polo Rs
 <img style="margin: 0 auto" src="https://cdn.britannica.com/53/194553-050-88A5AC72/Marco-Polo-Italian-portrait-woodcut.jpg"  height="500">
 
+# Table of contents
+- [About](#about)
+- [Installation](#installation)
+  - [Linux and Wsl](#linux-and-wsl)
+- [Env config](#env-config)
+  - [Env files](#env-files)
+  - [Docker](#docker)
+  - [Database](#database)
+  - [Migrations](#migrations)
+  - [Ngrok](#ngrok)
+- [Running](#running)
+  - [Server](#server)
+  - [Watch mode:](#watch-mode)
+- [More on migrations](#more-on-migrations)
+- [CLI](#cli)
+  - [The api_keys.json file](#the-api_keysjson-file)
+  - [Installation](#installation-1)
+
 # About
 The Marco Polo project is a video translator, and subtitle generator,
 capable of translating videos from more then 100 languages to more then 100 languages.
@@ -87,7 +105,7 @@ $ cargo run
 **Note:**
 The migrations will run automatically when you run the server.
 
-Watch mode:
+### Watch mode:
 ```bash
 $ cargo watch -x run
 ```
@@ -117,3 +135,74 @@ To mitigate this you can run the `prepare` command:
 $ cargo sqlx prepare --merged
 ```
 This will create a file called `sqlx-data.json` with the database schema, and sqlx will use this file to run the queries instead of the DATABASE_URL env var.
+
+# CLI
+
+The CLI is a tool to translate videos, and generate subtitles locally.
+
+The videos will not be uploaded to the server or youtube.
+
+But the transcription and translation will be done by the AI api's, so you need internet connection to use the CLI and api's
+keys.
+
+### The api_keys.json file
+The CLI will use the api_keys.json file to get the api keys needed.
+
+```json
+{
+  "deepl": "your_api_key",
+  "assemblyAi": "your_api_key"
+}
+```
+
+
+### Installation
+
+First create a folder to store the CLI files:
+
+```bash
+$ mkdir -p ~/.marco-polo-rs-cli
+```
+
+Then compile the project and copy the binary to the folder:
+
+
+```bash
+$ cargo build --release --package marco-polo-rs-cli --bin marco-polo-rs-cli && cp target/release/marco-polo-rs-cli ~/.marco-polo-rs-cli
+```
+
+Inside the folder you should have the binary and the api_keys.json file.
+
+Create a .sh file to run the CLI and the api_keys.json file:
+
+```bash
+$ touch ~/.marco-polo-rs-cli/marco-polo.sh
+$ touch ~/.marco-polo-rs-cli/api_keys.json
+```
+
+Add this to the .sh file:
+
+```bash
+#!/bin/bash
+~/.marco-polo-rs-cli/marco-polo-rs-cli -k ~/api_keys.json $@
+```
+
+Make the file executable:
+
+```bash
+$ chmod +x ~/.marco-polo-rs-cli/marco-polo.sh
+```
+
+Create a symbolic link to the file:
+
+```bash
+$ sudo ln -s ~/.marco-polo-rs-cli/marco-polo.sh usr/local/bin/marco-polo
+```
+
+Restart the terminal.
+
+Now you can run the CLI with the command:
+
+```bash
+$ marco-polo --help
+```
