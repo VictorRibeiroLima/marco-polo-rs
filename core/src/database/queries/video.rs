@@ -8,7 +8,7 @@ use crate::database::models::{
     video_storage::StorageVideoStage,
 };
 
-use super::storage;
+use super::{macros::find_all, pagination::Pagination, storage};
 
 pub struct CreateVideoDto<'a> {
     pub id: &'a Uuid,
@@ -73,6 +73,8 @@ pub async fn set_url(pool: &PgPool, video_id: &Uuid, url: String) -> Result<(), 
 
     Ok(())
 }
+
+find_all!(Video, "videos");
 
 pub async fn find_by_transcription_id(
     pool: &PgPool,
@@ -148,6 +150,41 @@ pub async fn find_by_id_with_storage(
     Ok(VideoWithStorage { video, storage })
 }
 
+pub async fn find_all_by_owner(
+    pool: &PgPool,
+    owner_id: i32,
+    pagination: Pagination<Video>,
+) -> Result<Vec<Video>, sqlx::Error> {
+    let (offset, limit, order, order_by) = pagination.to_tuple();
+
+    let sql = format!(
+        r#"
+        SELECT 
+            *
+        FROM 
+            videos 
+        WHERE
+            user_id = $1 AND deleted_at IS NULL
+        ORDER BY 
+            {} {}
+        LIMIT
+            $2
+        OFFSET 
+            $3
+        "#,
+        order_by.name(),
+        order.name()
+    );
+
+    let videos: Vec<Video> = sqlx::query_as(&sql)
+        .bind(owner_id)
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(pool)
+        .await?;
+
+    return Ok(videos);
+}
 pub async fn find_by_id_with_storage_and_channel(
     pool: &PgPool,
     id: &Uuid,
