@@ -1,4 +1,4 @@
-use std::{path::PathBuf, process::Command};
+use std::path::PathBuf;
 
 use crate::internals::cloud::traits::BucketClient;
 
@@ -37,36 +37,6 @@ pub async fn write_to_temp_files<BC: BucketClient + Sync>(
     temp_file_paths.push(output_path);
 
     Ok(temp_file_paths)
-}
-
-pub fn call_ffmpeg(
-    video_path: &PathBuf,
-    srt_path: &PathBuf,
-    output_path: &PathBuf,
-) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
-    let output = Command::new("ffmpeg")
-        .arg("-i")
-        .arg(&video_path)
-        .arg("-vf")
-        .arg(format!("subtitles={}", &srt_path.to_str().unwrap()))
-        .arg("-c:a")
-        .arg("copy")
-        .arg(&output_path)
-        .output()?;
-
-    match output.status.code() {
-        Some(0) => {}
-        Some(_) => {
-            println!("1:{:?}", output);
-            return Err("ffmpeg failed".into());
-        }
-        None => {
-            println!("2:{:?}", output);
-            return Err("ffmpeg failed".into());
-        }
-    }
-
-    Ok(())
 }
 
 pub fn _read_output_file(

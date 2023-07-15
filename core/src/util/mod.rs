@@ -16,5 +16,7 @@ macro_rules! time_it {
 
 #[allow(unused_imports)]
 pub(crate) use time_it;
+pub mod ffmpeg;
 pub mod fs;
 pub mod queue;
+pub mod srt;
