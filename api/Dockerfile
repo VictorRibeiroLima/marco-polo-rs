@@ -26,6 +26,7 @@ COPY ./macros/Cargo.toml ./macros/Cargo.toml
 COPY ./core/Cargo.toml ./core/Cargo.toml
 COPY ./api/Cargo.toml ./api/Cargo.toml
 COPY ./queue/Cargo.toml ./queue/Cargo.toml
+COPY ./cli/Cargo.toml ./cli/Cargo.toml
 
 #Create dummy files to trick cargo into building the dependencies
 RUN mkdir ./macros/src && echo "" > ./macros/src/lib.rs
