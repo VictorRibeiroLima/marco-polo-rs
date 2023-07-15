@@ -1,5 +1,6 @@
 use chrono::{Duration, NaiveTime};
-use marco_polo_rs_core::internals::transcriber::traits::Sentence;
+
+use crate::internals::transcriber::traits::Sentence;
 
 const MAX_SENTENCE_LENGTH: usize = 110; // including spaces
 

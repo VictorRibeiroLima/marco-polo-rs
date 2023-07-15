@@ -7,6 +7,7 @@ use crate::{
 use super::traits::SubtitlerClient;
 use async_trait::async_trait;
 mod util;
+use crate::util::ffmpeg::subtitle_video_to_file;
 
 #[derive(Clone)]
 pub struct LocalClient;
@@ -40,7 +41,7 @@ impl<BC: BucketClient> SubtitlerClient<BC> for LocalClient {
         let temp_file_paths =
             util::write_to_temp_files(bucket_client, &temp_dir, &video_id).await?;
 
-        match util::call_ffmpeg(
+        match subtitle_video_to_file(
             &temp_file_paths[0],
             &temp_file_paths[1],
             &temp_file_paths[2],

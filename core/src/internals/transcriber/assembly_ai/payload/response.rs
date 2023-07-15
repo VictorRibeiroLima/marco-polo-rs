@@ -3,6 +3,12 @@ use serde::{Deserialize, Serialize};
 use crate::internals::transcriber::traits::Sentence;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+
+pub struct UploadResponse {
+    pub upload_url: String,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TranscribeSentencesResponse {
     pub sentences: Vec<AssemblyAiSentence>,

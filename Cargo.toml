@@ -4,5 +4,6 @@ members = [
   "core",
   "queue",
   "api",
+  "cli",
   "macros",
 ]

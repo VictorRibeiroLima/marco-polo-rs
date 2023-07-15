@@ -26,7 +26,6 @@ use tokio::{
 use workers::{heavy::HeavyWorker, light::LightWorker, Worker};
 
 mod handlers;
-mod srt;
 mod workers;
 
 pub type CloudServiceInUse = AwsCloudService;

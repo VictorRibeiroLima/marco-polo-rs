@@ -1,14 +1,24 @@
+use std::path::PathBuf;
+use std::thread;
+use std::time::Duration;
+
+use reqwest::header::{HeaderMap, HeaderValue};
+use reqwest::{Client, Method};
+
 use async_trait::async_trait;
-use reqwest::Client;
-use serde_json::Value;
+use serde_json::{json, Value};
 
 use crate::{internals::ServiceProvider, SyncError};
 
-use self::payload::{request::TranscribeRequestBody, response::TranscribeSentencesResponse};
+use self::payload::{
+    request::TranscribeRequestBody, response::TranscribeSentencesResponse, response::UploadResponse,
+};
 
 use super::traits::{Sentence, TranscriberClient};
 
 mod payload;
+
+use crate::util;
 
 #[derive(Debug, Clone)]
 pub struct AssemblyAiClient {
@@ -109,5 +119,85 @@ impl TranscriberClient for AssemblyAiClient {
         };
 
         return transcript_id;
+    }
+
+    async fn transcribe_from_file(&self, file_path: &str) -> Result<String, SyncError> {
+        let path = PathBuf::from(file_path);
+        let audio_buff = util::ffmpeg::extract_audio_from_video_to_buff(&path)?;
+
+        let client = reqwest::Client::new();
+
+        let api_url = format!("{}/upload", self.api_url);
+
+        let mut headers = HeaderMap::new();
+        headers.insert("authorization", HeaderValue::from_str(&self.api_key)?);
+        headers.insert(
+            "content-type",
+            HeaderValue::from_static("application/octet-stream"),
+        );
+
+        let request = client
+            .request(Method::POST, &api_url)
+            .headers(headers)
+            .body(audio_buff)
+            .build()?;
+
+        let response = client.execute(request).await?;
+
+        let upload: UploadResponse = response.json().await?;
+
+        let req_body = json!({
+            "audio_url": upload.upload_url,
+        });
+
+        let parsed_body = serde_json::to_string(&req_body)?;
+
+        let url = format!("{}/transcript", self.api_url);
+
+        let res = client
+            .post(&url)
+            .header("Authorization", self.api_key.to_string())
+            .body(parsed_body)
+            .send()
+            .await?;
+
+        let res_body = res.text().await?;
+
+        let res_body: Value = serde_json::from_str(&res_body)?;
+
+        let transcript_id = match res_body["id"].as_str() {
+            Some(id) => Ok(id.to_string()),
+            None => return Err("Could not get transcript id".into()),
+        };
+
+        return transcript_id;
+    }
+
+    async fn pool(&self, transcription_id: &str) -> Result<(), SyncError> {
+        let client = reqwest::Client::new();
+        let pooling_url = format!("{}/transcript/{}", self.api_url, transcription_id);
+        loop {
+            let pooling_resp = client
+                .get(&pooling_url)
+                .header("Authorization", &self.api_key)
+                .send()
+                .await?;
+
+            let pooling_resp_body = pooling_resp.text().await?;
+
+            let pooling_resp_body: Value = serde_json::from_str(&pooling_resp_body)?;
+
+            let status = match pooling_resp_body["status"].as_str() {
+                Some(status) => status,
+                None => return Err("Could not get transcript status".into()),
+            };
+
+            if status == "completed" {
+                return Ok(());
+            } else if status == "error" {
+                return Err("Transcription failed".into());
+            }
+            thread::sleep(Duration::from_secs(3));
+        }
     }
 }
