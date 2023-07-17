@@ -80,7 +80,13 @@ async fn main() {
 
     let queue_client = cloud_service.queue_client();
     loop {
-        let message_result = queue_client.receive_message().await.unwrap();
+        let message_result = match queue_client.receive_message().await {
+            Ok(messages) => messages,
+            Err(e) => {
+                eprintln!("Error receiving message:{}", e);
+                continue;
+            }
+        };
         let messages = match message_result {
             Some(messages) => messages,
             _ => {
