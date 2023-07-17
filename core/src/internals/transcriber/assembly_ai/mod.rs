@@ -195,6 +195,10 @@ impl TranscriberClient for AssemblyAiClient {
             if status == "completed" {
                 return Ok(());
             } else if status == "error" {
+                eprintln!(
+                    "Transcription failed with error: {}",
+                    pooling_resp_body["error"]
+                );
                 return Err("Transcription failed".into());
             }
             thread::sleep(Duration::from_secs(3));

@@ -62,22 +62,51 @@ On Windows, you can install FFmpeg by downloading a build from the official webs
         }
     };
 
-    match File::create("./output.srt") {
+    let srt_path_string = match args.srt_only {
+        false => "./output.srt".to_string(),
+        true => {
+            let path = std::path::PathBuf::from(&args.output);
+            let file_stem = path.file_stem().unwrap().to_str().unwrap();
+            let path_str = format!("{}.srt", file_stem);
+            path_str
+        }
+    };
+
+    match File::create(&srt_path_string) {
         Ok(mut file) => match file.write_all(srt_file_string.as_bytes()) {
             Ok(_) => {}
             Err(e) => {
-                eprintln!("Unable to write to output.srt: {}", e);
+                eprintln!("Unable to write to {}: {}", srt_path_string, e);
                 std::process::exit(1);
             }
         },
         Err(_) => {
             eprintln!(
-                "Unable to create output.srt pls put it in the same directory as the executable"
+                "Unable to create {} pls put it in the same directory as the executable",
+                srt_file_string
             );
             std::process::exit(1);
         }
     }
 
+    if args.srt_only {
+        println!("Srt file written to {}", srt_path_string);
+        std::process::exit(0);
+    } else {
+        match write_subtitles_to_video(&args).await {
+            Ok(_) => {
+                println!("Video written to {}", args.output);
+                std::process::exit(0);
+            }
+            Err(e) => {
+                eprintln!("{}", e);
+                std::process::exit(1);
+            }
+        }
+    }
+}
+
+async fn write_subtitles_to_video(args: &Args) -> Result<(), SyncError> {
     let input_path = std::path::PathBuf::from(&args.input);
     let srt_path = std::path::PathBuf::from("./output.srt");
     let output_path = std::path::PathBuf::from(&args.output);
@@ -85,21 +114,10 @@ On Windows, you can install FFmpeg by downloading a build from the official webs
     println!("Writing subtitles to video...");
     println!("This may take a while...");
 
-    match ffmpeg::subtitle_video_to_file(&input_path, &srt_path, &output_path) {
-        Ok(_) => {}
-        Err(e) => {
-            eprintln!("{}", e);
-            std::process::exit(1);
-        }
-    }
+    ffmpeg::subtitle_video_to_file(&input_path, &srt_path, &output_path)?;
 
-    match std::fs::remove_file("./output.srt") {
-        Ok(_) => {}
-        Err(e) => {
-            eprintln!("{}", e);
-            std::process::exit(1);
-        }
-    }
+    std::fs::remove_file("./output.srt")?;
+    Ok(())
 }
 
 async fn get_sentences(
