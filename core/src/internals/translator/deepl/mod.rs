@@ -64,11 +64,13 @@ impl TranslatorClient for DeeplClient {
             .send()
             .await?;
 
+        let response_status = res.status();
         let text = res.text().await?;
 
         let response_body: DeeplResponse = match serde_json::from_str(&text) {
             Ok(response_body) => response_body,
             Err(e) => {
+                println!("status : {}", response_status);
                 println!("error : {}", e);
                 print!("");
                 println!("text {}", text);
