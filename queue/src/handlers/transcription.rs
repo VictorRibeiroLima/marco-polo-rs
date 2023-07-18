@@ -123,7 +123,7 @@ where
     ) -> Result<Sentence, Box<dyn std::error::Error + Sync + Send>> {
         let translator_client = &self.translator_client;
 
-        let translation = translator_client.translate_sentence(payload.text).await?;
+        let translation = translator_client.translate_sentence(&payload.text).await?;
         let sentence = Sentence {
             text: translation,
             start_time: payload.start_time,

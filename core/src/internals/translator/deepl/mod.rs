@@ -44,9 +44,9 @@ impl ServiceProvider for DeeplClient {
 impl TranslatorClient for DeeplClient {
     async fn translate_sentence(
         &self,
-        text: String,
+        text: &str,
     ) -> Result<String, Box<dyn std::error::Error + Sync + Send>> {
-        let text = &*text;
+        let text = text;
         let url = &self.api_base_url;
 
         let params = [
@@ -66,7 +66,15 @@ impl TranslatorClient for DeeplClient {
 
         let text = res.text().await?;
 
-        let response_body: DeeplResponse = serde_json::from_str(&text)?;
+        let response_body: DeeplResponse = match serde_json::from_str(&text) {
+            Ok(response_body) => response_body,
+            Err(e) => {
+                println!("error : {}", e);
+                print!("");
+                println!("text {}", text);
+                Err(e)?
+            }
+        };
 
         let translation = response_body.translations.first();
 

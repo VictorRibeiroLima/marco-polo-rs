@@ -144,19 +144,35 @@ async fn get_srt_file_string(
     sentences: Vec<Sentence>,
     deepl_client: DeeplClient,
 ) -> Result<String, SyncError> {
-    let mut translation_futures = vec![];
-
-    for sen in sentences {
-        let translation = get_translated_sentence(sen, &deepl_client);
-        translation_futures.push(translation);
-    }
+    let mut translated_sentences = vec![];
+    let mut i: usize = 0;
+    let buff_size = 100;
+    let sentences_len = sentences.len();
 
     println!("Translating sentences...");
-    let resp = join_all(translation_futures).await;
+    while i < sentences_len {
+        let mut translation_futures = vec![];
 
-    let mut translated_sentences = vec![];
-    for sentence in resp {
-        translated_sentences.push(sentence?);
+        let x = if i + buff_size > sentences_len {
+            sentences_len
+        } else {
+            i + buff_size
+        };
+
+        let buff = &sentences[i..x];
+
+        println!("Translating sentences {} to {}", i, x);
+        for sen in buff {
+            let translation = get_translated_sentence(sen, &deepl_client);
+            translation_futures.push(translation);
+        }
+
+        println!("Waiting for translations...");
+        let resp = join_all(translation_futures).await;
+        for sentence in resp {
+            translated_sentences.push(sentence?);
+        }
+        i = x;
     }
 
     println!("Creating new srt file...");
@@ -165,10 +181,10 @@ async fn get_srt_file_string(
 }
 
 async fn get_translated_sentence(
-    payload: Sentence,
+    payload: &Sentence,
     deepl_client: &DeeplClient,
 ) -> Result<Sentence, Box<dyn std::error::Error + Sync + Send>> {
-    let translation = deepl_client.translate_sentence(payload.text).await?;
+    let translation = deepl_client.translate_sentence(&payload.text).await?;
     let sentence = Sentence {
         text: translation,
         start_time: payload.start_time,

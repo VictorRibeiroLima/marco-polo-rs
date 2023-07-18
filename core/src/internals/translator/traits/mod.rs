@@ -6,6 +6,6 @@ use crate::internals::ServiceProvider;
 pub trait TranslatorClient: ServiceProvider {
     async fn translate_sentence(
         &self,
-        sentence: String,
+        sentence: &str,
     ) -> Result<String, Box<dyn std::error::Error + Sync + Send>>;
 }
