@@ -18,7 +18,7 @@ mod args;
 mod keys;
 
 const ASSEMBLY_AI_BASE_URL: &str = "https://api.assemblyai.com/v2";
-const DEEPL_BASE_URL: &str = "https://api-free.deepl.com/v2/translate";
+const DEEPL_BASE_URL: &str = "https://api.deepl.com/v2/translate";
 
 #[tokio::main]
 async fn main() {
