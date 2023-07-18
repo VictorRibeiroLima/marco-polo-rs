@@ -20,4 +20,8 @@ pub struct Args {
     /// Whether or not to render the video with subtitles or just the srt file
     #[arg(long, default_value = "false")]
     pub srt_only: bool,
+
+    /// The buffer size of the translation requests
+    #[arg(short, long, default_value = "100")]
+    pub translation_buffer_size: usize,
 }

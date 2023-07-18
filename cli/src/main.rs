@@ -54,7 +54,7 @@ On Windows, you can install FFmpeg by downloading a build from the official webs
         }
     };
 
-    let srt_file_string = match get_srt_file_string(sentences, deepl_client).await {
+    let srt_file_string = match get_srt_file_string(sentences, deepl_client, &args).await {
         Ok(srt_file_string) => srt_file_string,
         Err(e) => {
             eprintln!("{}", e);
@@ -143,10 +143,11 @@ async fn get_sentences(
 async fn get_srt_file_string(
     sentences: Vec<Sentence>,
     deepl_client: DeeplClient,
+    args: &Args,
 ) -> Result<String, SyncError> {
     let mut translated_sentences = vec![];
     let mut i: usize = 0;
-    let buff_size = 100;
+    let buff_size = args.translation_buffer_size;
     let sentences_len = sentences.len();
 
     println!("Translating sentences...");
