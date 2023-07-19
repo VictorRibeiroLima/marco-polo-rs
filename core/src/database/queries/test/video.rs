@@ -153,7 +153,7 @@ async fn test_create_if_foreign_key(pool: PgPool) {
 }
 #[sqlx::test(migrations = "../migrations", fixtures("videos"))]
 async fn test_find_by_video_id(pool: PgPool) {
-    let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
+    let id = uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
     let find_success = find_by_id(&pool, &id).await.unwrap();
 
     assert_eq!(find_success.id, id);
@@ -173,7 +173,7 @@ async fn test_not_find_by_video_id(pool: PgPool) {
 )]
 
 async fn test_find_by_id_with_storage(pool: PgPool) {
-    let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
+    let id = uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
     let video_stage = StorageVideoStage::Raw;
     let storage_id = 1234;
 
@@ -191,7 +191,7 @@ async fn test_find_by_id_with_storage(pool: PgPool) {
 )]
 
 async fn test_not_find_by_id_with_storage(pool: PgPool) {
-    let id = uuid::Uuid::from_str("805b57d2-f221-11ed-a05b-0242ac120003").unwrap(); //Invalid Uuid for the test
+    let id = uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120095").unwrap(); //Invalid Uuid for the test
     let video_stage = StorageVideoStage::Raw;
 
     let find_error = find_by_id_with_storage(&pool, &id, video_stage).await;
@@ -204,7 +204,7 @@ async fn test_not_find_by_id_with_storage(pool: PgPool) {
     fixtures("videos", "videos_transcriptions")
 )]
 async fn test_find_by_transcription_id(pool: PgPool) {
-    let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
+    let id = uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
     let transcription_id = "Transcription_Test_Ok";
 
     let find_success = find_by_transcription_id(&pool, transcription_id)

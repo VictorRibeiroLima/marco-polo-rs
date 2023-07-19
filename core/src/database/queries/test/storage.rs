@@ -9,7 +9,7 @@ use crate::database::{
 
 #[sqlx::test(migrations = "../migrations", fixtures("videos", "service_providers"))]
 async fn test_create_storage(pool: PgPool) {
-    let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
+    let id = uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
 
     let dto = CreateStorageDto {
         video_id: &id,
@@ -54,7 +54,7 @@ async fn test_create_storage_if_foreign_key(pool: PgPool) {
     fixtures("videos", "service_providers", "video_storage")
 )]
 async fn test_find_by_video_id_and_stage(pool: PgPool) {
-    let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
+    let id = uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
 
     let find_success = find_by_video_id_and_stage(&pool, &id, StorageVideoStage::Raw)
         .await

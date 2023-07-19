@@ -14,7 +14,7 @@ use crate::database::{
 
 #[sqlx::test(migrations = "../migrations", fixtures("videos"))]
 async fn test_create_transcription(pool: PgPool) {
-    let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
+    let id = uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
 
     let dto = CreateTranscriptionDto {
         video_id: id,
@@ -58,7 +58,7 @@ async fn test_create_transcription_if_foreign_key_video(pool: PgPool) {
     fixtures("videos", "videos_transcriptions")
 )]
 async fn test_find_by_video_id(pool: PgPool) {
-    let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
+    let id = uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
     let find_success = find_by_video_id(&pool, &id).await.unwrap();
 
     assert_eq!(find_success.video_id, id);
@@ -82,7 +82,7 @@ async fn test_update_transcription(pool: PgPool) {
     let old_path = "/path";
     let old_storage_id = 1234;
 
-    let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
+    let id = uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
     let new_storage_id = 5678;
     let new_path = "/new/path";
 
