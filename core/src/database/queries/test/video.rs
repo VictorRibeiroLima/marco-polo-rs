@@ -1,13 +1,114 @@
 use std::str::FromStr;
 
 use sqlx::PgPool;
+use uuid::Uuid;
 
 use crate::database::{
-    models::video_storage::StorageVideoStage,
+    models::{video::VideoOrderFields, video_storage::StorageVideoStage},
     queries::video::{
-        create, find_by_id, find_by_id_with_storage, find_by_transcription_id, CreateVideoDto,
+        create, find_all, find_by_id, find_by_id_with_storage, find_by_transcription_id,
+        CreateVideoDto,
     },
 };
+
+#[sqlx::test(migrations = "../migrations", fixtures("videos"))]
+async fn test_find_all(pool: sqlx::PgPool) {
+    let pagination = crate::database::queries::pagination::Pagination::default();
+
+    let result = find_all(&pool, pagination).await;
+    let list = result.unwrap();
+    let list_len = list.len();
+
+    assert_eq!(list_len, 10)
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("videos"))]
+async fn test_find_all_limit_20(pool: sqlx::PgPool) {
+    let pagination = crate::database::queries::pagination::Pagination {
+        offset: None,
+        limit: Some(20),
+        order_by: None,
+        order: None,
+    };
+    let result = find_all(&pool, pagination).await;
+    let list = result.unwrap();
+    let list_len = list.len();
+
+    assert_eq!(list_len, 20)
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("videos"))]
+async fn test_find_all_order_by_id_asc(pool: sqlx::PgPool) {
+    let pagination = crate::database::queries::pagination::Pagination {
+        offset: None,
+        limit: None,
+        order_by: Some(<VideoOrderFields>::Id),
+        order: Some(crate::database::queries::pagination::PaginationOrder::Asc),
+    };
+    let result = find_all(&pool, pagination).await;
+    let list = result.unwrap();
+    let list_len = list.len();
+
+    assert_eq!(list_len, 10);
+    let mut base_id: Uuid = Uuid::nil();
+    for (index, member) in list.into_iter().enumerate() {
+        if index == 0 {
+            base_id = member.id;
+        } else {
+            assert!(member.id > base_id);
+            base_id = member.id;
+        }
+    }
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("videos"))]
+async fn test_find_all_order_by_id_desc(pool: sqlx::PgPool) {
+    let pagination = crate::database::queries::pagination::Pagination {
+        offset: None,
+        limit: None,
+        order_by: Some(<VideoOrderFields>::Id),
+        order: Some(crate::database::queries::pagination::PaginationOrder::Desc),
+    };
+    let result = find_all(&pool, pagination).await;
+    let list = result.unwrap();
+    let list_len = list.len();
+
+    assert_eq!(list_len, 10);
+    let mut base_id: Uuid = Uuid::nil();
+    for (index, member) in list.into_iter().enumerate() {
+        if index == 0 {
+            base_id = member.id;
+        } else {
+            assert!(member.id < base_id);
+            base_id = member.id;
+        }
+    }
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("videos"))]
+async fn test_offset(pool: sqlx::PgPool) {
+    let pagination = crate::database::queries::pagination::Pagination {
+        offset: None,
+        limit: Some(11),
+        order_by: None,
+        order: None,
+    };
+
+    let result = find_all(&pool, pagination).await.unwrap();
+    let expected_member = &result[10];
+
+    let pagination = crate::database::queries::pagination::Pagination {
+        offset: Some(10),
+        limit: None,
+        order_by: Some(<VideoOrderFields>::Id),
+        order: Some(crate::database::queries::pagination::PaginationOrder::Asc),
+    };
+
+    let result = find_all(&pool, pagination).await.unwrap();
+    let member = &result[0];
+
+    assert_eq!(member.id, expected_member.id)
+}
 
 #[sqlx::test(migrations = "../migrations", fixtures("user", "channel"))]
 async fn test_create_video(pool: PgPool) {
@@ -52,7 +153,7 @@ async fn test_create_if_foreign_key(pool: PgPool) {
 }
 #[sqlx::test(migrations = "../migrations", fixtures("videos"))]
 async fn test_find_by_video_id(pool: PgPool) {
-    let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
+    let id = uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
     let find_success = find_by_id(&pool, &id).await.unwrap();
 
     assert_eq!(find_success.id, id);
@@ -72,7 +173,7 @@ async fn test_not_find_by_video_id(pool: PgPool) {
 )]
 
 async fn test_find_by_id_with_storage(pool: PgPool) {
-    let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
+    let id = uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
     let video_stage = StorageVideoStage::Raw;
     let storage_id = 1234;
 
@@ -90,7 +191,7 @@ async fn test_find_by_id_with_storage(pool: PgPool) {
 )]
 
 async fn test_not_find_by_id_with_storage(pool: PgPool) {
-    let id = uuid::Uuid::from_str("805b57d2-f221-11ed-a05b-0242ac120003").unwrap(); //Invalid Uuid for the test
+    let id = uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120095").unwrap(); //Invalid Uuid for the test
     let video_stage = StorageVideoStage::Raw;
 
     let find_error = find_by_id_with_storage(&pool, &id, video_stage).await;
@@ -103,7 +204,7 @@ async fn test_not_find_by_id_with_storage(pool: PgPool) {
     fixtures("videos", "videos_transcriptions")
 )]
 async fn test_find_by_transcription_id(pool: PgPool) {
-    let id = uuid::Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
+    let id = uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
     let transcription_id = "Transcription_Test_Ok";
 
     let find_success = find_by_transcription_id(&pool, transcription_id)

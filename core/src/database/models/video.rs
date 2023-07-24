@@ -1,11 +1,13 @@
-use chrono::{DateTime, Utc};
+use chrono::NaiveDateTime;
+use marco_polo_rs_macros::Paginate;
 use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 use uuid::Uuid;
 
 use super::{channel::Channel, video_storage::VideosStorage};
 
 //TODO: add youtube_id
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Paginate, FromRow)]
 pub struct Video {
     pub id: Uuid,
     pub title: String,
@@ -14,10 +16,10 @@ pub struct Video {
     pub channel_id: i32,
     pub url: Option<String>,
     pub language: String,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-    pub deleted_at: Option<DateTime<Utc>>,
-    pub uploaded_at: Option<DateTime<Utc>>,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+    pub deleted_at: Option<NaiveDateTime>,
+    pub uploaded_at: Option<NaiveDateTime>,
 }
 
 pub struct VideoWithStorage {

@@ -7,7 +7,7 @@ use crate::database::queries::translation::{create, CreateTranslationDto};
 
 #[sqlx::test(migrations = "../migrations", fixtures("videos", "service_providers"))]
 async fn test_create_translation(pool: PgPool) {
-    let id = Uuid::from_str("806b57d2-f221-11ed-a05b-0242ac120003").unwrap();
+    let id = Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
 
     let dto = CreateTranslationDto {
         video_id: &id,
