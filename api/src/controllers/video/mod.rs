@@ -21,7 +21,7 @@ use crate::{
     middleware::jwt_token::TokenClaims, models::error::AppError, AppCloudService, AppPool,
 };
 
-use self::dtos::create::{CreateVideo, VideoDTO};
+use self::dtos::{create::CreateVideo, VideoDTO};
 
 mod dtos;
 mod service;

@@ -13,7 +13,7 @@ where
     a: i32,
     b: String,
     c: &'a str,
-    #[order_field_name = "foo"]
+    #[paginate(name = "foo")]
     d: PhantomData<T>,
 }
 

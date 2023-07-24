@@ -4,12 +4,45 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::database::{
-    models::{video::VideoOrderFields, video_storage::StorageVideoStage},
-    queries::video::{
-        create, find_all, find_by_id, find_by_id_with_storage, find_by_transcription_id,
-        CreateVideoDto,
+    models::{
+        video::{Video, VideoFilters, VideoOrderFields},
+        video_storage::StorageVideoStage,
+    },
+    queries::{
+        filter::FilterableOptions,
+        video::{
+            create, find_all, find_by_id, find_by_id_with_storage, find_by_transcription_id,
+            CreateVideoDto,
+        },
     },
 };
+
+#[sqlx::test(migrations = "../migrations", fixtures("videos"))]
+async fn filtration_test(pool: sqlx::PgPool) {
+    let mut filters = VideoFilters::default();
+    filters.id = Some(uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap());
+    filters.url = Some(Some(String::from(
+        "https://www.youtube.com/watch?v=1234567890",
+    )));
+
+    let mut query = String::from("SELECT * FROM videos WHERE ");
+
+    for (index, filter) in filters.filter_fields().iter().enumerate() {
+        if index == 0 {
+            query.push_str(&format!("{} = ${}", filter, index + 1));
+        } else {
+            query.push_str(&format!(" AND {} = ${}", filter, index + 1));
+        }
+    }
+
+    let mut query = sqlx::query_as(&query);
+
+    query = filters.apply(query);
+
+    let videos: Vec<Video> = query.fetch_all(&pool).await.unwrap();
+
+    assert_eq!(videos.len(), 1);
+}
 
 #[sqlx::test(migrations = "../migrations", fixtures("videos"))]
 async fn test_find_all(pool: sqlx::PgPool) {

@@ -1,4 +1,5 @@
 pub mod channel;
+pub mod filter;
 mod macros;
 pub mod pagination;
 pub mod storage;

@@ -13,6 +13,7 @@ syn = { version = "2", features = ["derive", "printing", "extra-traits"] }
 quote = "1"
 proc-macro2 = "1.0.63"
 heck = "0.4.1"
+deluxe = "0.5.0"
 
 
 [dev-dependencies]
