@@ -8,4 +8,9 @@ pub trait TranslatorClient: ServiceProvider {
         &self,
         sentence: &str,
     ) -> Result<String, Box<dyn std::error::Error + Sync + Send>>;
+
+    async fn translate_sentences(
+        &self,
+        sentences: Vec<&str>,
+    ) -> Result<Vec<String>, Box<dyn std::error::Error + Sync + Send>>;
 }
