@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use chrono::{NaiveDate, NaiveDateTime};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -18,12 +19,69 @@ use crate::database::{
 };
 
 #[sqlx::test(migrations = "../migrations", fixtures("videos"))]
-async fn filtration_test(pool: sqlx::PgPool) {
+async fn filtration_test_id_url(pool: sqlx::PgPool) {
     let mut filters = VideoFilters::default();
     filters.id = Some(uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap());
     filters.url = Some(Some(String::from(
         "https://www.youtube.com/watch?v=1234567890",
     )));
+
+    let mut query = String::from("SELECT * FROM videos WHERE ");
+
+    for (index, filter) in filters.filter_fields().iter().enumerate() {
+        if index == 0 {
+            query.push_str(&format!("{} = ${}", filter, index + 1));
+        } else {
+            query.push_str(&format!(" AND {} = ${}", filter, index + 1));
+        }
+    }
+
+    let mut query = sqlx::query_as(&query);
+
+    query = filters.apply(query);
+
+    let videos: Vec<Video> = query.fetch_all(&pool).await.unwrap();
+
+    assert_eq!(videos.len(), 1);
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("videos"))]
+async fn filtration_test_id_deleted_at(pool: sqlx::PgPool) {
+    let mut filters = VideoFilters::default();
+
+    let date = NaiveDate::from_ymd_opt(2021, 9, 1)
+        .unwrap()
+        .and_hms_opt(0, 0, 0)
+        .unwrap();
+
+    filters.id = Some(uuid::Uuid::from_str("806b5cdc-f221-11ed-a05b-0242ac120076").unwrap());
+    filters.deleted_at = Some(Some(date));
+
+    let mut query = String::from("SELECT * FROM videos WHERE ");
+
+    for (index, filter) in filters.filter_fields().iter().enumerate() {
+        if index == 0 {
+            query.push_str(&format!("{} = ${}", filter, index + 1));
+        } else {
+            query.push_str(&format!(" AND {} = ${}", filter, index + 1));
+        }
+    }
+
+    let mut query = sqlx::query_as(&query);
+
+    query = filters.apply(query);
+
+    let videos: Vec<Video> = query.fetch_all(&pool).await.unwrap();
+
+    assert_eq!(videos.len(), 1);
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("videos"))]
+async fn filtration_test_id_deleted_at_none(pool: sqlx::PgPool) {
+    let mut filters = VideoFilters::default();
+
+    filters.id = Some(uuid::Uuid::from_str("806b5cfc-f221-11ed-a05b-0242ac120075").unwrap());
+    filters.deleted_at = Some(None);
 
     let mut query = String::from("SELECT * FROM videos WHERE ");
 

@@ -170,3 +170,22 @@ VALUES (
     666,
     666
   );
+INSERT INTO VIDEOS (id, title, description, user_id, channel_id,deleted_at)
+VALUES (
+    '806b5cdc-f221-11ed-a05b-0242ac120076',
+    'Space Tourism Test',
+    'This is a test video about space tourism',
+    666,
+    666,
+    '2021-09-01 00:00:00'
+  );
+
+INSERT INTO VIDEOS (id, title, description, user_id, channel_id,deleted_at)
+VALUES (
+    '806b5cfc-f221-11ed-a05b-0242ac120075',
+    'Hyperloop Competition Test',
+    'This is a test video of a Hyperloop competition',
+    666,
+    666,
+    NULL
+  );
