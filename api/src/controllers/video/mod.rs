@@ -7,7 +7,7 @@ use actix_web::{
 use marco_polo_rs_core::{
     database::{
         models::{user::UserRole, video::Video},
-        queries::{self, pagination::Pagination},
+        queries::{self, filter::Filter, pagination::Pagination},
     },
     internals::cloud::{
         aws::AwsCloudService,
@@ -70,16 +70,18 @@ async fn find_by_id(
 async fn find_all(
     pool: web::Data<AppPool>,
     pagination: web::Query<Pagination<Video>>,
+    filter: web::Query<Filter<Video>>,
     jwt: TokenClaims,
 ) -> Result<impl Responder, AppError> {
     let pagination = pagination.into_inner();
+    let filter = filter.into_inner();
     let pool = &pool.pool;
 
     let channels = match jwt.role {
         UserRole::Admin => queries::video::find_all(pool, pagination).await,
         UserRole::User => {
             let user_id = jwt.id;
-            queries::video::find_all_by_owner(pool, user_id, pagination).await
+            queries::video::find_all_by_owner(pool, user_id, pagination, filter).await
         }
     }?;
 
