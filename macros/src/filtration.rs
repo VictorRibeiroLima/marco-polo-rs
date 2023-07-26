@@ -41,6 +41,8 @@ pub fn gen_filtration_block(input: TokenStream) -> Result<TokenStream> {
 
     let apply_block = create_apply_block(&struct_fields);
 
+    let where_block = create_where_block(&struct_fields);
+
     /*
 
     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -132,6 +134,20 @@ pub fn gen_filtration_block(input: TokenStream) -> Result<TokenStream> {
             fn apply_raw(self, mut query: sqlx::query::Query<'_, sqlx::Postgres,sqlx::postgres::PgArguments>) -> sqlx::query::Query<'_, sqlx::Postgres,sqlx::postgres::PgArguments> {
                 #(#apply_block)*
                 return query;
+            }
+
+            fn gen_where_statements(&self, param_count: Option<usize>) -> (String, usize) {
+                let mut sql = String::new();
+
+                let mut param_count = match param_count {
+                    Some(param_count) => param_count,
+                    None => 0,
+                };
+
+                #(#where_block)*
+
+                return (sql, param_count);
+
             }
         }
     };
@@ -244,4 +260,59 @@ fn create_apply_block(struct_fields: &Vec<(Ident, Type, String)>) -> Vec<TokenSt
             }
         })
         .collect()
+}
+
+fn create_where_block(struct_fields: &Vec<(Ident, Type, String)>) -> Vec<TokenStream> {
+    struct_fields
+        .iter()
+        .map(|(field_ident, field_type, meta_name)| {
+            let is_option = check_if_type_is_option(field_type);
+
+            if is_option {
+                return quote! {
+                    param_count = param_count + 1;
+                    if self.#field_ident.is_some() {
+                        let value = self.#field_ident.as_ref().unwrap();
+                        match value {
+                            Some(_) => {
+                                if param_count == 1 {
+                                    sql.push_str(&format!("{} = ${}", #meta_name, param_count));
+                                } else {
+                                    sql.push_str(&format!(" AND {} = ${}", #meta_name, param_count));
+                                }
+                            }
+                            None => {
+                                if param_count == 1 {
+                                    sql.push_str(&format!("{} IS NULL", #meta_name));
+                                } else {
+                                    sql.push_str(&format!(" AND {} IS NULL", #meta_name));
+                                }
+                            }
+                        }
+                    }
+                };
+            }
+            return quote! {
+                param_count = param_count + 1;
+                if self.#field_ident.is_some() {
+                    if param_count == 1 {
+                        sql.push_str(&format!("{} = ${}", #meta_name, param_count));
+                    } else {
+                        sql.push_str(&format!(" AND {} = ${}", #meta_name, param_count));
+                    }
+                }
+            };
+        })
+        .collect()
+}
+
+fn check_if_type_is_option(field_type: &Type) -> bool {
+    if let Type::Path(ref type_path) = field_type {
+        if let Some(segment) = type_path.path.segments.last() {
+            if segment.ident.to_string() == "Option" {
+                return true;
+            }
+        }
+    }
+    return false;
 }
