@@ -23,6 +23,10 @@ pub fn check_envs() {
     std::env::var("DEEPL_BASE_URL").expect("DEEPL_BASE_URL not set");
     std::env::var("DEEPL_API_KEY").expect("DEEPL_API_KEY not set");
 
+    // GOOGLE TRANSLATE API
+    std::env::var("GOOGLE_TRANSLATE_API_BASE_URL").expect("GOOGLE_TRANSLATE_API_BASE_URL not set");
+    std::env::var("GOOGLE_TRANSLATE_API_KEY").expect("GOOGLE_TRANSLATE_API_KEY not set");
+
     //VIDEO BOX
     std::env::var("VIDEO_BOX_BASE_URL").expect("VIDEO_BOX_BASE_URL not set");
     std::env::var("VIDEO_BOX_API_KEY").expect("VIDEO_BOX_API_KEY not set");

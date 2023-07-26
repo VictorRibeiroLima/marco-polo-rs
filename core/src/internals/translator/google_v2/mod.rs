@@ -18,9 +18,11 @@ pub struct GoogleTranslateV2Client {
 impl GoogleTranslateV2Client {
     pub fn new() -> Self {
         println!("Creating Google Translator V2 client...");
-        let api_key = std::env::var("GOOGLE_TRANSLATOR_API_V2_URL").expect("GOOGLE_TRANSLATOR_API_V2_URL not set");
+        let api_key =
+            std::env::var("GOOGLE_TRANSLATE_API_KEY").expect("GOOGLE_TRANSLATE_API_KEY not set");
 
-        let api_base_url = std::env::var("GOOGLE_TRANSLATOR_API_V2_URL").expect("GOOGLE_TRANSLATOR_API_V2_URL not set");
+        let api_base_url = std::env::var("GOOGLE_TRANSLATE_API_BASE_URL")
+            .expect("GOOGLE_TRANSLATE_API_BASE_URL not set");
 
         let client = reqwest::Client::new();
 
@@ -51,6 +53,5 @@ impl TranslatorClient for GoogleTranslateV2Client {
         &self,
         sentences: Vec<&str>,
     ) -> Result<Vec<String>, Box<dyn std::error::Error + Sync + Send>> {
-        
     }
 }
