@@ -1,7 +1,7 @@
 use deluxe::Result;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
-use syn::{DeriveInput, Type};
+use syn::{DeriveInput, GenericArgument, PathArguments, Type};
 
 #[derive(deluxe::ExtractAttributes)]
 #[deluxe(attributes(filtrate))]
@@ -9,6 +9,12 @@ struct FiltrationFieldAttributes {
     name: Option<String>,
     #[deluxe(default = false)]
     skip: bool,
+}
+
+enum WhereType {
+    Option,
+    String,
+    NonSpecial,
 }
 
 pub fn gen_filtration_block(input: TokenStream) -> Result<TokenStream> {
@@ -139,7 +145,7 @@ pub fn gen_filtration_block(input: TokenStream) -> Result<TokenStream> {
             fn gen_where_statements(&self, param_count: Option<usize>) -> (String, usize) {
                 let mut sql = String::new();
 
-                let mut param_count = match param_count {
+                let mut param_count:usize = match param_count {
                     Some(param_count) => param_count,
                     None => 0,
                 };
@@ -149,6 +155,10 @@ pub fn gen_filtration_block(input: TokenStream) -> Result<TokenStream> {
                 return (sql, param_count);
 
             }
+        }
+
+        impl #impl_generics crate::database::queries::filter::Filterable for #ident #ty_generics #where_clause {
+            type F = #struct_ident;
         }
     };
     Ok(tokens)
@@ -266,53 +276,133 @@ fn create_where_block(struct_fields: &Vec<(Ident, Type, String)>) -> Vec<TokenSt
     struct_fields
         .iter()
         .map(|(field_ident, field_type, meta_name)| {
-            let is_option = check_if_type_is_option(field_type);
-
-            if is_option {
-                return quote! {
-                    param_count = param_count + 1;
-                    if self.#field_ident.is_some() {
-                        let value = self.#field_ident.as_ref().unwrap();
-                        match value {
-                            Some(_) => {
-                                if param_count == 1 {
-                                    sql.push_str(&format!("{} = ${}", #meta_name, param_count));
-                                } else {
-                                    sql.push_str(&format!(" AND {} = ${}", #meta_name, param_count));
-                                }
-                            }
-                            None => {
-                                if param_count == 1 {
-                                    sql.push_str(&format!("{} IS NULL", #meta_name));
-                                } else {
-                                    sql.push_str(&format!(" AND {} IS NULL", #meta_name));
-                                }
-                            }
-                        }
-                    }
-                };
-            }
-            return quote! {
-                param_count = param_count + 1;
-                if self.#field_ident.is_some() {
-                    if param_count == 1 {
-                        sql.push_str(&format!("{} = ${}", #meta_name, param_count));
-                    } else {
-                        sql.push_str(&format!(" AND {} = ${}", #meta_name, param_count));
-                    }
-                }
-            };
+            write_where_block(field_ident, field_type, meta_name)
         })
         .collect()
 }
 
-fn check_if_type_is_option(field_type: &Type) -> bool {
+fn write_where_block(field_ident: &Ident, field_type: &Type, meta_name: &String) -> TokenStream {
+    let where_type = check_where_type(field_type);
+
+    match where_type {
+        WhereType::Option => create_where_block_option(field_ident, field_type, meta_name),
+        WhereType::String => create_where_block_string(field_ident, meta_name),
+        WhereType::NonSpecial => create_where_block_non_special(field_ident, meta_name),
+    }
+}
+
+fn create_where_block_option(
+    field_ident: &Ident,
+    field_type: &Type,
+    meta_name: &String,
+) -> TokenStream {
+    let inner_type = get_option_inner_type(field_type);
+    let statement = match inner_type {
+        WhereType::String => write_string_statement(meta_name),
+        WhereType::NonSpecial => write_non_special_statement(meta_name),
+        WhereType::Option => {
+            panic!("Nested option types are not supported")
+        }
+    };
+    return quote! {
+
+        if self.#field_ident.is_some() {
+            let value = self.#field_ident.as_ref().unwrap();
+            match value {
+                Some(_) => {
+                    param_count = param_count + 1;
+                   #statement
+                }
+                None => {
+                    if param_count == 0 {
+                        sql.push_str(&format!("{} IS NULL", #meta_name));
+                    } else {
+                        sql.push_str(&format!(" AND {} IS NULL", #meta_name));
+                    }
+                }
+            }
+        }
+    };
+}
+
+fn create_where_block_string(field_ident: &Ident, meta_name: &String) -> TokenStream {
+    let string_statement = write_string_statement(meta_name);
+    return quote! {
+
+        if self.#field_ident.is_some() {
+            param_count = param_count + 1;
+            #string_statement
+        }
+    };
+}
+
+fn write_string_statement(meta_name: &String) -> TokenStream {
+    return quote! {
+        if param_count == 1 {
+            sql.push_str(&format!("{} LIKE ${}", #meta_name, param_count));
+        } else {
+            sql.push_str(&format!(" AND {} LIKE ${}", #meta_name, param_count));
+        }
+    };
+}
+
+fn create_where_block_non_special(field_ident: &Ident, meta_name: &String) -> TokenStream {
+    let non_special_statement = write_non_special_statement(meta_name);
+    return quote! {
+        if self.#field_ident.is_some() {
+            param_count = param_count + 1;
+            #non_special_statement
+        }
+    };
+}
+
+fn write_non_special_statement(meta_name: &String) -> TokenStream {
+    return quote! {
+        if param_count == 1 {
+            sql.push_str(&format!("{} = ${}", #meta_name, param_count));
+        } else {
+            sql.push_str(&format!(" AND {} = ${}", #meta_name, param_count));
+        }
+    };
+}
+
+fn check_where_type(field_type: &Type) -> WhereType {
     if let Type::Path(ref type_path) = field_type {
         if let Some(segment) = type_path.path.segments.last() {
-            if segment.ident.to_string() == "Option" {
-                return true;
+            let ident_string = segment.ident.to_string();
+            if ident_string == "Option" {
+                return WhereType::Option;
+            } else if ident_string == "String" {
+                return WhereType::String;
             }
         }
     }
-    return false;
+    return WhereType::NonSpecial;
+}
+
+fn get_option_inner_type(field_type: &Type) -> WhereType {
+    match field_type {
+        Type::Path(ref type_path) => {
+            let path_segment = type_path.path.segments.last().unwrap();
+            match path_segment.arguments {
+                PathArguments::AngleBracketed(ref args) => {
+                    let generic_arg = args.args.first().unwrap();
+                    match generic_arg {
+                        GenericArgument::Type(ref inner_type) => {
+                            return check_where_type(inner_type);
+                        }
+                        _ => {
+                            panic!("Only option types are supported")
+                        }
+                    }
+                }
+                _ => {
+                    panic!("Only option types are supported")
+                }
+            };
+        }
+        _ => {
+            panic!("Only option types are supported")
+        }
+    }
 }

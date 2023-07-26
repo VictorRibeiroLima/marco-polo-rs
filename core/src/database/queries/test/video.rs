@@ -1,16 +1,16 @@
 use std::str::FromStr;
 
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::NaiveDate;
 use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::database::{
     models::{
-        video::{Video, VideoFilters, VideoOrderFields},
+        video::{Video, VideoOrderFields},
         video_storage::StorageVideoStage,
     },
     queries::{
-        filter::FilterableOptions,
+        filter::Filter,
         video::{
             create, find_all, find_by_id, find_by_id_with_storage, find_by_transcription_id,
             CreateVideoDto,
@@ -20,25 +20,21 @@ use crate::database::{
 
 #[sqlx::test(migrations = "../migrations", fixtures("videos"))]
 async fn filtration_test_id_url(pool: sqlx::PgPool) {
-    let mut filters = VideoFilters::default();
-    filters.id = Some(uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap());
-    filters.url = Some(Some(String::from(
+    let mut filter: Filter<Video> = Filter::default();
+    filter.options.id = Some(uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap());
+    filter.options.url = Some(Some(String::from(
         "https://www.youtube.com/watch?v=1234567890",
     )));
 
     let mut query = String::from("SELECT * FROM videos WHERE ");
 
-    for (index, filter) in filters.filter_fields().iter().enumerate() {
-        if index == 0 {
-            query.push_str(&format!("{} = ${}", filter, index + 1));
-        } else {
-            query.push_str(&format!(" AND {} = ${}", filter, index + 1));
-        }
-    }
+    let (where_sql, _) = filter.gen_where_statements(None);
+
+    query.push_str(&where_sql);
 
     let mut query = sqlx::query_as(&query);
 
-    query = filters.apply(query);
+    query = filter.apply(query);
 
     let videos: Vec<Video> = query.fetch_all(&pool).await.unwrap();
 
@@ -47,29 +43,25 @@ async fn filtration_test_id_url(pool: sqlx::PgPool) {
 
 #[sqlx::test(migrations = "../migrations", fixtures("videos"))]
 async fn filtration_test_id_deleted_at(pool: sqlx::PgPool) {
-    let mut filters = VideoFilters::default();
+    let mut filter: Filter<Video> = Filter::default();
 
     let date = NaiveDate::from_ymd_opt(2021, 9, 1)
         .unwrap()
         .and_hms_opt(0, 0, 0)
         .unwrap();
 
-    filters.id = Some(uuid::Uuid::from_str("806b5cdc-f221-11ed-a05b-0242ac120076").unwrap());
-    filters.deleted_at = Some(Some(date));
+    filter.options.id = Some(uuid::Uuid::from_str("806b5cdc-f221-11ed-a05b-0242ac120076").unwrap());
+    filter.options.deleted_at = Some(Some(date));
 
     let mut query = String::from("SELECT * FROM videos WHERE ");
 
-    for (index, filter) in filters.filter_fields().iter().enumerate() {
-        if index == 0 {
-            query.push_str(&format!("{} = ${}", filter, index + 1));
-        } else {
-            query.push_str(&format!(" AND {} = ${}", filter, index + 1));
-        }
-    }
+    let (where_sql, _) = filter.gen_where_statements(None);
+
+    query.push_str(&where_sql);
 
     let mut query = sqlx::query_as(&query);
 
-    query = filters.apply(query);
+    query = filter.apply(query);
 
     let videos: Vec<Video> = query.fetch_all(&pool).await.unwrap();
 
@@ -78,24 +70,20 @@ async fn filtration_test_id_deleted_at(pool: sqlx::PgPool) {
 
 #[sqlx::test(migrations = "../migrations", fixtures("videos"))]
 async fn filtration_test_id_deleted_at_none(pool: sqlx::PgPool) {
-    let mut filters = VideoFilters::default();
+    let mut filter: Filter<Video> = Filter::default();
 
-    filters.id = Some(uuid::Uuid::from_str("806b5cfc-f221-11ed-a05b-0242ac120075").unwrap());
-    filters.deleted_at = Some(None);
+    filter.options.id = Some(uuid::Uuid::from_str("806b5cfc-f221-11ed-a05b-0242ac120075").unwrap());
+    filter.options.deleted_at = Some(None);
 
     let mut query = String::from("SELECT * FROM videos WHERE ");
 
-    for (index, filter) in filters.filter_fields().iter().enumerate() {
-        if index == 0 {
-            query.push_str(&format!("{} = ${}", filter, index + 1));
-        } else {
-            query.push_str(&format!(" AND {} = ${}", filter, index + 1));
-        }
-    }
+    let (where_sql, _) = filter.gen_where_statements(None);
+
+    query.push_str(&where_sql);
 
     let mut query = sqlx::query_as(&query);
 
-    query = filters.apply(query);
+    query = filter.apply(query);
 
     let videos: Vec<Video> = query.fetch_all(&pool).await.unwrap();
 
