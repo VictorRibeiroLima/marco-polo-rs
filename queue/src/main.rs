@@ -11,7 +11,7 @@ use marco_polo_rs_core::{
         },
         subtitler::local::LocalClient,
         transcriber::assembly_ai::AssemblyAiClient,
-        translator::deepl::DeeplClient,
+        translator::google_v2::GoogleTranslateV2Client,
         youtube_client::client::YoutubeClient,
         yt_downloader::yt_dl::YtDl,
     },
@@ -30,7 +30,7 @@ mod workers;
 
 pub type CloudServiceInUse = AwsCloudService;
 pub type TranscriberClientInUse = AssemblyAiClient;
-pub type TranslatorClientInUse = DeeplClient;
+pub type TranslatorClientInUse = GoogleTranslateV2Client;
 pub type SubtitlerClientInUse = LocalClient;
 pub type VideoDownloaderInUse = YtDl;
 pub type YoutubeClientInUse = YoutubeClient;

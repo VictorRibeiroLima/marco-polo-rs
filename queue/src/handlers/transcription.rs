@@ -1,7 +1,5 @@
 use std::sync::Arc;
 
-use futures::future::join_all;
-
 use marco_polo_rs_core::{
     database::{
         models::video::VideoStage,
@@ -98,37 +96,29 @@ where
         &self,
         sentences: Vec<Sentence>,
     ) -> Result<(String, Option<String>), Box<dyn std::error::Error + Sync + Send>> {
-        let mut translation_futures = vec![];
-
-        for sen in sentences {
-            let translation = self.get_translated_sentence(sen);
-            translation_futures.push(translation);
-        }
-
-        let resp = join_all(translation_futures).await;
-
-        let mut translated_sentences = vec![];
-        for sentence in resp {
-            translated_sentences.push(sentence?);
-        }
+        let translated_sentences = self.get_translated_sentences(sentences).await?;
 
         let new_srt_buffer = srt::create_based_on_sentences(translated_sentences);
 
         Ok((new_srt_buffer, None))
     }
 
-    async fn get_translated_sentence(
+    async fn get_translated_sentences(
         &self,
-        payload: Sentence,
-    ) -> Result<Sentence, Box<dyn std::error::Error + Sync + Send>> {
+        mut payload: Vec<Sentence>,
+    ) -> Result<Vec<Sentence>, Box<dyn std::error::Error + Sync + Send>> {
         let translator_client = &self.translator_client;
 
-        let translation = translator_client.translate_sentence(&payload.text).await?;
-        let sentence = Sentence {
-            text: translation,
-            start_time: payload.start_time,
-            end_time: payload.end_time,
-        };
-        Ok(sentence)
+        let mut texts_from_sentences: Vec<&str> = vec![];
+        for sentence in payload.iter() {
+            texts_from_sentences.push(&sentence.text);
+        }
+
+        let translations = translator_client.translate_sentences(texts_from_sentences).await?;
+        for (i, translation) in translations.into_iter().enumerate() {
+            payload[i].text = translation.to_string();
+        }
+
+        Ok(payload)
     }
 }

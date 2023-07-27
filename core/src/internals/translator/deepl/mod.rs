@@ -87,4 +87,11 @@ impl TranslatorClient for DeeplClient {
 
         Ok(translation)
     }
+
+    async fn translate_sentences(
+        &self,
+        sentences: Vec<&str>,
+    ) -> Result<Vec<String>, Box<dyn std::error::Error + Sync + Send>> {
+        todo!("Implement DeeplClient::translate_sentences")
+    }
 }
