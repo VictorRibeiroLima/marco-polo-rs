@@ -151,6 +151,8 @@ pub fn gen_filtration_block(input: TokenStream) -> Result<TokenStream> {
                     None => 0,
                 };
 
+                let mut where_count = 0;
+
                 #(#where_block)*
 
                 return (sql, param_count);
@@ -308,6 +310,7 @@ fn create_where_block_option(
     return quote! {
 
         if self.#field_ident.is_some() {
+            where_count = where_count + 1;
             let value = self.#field_ident.as_ref().unwrap();
             match value {
                 Some(_) => {
@@ -315,7 +318,7 @@ fn create_where_block_option(
                    #statement
                 }
                 None => {
-                    if param_count == 0 {
+                    if where_count == 1 {
                         sql.push_str(&format!("{} IS NULL", #meta_name));
                     } else {
                         sql.push_str(&format!(" AND {} IS NULL", #meta_name));
@@ -331,6 +334,7 @@ fn create_where_block_string(field_ident: &Ident, meta_name: &String) -> TokenSt
     return quote! {
 
         if self.#field_ident.is_some() {
+            where_count = where_count + 1;
             param_count = param_count + 1;
             #string_statement
         }
@@ -339,7 +343,7 @@ fn create_where_block_string(field_ident: &Ident, meta_name: &String) -> TokenSt
 
 fn write_string_statement(meta_name: &String) -> TokenStream {
     return quote! {
-        if param_count == 1 {
+        if where_count == 1 {
             sql.push_str(&format!("{} LIKE ${}", #meta_name, param_count));
         } else {
             sql.push_str(&format!(" AND {} LIKE ${}", #meta_name, param_count));
@@ -351,6 +355,7 @@ fn create_where_block_non_special(field_ident: &Ident, meta_name: &String) -> To
     let non_special_statement = write_non_special_statement(meta_name);
     return quote! {
         if self.#field_ident.is_some() {
+            where_count = where_count + 1;
             param_count = param_count + 1;
             #non_special_statement
         }
@@ -359,7 +364,7 @@ fn create_where_block_non_special(field_ident: &Ident, meta_name: &String) -> To
 
 fn write_non_special_statement(meta_name: &String) -> TokenStream {
     return quote! {
-        if param_count == 1 {
+        if where_count == 1 {
             sql.push_str(&format!("{} = ${}", #meta_name, param_count));
         } else {
             sql.push_str(&format!(" AND {} = ${}", #meta_name, param_count));
