@@ -3,7 +3,10 @@ use std::sync::Arc;
 
 use actix_http::Request;
 use actix_web::{dev::ServiceResponse, http::header::ContentType, test, web, App};
-use marco_polo_rs_core::database::models::user::{User, UserRole};
+use marco_polo_rs_core::database::models::{
+    user::{User, UserRole},
+    video::VideoStage,
+};
 use reqwest::StatusCode;
 use sqlx::PgPool;
 
@@ -12,7 +15,7 @@ use uuid::Uuid;
 
 use crate::auth::gen_token;
 
-use crate::controllers::video::dtos::create::VideoDTO;
+use crate::controllers::video::dtos::VideoDTO;
 
 use crate::utils::test::get_token;
 use crate::AppPool;
@@ -41,6 +44,7 @@ async fn test_find_by_id_get_ok(pool: PgPool) {
         created_at: date,
         updated_at: date,
         uploaded_at: Some(date),
+        stage: VideoStage::Downloading,
     };
 
     let test_app = innit_test_app(pool.clone()).await;

@@ -8,7 +8,7 @@ use crate::database::models::{
     video_storage::StorageVideoStage,
 };
 
-use super::{macros::find_all, pagination::Pagination, storage};
+use super::{filter::Filter, macros::find_all, pagination::Pagination, storage};
 
 pub struct CreateVideoDto<'a> {
     pub id: &'a Uuid,
@@ -91,6 +91,7 @@ pub async fn find_by_transcription_id(
             v.language,
             v.user_id,
             v.channel_id,
+            v.stage as "stage: VideoStage",
             v.created_at as "created_at: NaiveDateTime",
             v.updated_at as "updated_at: NaiveDateTime",
             v.deleted_at as "deleted_at: NaiveDateTime",
@@ -122,6 +123,7 @@ pub async fn find_by_id(pool: &PgPool, id: &Uuid) -> Result<Video, sqlx::Error> 
             v.language,
             v.user_id,
             v.channel_id,
+            v.stage as "stage: VideoStage",
             v.created_at as "created_at: NaiveDateTime",
             v.updated_at as "updated_at: NaiveDateTime",
             v.deleted_at as "deleted_at: NaiveDateTime",
@@ -154,8 +156,13 @@ pub async fn find_all_by_owner(
     pool: &PgPool,
     owner_id: i32,
     pagination: Pagination<Video>,
+    mut filter: Filter<Video>,
 ) -> Result<Vec<Video>, sqlx::Error> {
     let (offset, limit, order, order_by) = pagination.to_tuple();
+    filter.options.user_id = Some(owner_id);
+    filter.options.deleted_at = Some(None);
+
+    let (where_sql, param_count) = filter.gen_where_statements(None);
 
     let sql = format!(
         r#"
@@ -164,16 +171,19 @@ pub async fn find_all_by_owner(
         FROM 
             videos 
         WHERE
-            user_id = $1 AND deleted_at IS NULL
+            {}
         ORDER BY 
             {} {}
         LIMIT
-            $2
+            ${}
         OFFSET 
-            $3
+            ${}
         "#,
+        where_sql,
         order_by.name(),
-        order.name()
+        order.name(),
+        param_count + 1,
+        param_count + 2,
     );
 
     let videos: Vec<Video> = sqlx::query_as(&sql)

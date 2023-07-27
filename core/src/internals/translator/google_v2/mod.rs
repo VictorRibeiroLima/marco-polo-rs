@@ -46,7 +46,7 @@ impl ServiceProvider for GoogleTranslateV2Client {
 impl TranslatorClient for GoogleTranslateV2Client {
     async fn translate_sentence(
         &self,
-        text: &str,
+        _text: &str,
     ) -> Result<String, Box<dyn std::error::Error + Sync + Send>> {
         todo!("Implement GoogleTranslateV2Client::translate_sentence")
     }
