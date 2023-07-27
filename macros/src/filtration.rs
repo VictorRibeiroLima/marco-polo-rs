@@ -23,7 +23,7 @@ pub fn gen_filtration_block(input: TokenStream) -> Result<TokenStream> {
 
     let struct_fields = extract_metadata_field_attrs(&mut derive_input);
     if struct_fields.is_empty() {
-        panic!("Pagination can only be derived for non-empty structures");
+        panic!("Filtration can only be derived for non-empty structures");
     };
 
     // Get the visibility and identifier of the struct
@@ -122,7 +122,7 @@ pub fn gen_filtration_block(input: TokenStream) -> Result<TokenStream> {
 
     let tokens = quote! {
         #derives
-        #visibility struct #struct_ident{
+        #visibility struct #struct_ident #impl_generics #where_clause {
             #(#fields,)*
         }
 
@@ -159,7 +159,7 @@ pub fn gen_filtration_block(input: TokenStream) -> Result<TokenStream> {
         }
 
         impl #impl_generics crate::database::queries::filter::Filterable for #ident #ty_generics #where_clause {
-            type F = #struct_ident;
+            type F = #struct_ident #ty_generics;
         }
     };
     Ok(tokens)

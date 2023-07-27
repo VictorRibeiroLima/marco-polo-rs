@@ -6,8 +6,6 @@ use sqlx::{
 
 use serde::{Deserialize, Serialize};
 
-trait InnerBind {}
-
 pub trait FilterableOptions {
     fn apply<O>(
         self,
