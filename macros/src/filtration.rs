@@ -32,8 +32,9 @@ pub fn gen_filtration_block(input: TokenStream) -> Result<TokenStream> {
 
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
+    let ident_string = ident.to_string();
     // Create the struct name
-    let struct_name = ident.to_string() + "Filters";
+    let struct_name = format!("InternalFiltration{}Filters", ident_string);
     let struct_ident = Ident::new(&struct_name, Span::call_site());
 
     // Create the derives
