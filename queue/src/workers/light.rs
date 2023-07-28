@@ -11,6 +11,7 @@ use marco_polo_rs_core::{
 use tokio::sync::Mutex;
 
 use crate::{
+    error::HandlerError,
     handlers::{download_video, processed_upload, raw_upload, transcription},
     CloudServiceInUse, Message, TranscriberClientInUse, TranslatorClientInUse,
     VideoDownloaderInUse, YoutubeClientInUse,
@@ -33,37 +34,36 @@ impl LightWorker {
     async fn handle_message(&self, message: Message, payload_type: PayloadType) {
         let queue_client = self.cloud_service.queue_client();
 
-        let result: Result<(), SyncError> = self.handle_payload(payload_type, &message).await;
+        let result: Result<(), HandlerError> = self.handle_payload(payload_type, &message).await;
 
         match result {
             Ok(_) => {}
             Err(e) => {
                 println!("Light Worker {} error: {:?}", self.id, e);
-                return;
+                match e {
+                    HandlerError::Retry(_) => {
+                        return;
+                    }
+                    HandlerError::Final(_) => {
+                        self.delete_message(queue_client, message).await;
+                        return;
+                    }
+                }
             }
         }
 
-        //TODO: see what to when delete fails
-        let result: Result<(), SyncError> = queue_client.delete_message(message).await;
-
-        match result {
-            Ok(_) => {}
-            Err(e) => {
-                println!("Light Worker {} delete error: {:?}", self.id, e);
-                return;
-            }
-        }
+        self.delete_message(queue_client, message).await;
     }
 
     async fn handle_payload(
         &self,
         payload_type: PayloadType,
         message: &Message,
-    ) -> Result<(), SyncError> {
+    ) -> Result<(), HandlerError> {
         match payload_type {
             PayloadType::BatukaVideoRawUpload(payload) => {
                 println!("Light Worker {} handling raw upload...", self.id);
-                let result: Result<(), SyncError> = raw_upload::handle(
+                let result: Result<(), HandlerError> = raw_upload::handle(
                     &self.cloud_service,
                     &self.transcriber_client,
                     &self.pool,
@@ -95,7 +95,7 @@ impl LightWorker {
             //Maybe heavy worker should handle this
             PayloadType::BatukaDownloadVideo(payload) => {
                 println!("Light Worker {} handling video download...", self.id);
-                let download_result: Result<(), SyncError> = download_video::handle(
+                let download_result: Result<(), HandlerError> = download_video::handle(
                     payload,
                     &self.cloud_service,
                     &self.video_downloader,
@@ -110,6 +110,22 @@ impl LightWorker {
                 panic!("Light worker should not handle translation uploads")
             }
         };
+    }
+
+    async fn delete_message<QC: QueueClient>(
+        &self,
+        queue_client: &QC,
+        message: <QC as QueueClient>::M,
+    ) {
+        let result: Result<(), SyncError> = queue_client.delete_message(message).await;
+
+        match result {
+            Ok(_) => {}
+            Err(e) => {
+                println!("Light Worker {} delete error: {:?}", self.id, e);
+                return;
+            }
+        }
     }
 }
 

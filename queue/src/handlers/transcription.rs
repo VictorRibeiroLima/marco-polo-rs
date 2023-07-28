@@ -18,6 +18,8 @@ use marco_polo_rs_core::{
 
 use marco_polo_rs_core::util::srt;
 
+use crate::error::HandlerError;
+
 pub struct Handler<'a, TC, CS, TLC>
 where
     TC: TranscriberClient,
@@ -50,10 +52,7 @@ where
         }
     }
 
-    pub async fn handle(
-        &self,
-        payload: SrtPayload,
-    ) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
+    pub async fn handle(&self, payload: SrtPayload) -> Result<(), HandlerError> {
         let transcriber_client = self.transcriber_client;
         let bucket_client = self.cloud_service.bucket_client();
         let translator_id = self.translator_client.id();
@@ -114,7 +113,9 @@ where
             texts_from_sentences.push(&sentence.text);
         }
 
-        let translations = translator_client.translate_sentences(texts_from_sentences).await?;
+        let translations = translator_client
+            .translate_sentences(texts_from_sentences)
+            .await?;
         for (i, translation) in translations.into_iter().enumerate() {
             payload[i].text = translation.to_string();
         }

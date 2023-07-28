@@ -13,8 +13,9 @@ use marco_polo_rs_core::{
         subtitler::traits::SubtitlerClient,
         ServiceProvider,
     },
-    SyncError,
 };
+
+use crate::error::HandlerError;
 
 pub struct Handler<'a, CS, SC>
 where
@@ -46,7 +47,7 @@ where
         }
     }
 
-    pub async fn handle(&self, payload: SrtPayload) -> Result<(), SyncError> {
+    pub async fn handle(&self, payload: SrtPayload) -> Result<(), HandlerError> {
         let bucket_client = self.cloud_service.bucket_client();
         let queue_client = self.cloud_service.queue_client();
 

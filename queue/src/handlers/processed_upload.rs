@@ -4,17 +4,16 @@ use marco_polo_rs_core::{
         queries::{self, video::CreateError},
     },
     internals::{cloud::models::payload::VideoPayload, youtube_client::traits::YoutubeClient},
-    SyncError,
 };
 use sqlx::PgPool;
 
-use crate::YoutubeClientInUse;
+use crate::{error::HandlerError, YoutubeClientInUse};
 
 pub async fn handle(
     pool: &PgPool,
     youtube_client: &YoutubeClientInUse,
     payload: VideoPayload,
-) -> Result<(), SyncError> {
+) -> Result<(), HandlerError> {
     let video_with_storage_and_channel = queries::video::find_by_id_with_storage_and_channel(
         &pool,
         &payload.video_id,
@@ -37,7 +36,7 @@ pub async fn handle(
                 stage: VideoStage::Uploading,
             };
             queries::video::create_error(&pool, dto).await?;
-            return Err(error);
+            return Err(HandlerError::Final(error));
         }
     };
 

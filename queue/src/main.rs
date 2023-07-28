@@ -25,6 +25,7 @@ use tokio::{
 };
 use workers::{heavy::HeavyWorker, light::LightWorker, Worker};
 
+mod error;
 mod handlers;
 mod workers;
 
