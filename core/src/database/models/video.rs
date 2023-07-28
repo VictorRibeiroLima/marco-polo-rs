@@ -42,5 +42,6 @@ pub enum VideoStage {
     Transcribing,
     Translating,
     Subtitling,
+    Uploading,
     Done,
 }

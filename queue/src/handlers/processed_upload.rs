@@ -1,5 +1,8 @@
 use marco_polo_rs_core::{
-    database::{models::video_storage::StorageVideoStage, queries},
+    database::{
+        models::{video::VideoStage, video_storage::StorageVideoStage},
+        queries::{self, video::CreateError},
+    },
     internals::{cloud::models::payload::VideoPayload, youtube_client::traits::YoutubeClient},
     SyncError,
 };
@@ -19,9 +22,24 @@ pub async fn handle(
     )
     .await?;
 
-    let youtube_video = youtube_client
+    queries::video::change_stage(&pool, &payload.video_id, VideoStage::Uploading).await?;
+
+    let youtube_video_result = youtube_client
         .upload_video(&video_with_storage_and_channel)
-        .await?;
+        .await;
+
+    let youtube_video = match youtube_video_result {
+        Ok(video) => video,
+        Err(error) => {
+            let dto = CreateError {
+                video_id: &payload.video_id,
+                error: &error.to_string(),
+                stage: VideoStage::Uploading,
+            };
+            queries::video::create_error(&pool, dto).await?;
+            return Err(error);
+        }
+    };
 
     let video_url = format!(
         "https://www.youtube.com/watch?v={}",
