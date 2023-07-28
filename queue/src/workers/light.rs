@@ -41,7 +41,7 @@ impl LightWorker {
             Err(e) => {
                 println!("Light Worker {} error: {:?}", self.id, e);
                 match e {
-                    HandlerError::Retry(_) => {
+                    HandlerError::Retrievable(_) => {
                         return;
                     }
                     HandlerError::Final(_) => {

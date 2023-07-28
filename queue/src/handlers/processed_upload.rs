@@ -39,7 +39,7 @@ pub async fn handle(
             if error_count >= ERROR_COUNT_THRESHOLD {
                 return Err(HandlerError::Final(error));
             }
-            return Err(HandlerError::Retry(error));
+            return Err(HandlerError::Retrievable(error));
         }
     };
 
