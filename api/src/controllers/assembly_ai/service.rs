@@ -1,9 +1,13 @@
 use sqlx::PgPool;
 
 use marco_polo_rs_core::{
-    database::queries::{self, transcription::UpdateVideoTranscriptionDto},
+    database::{
+        models::video::VideoStage,
+        queries::{self, transcription::UpdateVideoTranscriptionDto, video::CreateErrorDto},
+    },
     internals::cloud::traits::BucketClient,
 };
+use uuid::Uuid;
 
 use crate::models::error::AppError;
 
@@ -23,6 +27,8 @@ where
 
     let transcription_id = &req_body.transcript_id;
 
+    let video = queries::video::find_by_transcription_id(pool, transcription_id).await?;
+
     let url = format!("{}/transcript/{}/srt", base_url, req_body.transcript_id);
 
     let client = reqwest::Client::new();
@@ -33,10 +39,16 @@ where
         .send()
         .await?;
 
+    let status = resp.status();
     let body = resp.text().await?;
+
+    if !status.is_success() {
+        transcription_error(pool, &video.id, &format!("AssemblyAI error: {}", body)).await?;
+        return Ok(());
+    }
+
     let body = body.as_bytes().to_vec();
 
-    let video = queries::video::find_by_transcription_id(pool, transcription_id).await?;
     let file_name = format!("srt_transcriptions/{}.srt", video.id);
 
     bucket_client.upload_file(&file_name, body).await?;
@@ -52,4 +64,14 @@ where
     .await?;
 
     return Ok(());
+}
+
+async fn transcription_error(pool: &PgPool, video_id: &Uuid, error: &str) -> Result<(), AppError> {
+    let dto: CreateErrorDto = CreateErrorDto {
+        video_id,
+        error,
+        stage: VideoStage::Transcribing,
+    };
+    queries::video::create_error(&pool, dto).await?;
+    Ok(())
 }

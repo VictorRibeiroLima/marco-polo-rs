@@ -7,8 +7,9 @@ use marco_polo_rs_core::{
         },
         transcriber::traits::TranscriberClient,
     },
-    SyncError,
 };
+
+use crate::error::HandlerError;
 
 pub async fn handle<CS: CloudService>(
     cloud_service: &CS,
@@ -16,7 +17,7 @@ pub async fn handle<CS: CloudService>(
     pool: &sqlx::PgPool,
     message: &<<CS as CloudService>::QC as QueueClient>::M,
     payload: VideoPayload,
-) -> Result<(), SyncError> {
+) -> Result<(), HandlerError> {
     let bucket_client = cloud_service.bucket_client();
 
     let queue_client = cloud_service.queue_client();

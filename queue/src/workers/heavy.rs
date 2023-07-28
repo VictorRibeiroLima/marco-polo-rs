@@ -6,11 +6,10 @@ use marco_polo_rs_core::{
         traits::{CloudService, QueueClient},
     },
     util::queue::Queue,
-    SyncError,
 };
 use tokio::sync::Mutex;
 
-use crate::{handlers, CloudServiceInUse, Message, SubtitlerClientInUse};
+use crate::{error::HandlerError, handlers, CloudServiceInUse, Message, SubtitlerClientInUse};
 
 use super::Worker;
 
@@ -52,7 +51,7 @@ impl HeavyWorker {
         &self,
         payload_type: PayloadType,
         message: &Message,
-    ) -> Result<(), SyncError> {
+    ) -> Result<(), HandlerError> {
         match payload_type {
             PayloadType::BatukaSrtTranslationUpload(payload) => {
                 println!("Heavy Worker {} handling translation upload...", self.id);
@@ -64,7 +63,7 @@ impl HeavyWorker {
                     &message,
                 );
 
-                let sentences_result: Result<(), SyncError> = handler.handle(payload).await;
+                let sentences_result: Result<(), HandlerError> = handler.handle(payload).await;
                 return sentences_result;
             }
 

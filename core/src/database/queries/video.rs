@@ -19,6 +19,12 @@ pub struct CreateVideoDto<'a> {
     pub language: &'a str,
 }
 
+pub struct CreateErrorDto<'a> {
+    pub video_id: &'a Uuid,
+    pub error: &'a str,
+    pub stage: VideoStage,
+}
+
 pub async fn create(pool: &PgPool, dto: CreateVideoDto<'_>) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
@@ -58,6 +64,70 @@ pub async fn change_stage(
     Ok(())
 }
 
+pub async fn change_error_state(
+    pool: &PgPool,
+    video_id: &Uuid,
+    error: bool,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"
+        UPDATE videos
+        SET error = $1
+        WHERE id = $2
+        "#,
+        error,
+        video_id,
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn create_error(pool: &PgPool, dto: CreateErrorDto<'_>) -> Result<i64, sqlx::Error> {
+    let mut trx = pool.begin().await?;
+
+    sqlx::query!(
+        r#"
+        UPDATE videos
+        SET error = true
+        WHERE id = $1
+    "#,
+        dto.video_id
+    )
+    .execute(&mut trx)
+    .await?;
+
+    sqlx::query!(
+        r#"
+        INSERT INTO videos_errors (video_id, error, stage)
+        VALUES ($1, $2, $3);
+        "#,
+        dto.video_id,
+        dto.error,
+        &dto.stage as &VideoStage,
+    )
+    .execute(&mut trx)
+    .await?;
+
+    let count_result = sqlx::query!(
+        r#"
+        SELECT COUNT(*) as "count!: i64"
+        FROM videos_errors
+        WHERE video_id = $1 and stage = $2"#,
+        dto.video_id,
+        dto.stage as VideoStage,
+    )
+    .fetch_optional(&mut trx)
+    .await?;
+
+    let count = count_result.map(|row| row.count).unwrap_or_default();
+
+    trx.commit().await?;
+
+    Ok(count)
+}
+
 pub async fn set_url(pool: &PgPool, video_id: &Uuid, url: String) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
@@ -91,6 +161,7 @@ pub async fn find_by_transcription_id(
             v.language,
             v.user_id,
             v.channel_id,
+            v.error,
             v.stage as "stage: VideoStage",
             v.created_at as "created_at: NaiveDateTime",
             v.updated_at as "updated_at: NaiveDateTime",
@@ -123,6 +194,7 @@ pub async fn find_by_id(pool: &PgPool, id: &Uuid) -> Result<Video, sqlx::Error> 
             v.language,
             v.user_id,
             v.channel_id,
+            v.error,
             v.stage as "stage: VideoStage",
             v.created_at as "created_at: NaiveDateTime",
             v.updated_at as "updated_at: NaiveDateTime",

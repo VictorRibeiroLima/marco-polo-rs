@@ -11,8 +11,9 @@ use marco_polo_rs_core::{
         yt_downloader::traits::YoutubeDownloader,
         ServiceProvider,
     },
-    SyncError,
 };
+
+use crate::error::HandlerError;
 
 pub async fn handle<CS: CloudService>(
     payload: VideoDownloadPayload,
@@ -20,7 +21,7 @@ pub async fn handle<CS: CloudService>(
     video_downloader: &impl YoutubeDownloader,
     pool: &sqlx::PgPool,
     message: &<<CS as CloudService>::QC as QueueClient>::M,
-) -> Result<(), SyncError> {
+) -> Result<(), HandlerError> {
     let video_id = payload.video_id;
     let format = payload.video_format.clone();
     let format_extension = format.to_string();

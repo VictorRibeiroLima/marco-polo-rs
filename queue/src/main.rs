@@ -25,6 +25,7 @@ use tokio::{
 };
 use workers::{heavy::HeavyWorker, light::LightWorker, Worker};
 
+mod error;
 mod handlers;
 mod workers;
 
@@ -36,6 +37,8 @@ pub type VideoDownloaderInUse = YtDl;
 pub type YoutubeClientInUse = YoutubeClient;
 
 pub type Message = <<CloudServiceInUse as CloudService>::QC as QueueClient>::M;
+
+const ERROR_COUNT_THRESHOLD: i64 = 3;
 
 #[tokio::main]
 async fn main() {
