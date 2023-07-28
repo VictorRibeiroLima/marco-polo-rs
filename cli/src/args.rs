@@ -1,5 +1,11 @@
 use clap::Parser;
 
+#[derive(Deserialize, Serialize, Debug, Clone, Copy)]
+pub enum TranslationService {
+    Deepl,
+    Google,
+}
+
 /// The Marco polo rs CLI
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -21,7 +27,8 @@ pub struct Args {
     #[arg(long, default_value = "false")]
     pub srt_only: bool,
 
-    /// The buffer size of the translation requests
-    #[arg(short, long, default_value = "100")]
-    pub translation_buffer_size: usize,
+    /// The translation service to use
+    /// Options are deepl and google
+    #[arg(long, default_value = TranslationService::Google)]
+    pub translation_service: TranslationService,
 }
