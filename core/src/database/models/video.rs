@@ -17,6 +17,7 @@ pub struct Video {
     pub url: Option<String>,
     pub language: String,
     pub stage: VideoStage,
+    pub error: bool,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
     pub deleted_at: Option<NaiveDateTime>,
