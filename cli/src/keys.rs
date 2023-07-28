@@ -8,7 +8,7 @@ pub struct Keys {
     pub deepl: Option<String>,
     pub assembly_ai: String,
     pub google: Option<String>,
-    pub login: String,
+    pub email: String,
     pub password: String,
 }
 

@@ -1,5 +1,7 @@
+use api::login;
 use args::Args;
 use clap::Parser;
+use keys::Keys;
 use marco_polo_rs_core::{
     internals::transcriber::{
         assembly_ai::AssemblyAiClient,
@@ -11,10 +13,12 @@ use marco_polo_rs_core::{
 use srt::{get_srt_string, write_srt_file};
 
 use std::env;
+mod api;
 mod args;
 mod keys;
 mod srt;
 
+const API_URL: &str = "https://d383mxrb2huo0o.cloudfront.net";
 const ASSEMBLY_AI_BASE_URL: &str = "https://api.assemblyai.com/v2";
 const DEEPL_BASE_URL: &str = "https://api.deepl.com/v2/translate";
 const GOOGLE_TRANSLATE_API_V2: &str = "https://translation.googleapis.com/language/translate/v2";
@@ -38,7 +42,19 @@ On Windows, you can install FFmpeg by downloading a build from the official webs
         }
     }
 
-    setup_env(&args);
+    let keys = match keys::Keys::new(&args.keys) {
+        Ok(keys) => keys,
+        Err(e) => {
+            eprintln!("{}", e);
+            std::process::exit(1);
+        }
+    };
+
+    setup_env(&args, &keys);
+
+    login(&keys.email, &keys.password)
+        .await
+        .expect("Failed to login");
 
     let assembly_ai_client =
         marco_polo_rs_core::internals::transcriber::assembly_ai::AssemblyAiClient::new();
@@ -126,21 +142,14 @@ async fn get_sentences(
     Ok(sentences)
 }
 
-fn setup_env(args: &Args) {
+fn setup_env(args: &Args, keys: &Keys) {
     env::set_var("API_URL", "");
 
-    let keys = match keys::Keys::new(&args.keys) {
-        Ok(keys) => keys,
-        Err(e) => {
-            eprintln!("{}", e);
-            std::process::exit(1);
-        }
-    };
     if args.translation_service == "deepl" {
         env::set_var("DEEPL_BASE_URL", DEEPL_BASE_URL);
         env::set_var(
             "DEEPL_API_KEY",
-            keys.deepl.expect(
+            keys.deepl.as_ref().expect(
                 "deepl to be set on the 'keys' file when 'deepl' is set as the translation service",
             ),
         );
@@ -148,7 +157,7 @@ fn setup_env(args: &Args) {
         env::set_var("GOOGLE_TRANSLATE_API_BASE_URL", GOOGLE_TRANSLATE_API_V2);
         env::set_var(
             "GOOGLE_TRANSLATE_API_KEY",
-            keys.google.expect(
+            keys.google.as_ref().expect(
                 "google to be set on the 'keys' file when 'google' is set as the translation service",
             ),
         );
@@ -164,5 +173,5 @@ fn setup_env(args: &Args) {
     env::set_var("ASSEMBLY_AI_WEBHOOK_TOKEN", "");
     env::set_var("ASSEMBLY_AI_BASE_URL", ASSEMBLY_AI_BASE_URL);
     env::set_var("ASSEMBLY_AI_API_KEY", "test");
-    env::set_var("ASSEMBLY_AI_API_KEY", keys.assembly_ai);
+    env::set_var("ASSEMBLY_AI_API_KEY", keys.assembly_ai.to_string());
 }
