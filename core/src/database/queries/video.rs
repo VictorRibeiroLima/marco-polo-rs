@@ -100,7 +100,7 @@ pub async fn create_error(pool: &PgPool, dto: CreateError<'_>) -> Result<(), sql
 
     sqlx::query!(
         r#"
-        INSERT INTO video_errors (video_id, error, stage)
+        INSERT INTO videos_errors (video_id, error, stage)
         VALUES ($1, $2, $3);
         "#,
         dto.video_id,

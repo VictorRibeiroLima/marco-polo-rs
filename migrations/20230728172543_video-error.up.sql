@@ -2,7 +2,7 @@
 ALTER TABLE videos ADD COLUMN error BOOLEAN NOT NULL DEFAULT FALSE;
 
 
-CREATE TABLE video_errors (
+CREATE TABLE videos_errors (
   id SERIAL PRIMARY KEY,
   video_id UUID NOT NULL REFERENCES videos(id),
   error TEXT NOT NULL,
