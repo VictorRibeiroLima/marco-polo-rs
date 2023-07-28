@@ -1,13 +1,13 @@
 use marco_polo_rs_core::{
     database::{
         models::{video::VideoStage, video_storage::StorageVideoStage},
-        queries::{self, video::CreateError},
+        queries::{self, video::CreateErrorDto},
     },
     internals::{cloud::models::payload::VideoPayload, youtube_client::traits::YoutubeClient},
 };
 use sqlx::PgPool;
 
-use crate::{error::HandlerError, YoutubeClientInUse};
+use crate::{error::HandlerError, YoutubeClientInUse, ERROR_COUNT_THRESHOLD};
 
 pub async fn handle(
     pool: &PgPool,
@@ -30,13 +30,16 @@ pub async fn handle(
     let youtube_video = match youtube_video_result {
         Ok(video) => video,
         Err(error) => {
-            let dto = CreateError {
+            let dto = CreateErrorDto {
                 video_id: &payload.video_id,
                 error: &error.to_string(),
                 stage: VideoStage::Uploading,
             };
-            queries::video::create_error(&pool, dto).await?;
-            return Err(HandlerError::Final(error));
+            let error_count = queries::video::create_error(&pool, dto).await?;
+            if error_count >= ERROR_COUNT_THRESHOLD {
+                return Err(HandlerError::Final(error));
+            }
+            return Err(HandlerError::Retry(error));
         }
     };
 

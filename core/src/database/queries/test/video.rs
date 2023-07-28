@@ -12,8 +12,8 @@ use crate::database::{
     queries::{
         filter::Filter,
         video::{
-            create, find_all, find_by_id, find_by_id_with_storage, find_by_transcription_id,
-            CreateVideoDto,
+            create, create_error, find_all, find_by_id, find_by_id_with_storage,
+            find_by_transcription_id, CreateErrorDto, CreateVideoDto,
         },
     },
 };
@@ -302,4 +302,74 @@ async fn test_not_find_by_transcription_id(pool: PgPool) {
     let find_not_success = find_by_transcription_id(&pool, transcription_id).await;
 
     assert!(find_not_success.is_err());
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("videos"))]
+async fn test_create_error_mark_video_error(pool: PgPool) {
+    let video_id = uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
+    let error = "Test Error";
+    let stage = crate::database::models::video::VideoStage::Downloading;
+
+    let dto = CreateErrorDto {
+        video_id: &video_id,
+        error: &error,
+        stage,
+    };
+
+    create_error(&pool, dto).await.unwrap();
+
+    let video = find_by_id(&pool, &video_id).await.unwrap();
+
+    assert!(video.error)
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("videos"))]
+async fn test_create_error_0_previous_errors(pool: PgPool) {
+    let video_id = uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
+    let error = "Test Error";
+    let stage = crate::database::models::video::VideoStage::Downloading;
+
+    let dto = CreateErrorDto {
+        video_id: &video_id,
+        error: &error,
+        stage,
+    };
+
+    let result = create_error(&pool, dto).await.unwrap();
+
+    assert_eq!(result, 1);
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("videos_errors"))]
+async fn test_create_error_1_previous_errors(pool: PgPool) {
+    let video_id = uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
+    let error = "Test Error";
+    let stage = crate::database::models::video::VideoStage::Downloading;
+
+    let dto = CreateErrorDto {
+        video_id: &video_id,
+        error: &error,
+        stage,
+    };
+
+    let result = create_error(&pool, dto).await.unwrap();
+
+    assert_eq!(result, 2);
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("videos_errors"))]
+async fn test_create_error_1_previous_errors_from_another_stage(pool: PgPool) {
+    let video_id = uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
+    let error = "Test Error";
+    let stage = crate::database::models::video::VideoStage::Uploading;
+
+    let dto = CreateErrorDto {
+        video_id: &video_id,
+        error: &error,
+        stage,
+    };
+
+    let result = create_error(&pool, dto).await.unwrap();
+
+    assert_eq!(result, 1);
 }

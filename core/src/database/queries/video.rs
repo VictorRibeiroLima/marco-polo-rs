@@ -19,7 +19,7 @@ pub struct CreateVideoDto<'a> {
     pub language: &'a str,
 }
 
-pub struct CreateError<'a> {
+pub struct CreateErrorDto<'a> {
     pub video_id: &'a Uuid,
     pub error: &'a str,
     pub stage: VideoStage,
@@ -84,7 +84,7 @@ pub async fn change_error_state(
     Ok(())
 }
 
-pub async fn create_error(pool: &PgPool, dto: CreateError<'_>) -> Result<(), sqlx::Error> {
+pub async fn create_error(pool: &PgPool, dto: CreateErrorDto<'_>) -> Result<i64, sqlx::Error> {
     let mut trx = pool.begin().await?;
 
     sqlx::query!(
@@ -105,14 +105,27 @@ pub async fn create_error(pool: &PgPool, dto: CreateError<'_>) -> Result<(), sql
         "#,
         dto.video_id,
         dto.error,
-        dto.stage as VideoStage,
+        &dto.stage as &VideoStage,
     )
     .execute(&mut trx)
     .await?;
 
+    let count_result = sqlx::query!(
+        r#"
+        SELECT COUNT(*) as "count!: i64"
+        FROM videos_errors
+        WHERE video_id = $1 and stage = $2"#,
+        dto.video_id,
+        dto.stage as VideoStage,
+    )
+    .fetch_optional(&mut trx)
+    .await?;
+
+    let count = count_result.map(|row| row.count).unwrap_or_default();
+
     trx.commit().await?;
 
-    Ok(())
+    Ok(count)
 }
 
 pub async fn set_url(pool: &PgPool, video_id: &Uuid, url: String) -> Result<(), sqlx::Error> {
