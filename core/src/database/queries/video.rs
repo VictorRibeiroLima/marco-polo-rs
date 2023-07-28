@@ -19,6 +19,12 @@ pub struct CreateVideoDto<'a> {
     pub language: &'a str,
 }
 
+pub struct CreateError<'a> {
+    pub video_id: &'a Uuid,
+    pub error: &'a str,
+    pub stage: VideoStage,
+}
+
 pub async fn create(pool: &PgPool, dto: CreateVideoDto<'_>) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
@@ -54,6 +60,57 @@ pub async fn change_stage(
     )
     .execute(pool)
     .await?;
+
+    Ok(())
+}
+
+pub async fn change_error_state(
+    pool: &PgPool,
+    video_id: &Uuid,
+    error: bool,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"
+        UPDATE videos
+        SET error = $1
+        WHERE id = $2
+        "#,
+        error,
+        video_id,
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn create_error(pool: &PgPool, dto: CreateError<'_>) -> Result<(), sqlx::Error> {
+    let mut trx = pool.begin().await?;
+
+    sqlx::query!(
+        r#"
+        UPDATE videos
+        SET error = true
+        WHERE id = $1
+    "#,
+        dto.video_id
+    )
+    .execute(&mut trx)
+    .await?;
+
+    sqlx::query!(
+        r#"
+        INSERT INTO video_errors (video_id, error, stage)
+        VALUES ($1, $2, $3);
+        "#,
+        dto.video_id,
+        dto.error,
+        dto.stage as VideoStage,
+    )
+    .execute(&mut trx)
+    .await?;
+
+    trx.commit().await?;
 
     Ok(())
 }
