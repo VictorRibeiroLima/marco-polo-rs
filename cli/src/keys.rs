@@ -5,8 +5,11 @@ use serde::Deserialize;
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Keys {
-    pub deepl: String,
+    pub deepl: Option<String>,
     pub assembly_ai: String,
+    pub google: Option<String>,
+    pub email: String,
+    pub password: String,
 }
 
 impl Keys {

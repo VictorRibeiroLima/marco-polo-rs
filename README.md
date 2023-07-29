@@ -174,7 +174,10 @@ The CLI will use the api_keys.json file to get the api keys needed.
 ```json
 {
   "deepl": "your_api_key",
-  "assemblyAi": "your_api_key"
+  "assemblyAi": "your_api_key",
+  "google": "your_api_key",
+  "email": "email",
+  "password": "password"
 }
 ```
 

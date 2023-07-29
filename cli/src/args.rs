@@ -21,7 +21,7 @@ pub struct Args {
     #[arg(long, default_value = "false")]
     pub srt_only: bool,
 
-    /// The buffer size of the translation requests
-    #[arg(short, long, default_value = "100")]
-    pub translation_buffer_size: usize,
+    /// Define which translation service to use (google or deepl)
+    #[arg(short, long, default_value = "google")]
+    pub translation_service: String,
 }

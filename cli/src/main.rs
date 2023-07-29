@@ -1,24 +1,27 @@
+use api::login;
 use args::Args;
 use clap::Parser;
+use keys::Keys;
 use marco_polo_rs_core::{
-    internals::{
-        transcriber::{
-            assembly_ai::AssemblyAiClient,
-            traits::{Sentence, TranscriberClient},
-        },
-        translator::{deepl::DeeplClient, traits::TranslatorClient},
+    internals::transcriber::{
+        assembly_ai::AssemblyAiClient,
+        traits::{Sentence, TranscriberClient},
     },
-    util::{ffmpeg, srt},
+    util::ffmpeg,
     SyncError,
 };
+use srt::{get_srt_string, write_srt_file};
 
-use futures::future::join_all;
-use std::{env, fs::File, io::Write};
+use std::env;
+mod api;
 mod args;
 mod keys;
+mod srt;
 
+const API_URL: &str = "https://d383mxrb2huo0o.cloudfront.net";
 const ASSEMBLY_AI_BASE_URL: &str = "https://api.assemblyai.com/v2";
 const DEEPL_BASE_URL: &str = "https://api.deepl.com/v2/translate";
+const GOOGLE_TRANSLATE_API_V2: &str = "https://translation.googleapis.com/language/translate/v2";
 
 #[tokio::main]
 async fn main() {
@@ -39,12 +42,22 @@ On Windows, you can install FFmpeg by downloading a build from the official webs
         }
     }
 
-    setup_env(&args);
+    let keys = match keys::Keys::new(&args.keys) {
+        Ok(keys) => keys,
+        Err(e) => {
+            eprintln!("{}", e);
+            std::process::exit(1);
+        }
+    };
+
+    setup_env(&args, &keys);
+
+    login(&keys.email, &keys.password)
+        .await
+        .expect("Failed to login");
 
     let assembly_ai_client =
         marco_polo_rs_core::internals::transcriber::assembly_ai::AssemblyAiClient::new();
-
-    let deepl_client = marco_polo_rs_core::internals::translator::deepl::DeeplClient::new();
 
     let sentences = match get_sentences(assembly_ai_client, &args).await {
         Ok(sentences) => sentences,
@@ -54,10 +67,9 @@ On Windows, you can install FFmpeg by downloading a build from the official webs
         }
     };
 
-    let srt_file_string = match get_srt_file_string(sentences, deepl_client, &args).await {
+    let srt_file_string = match get_srt_string(sentences, &args).await {
         Ok(srt_file_string) => srt_file_string,
-        Err(e) => {
-            eprintln!("{}", e);
+        Err(_) => {
             std::process::exit(1);
         }
     };
@@ -72,19 +84,9 @@ On Windows, you can install FFmpeg by downloading a build from the official webs
         }
     };
 
-    match File::create(&srt_path_string) {
-        Ok(mut file) => match file.write_all(srt_file_string.as_bytes()) {
-            Ok(_) => {}
-            Err(e) => {
-                eprintln!("Unable to write to {}: {}", srt_path_string, e);
-                std::process::exit(1);
-            }
-        },
+    match write_srt_file(&srt_path_string, srt_file_string) {
+        Ok(_) => {}
         Err(_) => {
-            eprintln!(
-                "Unable to create {} pls put it in the same directory as the executable",
-                srt_file_string
-            );
             std::process::exit(1);
         }
     }
@@ -140,77 +142,36 @@ async fn get_sentences(
     Ok(sentences)
 }
 
-async fn get_srt_file_string(
-    sentences: Vec<Sentence>,
-    deepl_client: DeeplClient,
-    args: &Args,
-) -> Result<String, SyncError> {
-    let mut translated_sentences = vec![];
-    let mut i: usize = 0;
-    let buff_size = args.translation_buffer_size;
-    let sentences_len = sentences.len();
+fn setup_env(args: &Args, keys: &Keys) {
+    env::set_var("API_URL", "");
 
-    println!("Translating sentences...");
-    while i < sentences_len {
-        let mut translation_futures = vec![];
-
-        let x = if i + buff_size > sentences_len {
-            sentences_len
-        } else {
-            i + buff_size
-        };
-
-        let buff = &sentences[i..x];
-
-        println!("Translating sentences {} to {}", i, x);
-        for sen in buff {
-            let translation = get_translated_sentence(sen, &deepl_client);
-            translation_futures.push(translation);
-        }
-
-        println!("Waiting for translations...");
-        let resp = join_all(translation_futures).await;
-        for sentence in resp {
-            translated_sentences.push(sentence?);
-        }
-        i = x;
+    if args.translation_service == "deepl" {
+        env::set_var("DEEPL_BASE_URL", DEEPL_BASE_URL);
+        env::set_var(
+            "DEEPL_API_KEY",
+            keys.deepl.as_ref().expect(
+                "deepl to be set on the 'keys' file when 'deepl' is set as the translation service",
+            ),
+        );
+    } else if args.translation_service == "google" {
+        env::set_var("GOOGLE_TRANSLATE_API_BASE_URL", GOOGLE_TRANSLATE_API_V2);
+        env::set_var(
+            "GOOGLE_TRANSLATE_API_KEY",
+            keys.google.as_ref().expect(
+                "google to be set on the 'keys' file when 'google' is set as the translation service",
+            ),
+        );
+    } else {
+        eprintln!(
+            "Translation service '{}' not supported",
+            args.translation_service
+        );
+        std::process::exit(1);
     }
 
-    println!("Creating new srt file...");
-    let new_srt_buffer = srt::create_based_on_sentences(translated_sentences);
-    Ok(new_srt_buffer)
-}
-
-async fn get_translated_sentence(
-    payload: &Sentence,
-    deepl_client: &DeeplClient,
-) -> Result<Sentence, Box<dyn std::error::Error + Sync + Send>> {
-    let translation = deepl_client.translate_sentence(&payload.text).await?;
-    let sentence = Sentence {
-        text: translation,
-        start_time: payload.start_time,
-        end_time: payload.end_time,
-    };
-    Ok(sentence)
-}
-
-fn setup_env(args: &Args) {
-    env::set_var("DEEPL_BASE_URL", DEEPL_BASE_URL);
-
-    env::set_var("ASSEMBLY_AI_BASE_URL", ASSEMBLY_AI_BASE_URL);
-    env::set_var("ASSEMBLY_AI_API_KEY", "test");
-
-    env::set_var("API_URL", "");
     env::set_var("ASSEMBLY_AI_WEBHOOK_ENDPOINT", "");
     env::set_var("ASSEMBLY_AI_WEBHOOK_TOKEN", "");
-
-    let keys = match keys::Keys::new(&args.keys) {
-        Ok(keys) => keys,
-        Err(e) => {
-            eprintln!("{}", e);
-            std::process::exit(1);
-        }
-    };
-    env::set_var("DEEPL_API_KEY", keys.deepl);
-    env::set_var("ASSEMBLY_AI_API_KEY", keys.assembly_ai);
+    env::set_var("ASSEMBLY_AI_BASE_URL", ASSEMBLY_AI_BASE_URL);
+    env::set_var("ASSEMBLY_AI_API_KEY", "test");
+    env::set_var("ASSEMBLY_AI_API_KEY", keys.assembly_ai.to_string());
 }
