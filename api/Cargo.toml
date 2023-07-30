@@ -11,6 +11,7 @@ path = "src/main.rs"
 marco-polo-rs-core = { path = "../core" }
 reqwest = { version = "0.11", features = ["json"] }
 actix-web = "4"
+actix-cors = "0.6.4"
 dotenv = "0.15.0"
 tokio = { version = "1.16.1", features = ["full"] }
 tokio-util = { version = "0.7.8", features = ["codec"] }
