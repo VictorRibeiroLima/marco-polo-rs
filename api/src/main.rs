@@ -56,7 +56,7 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            .wrap(Cors::default())
+            .wrap(Cors::permissive())
             .app_data(JsonConfig::default().error_handler(|err, _req| {
                 let error = AppError::from(err);
                 return error.into();
