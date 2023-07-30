@@ -35,11 +35,28 @@ impl YoutubeClient {
     }
 
     async fn get_token(&self, refresh_token: String) -> Result<String, SyncError> {
-        let token = self
+        let result = self
             .oauth2_client
             .exchange_refresh_token(&RefreshToken::new(refresh_token))
             .request_async(oauth2::reqwest::async_http_client)
-            .await?;
+            .await;
+
+        let token = match result {
+            Ok(token) => token,
+            Err(err) => match err {
+                oauth2::RequestTokenError::ServerResponse(response) => {
+                    let fallback_description =
+                        String::from("Token request error without description");
+                    let description = response
+                        .error_description()
+                        .unwrap_or(&fallback_description);
+                    return Err(description.to_string().into());
+                }
+                _ => {
+                    return Err(err.into());
+                }
+            },
+        };
 
         return Ok(token.access_token().secret().to_string());
     }
