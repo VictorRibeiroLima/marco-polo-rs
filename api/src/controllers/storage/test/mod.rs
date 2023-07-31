@@ -1,12 +1,13 @@
 use std::sync::Arc;
 
+use crate::controllers::test::mock::cloud_service::CloudServiceMock;
+
 use super::*;
 use actix_web::{http::header::ContentType, test, web, App};
-use marco_polo_rs_core::internals::cloud::mock::TestCloudService;
 
 #[actix_web::test]
 async fn test_create_signed_upload_url() {
-    let test_cloud_service = TestCloudService::new();
+    let test_cloud_service = CloudServiceMock::new();
 
     let app_cloud_service = AppCloudService {
         client: Arc::new(test_cloud_service),
@@ -16,7 +17,7 @@ async fn test_create_signed_upload_url() {
 
     let app = App::new().app_data(app_data).route(
         "/signed-upload-url",
-        web::get().to(signed_upload_url::<TestCloudService>),
+        web::get().to(signed_upload_url::<CloudServiceMock>),
     );
 
     let app = test::init_service(app).await;

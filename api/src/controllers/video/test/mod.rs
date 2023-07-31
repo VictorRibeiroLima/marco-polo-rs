@@ -2,10 +2,19 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use actix_http::Request;
-use actix_web::{dev::ServiceResponse, http::header::ContentType, test, web, App};
-use marco_polo_rs_core::database::models::{
-    user::{User, UserRole},
-    video::VideoStage,
+use actix_web::{
+    dev::ServiceResponse,
+    http::header::ContentType,
+    test,
+    web::{self, post},
+    App,
+};
+use marco_polo_rs_core::{
+    database::models::{
+        user::{User, UserRole},
+        video::VideoStage,
+    },
+    internals::{cloud::aws::AwsCloudService, youtube_client::client::YoutubeClient},
 };
 use reqwest::StatusCode;
 use sqlx::PgPool;
@@ -20,9 +29,12 @@ use crate::controllers::video::dtos::VideoDTO;
 use crate::utils::test::get_token;
 use crate::AppPool;
 
-use super::{find_all, find_by_id};
+use super::{create_video, find_all, find_by_id};
 
-#[sqlx::test(migrations = "../migrations", fixtures("user", "videos"))]
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/user", "../../../test/fixtures/videos")
+)]
 async fn test_find_by_id_get_ok(pool: PgPool) {
     let pool = Arc::new(pool);
 
@@ -61,7 +73,10 @@ async fn test_find_by_id_get_ok(pool: PgPool) {
     assert_eq!(actual_dto, expected_dto);
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("user", "videos"))]
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/user", "../../../test/fixtures/videos")
+)]
 async fn test_find_all_user(pool: PgPool) {
     let pool = Arc::new(pool);
     let user_id = 789;
@@ -94,7 +109,10 @@ async fn test_find_all_user(pool: PgPool) {
     assert_eq!(actual_videos_ids, expected_videos_id);
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("admin", "videos"))]
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/admin", "../../../test/fixtures/videos")
+)]
 async fn test_find_all_admin(pool: PgPool) {
     let pool = Arc::new(pool);
     let admin_id = 1000;
@@ -136,7 +154,10 @@ async fn test_find_all_admin(pool: PgPool) {
     assert_eq!(actual_videos_ids, expected_videos_ids);
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("admin", "videos"))]
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/admin", "../../../test/fixtures/videos")
+)]
 async fn test_find_all_5(pool: PgPool) {
     let pool = Arc::new(pool);
     let admin_id = 1000;
@@ -156,7 +177,10 @@ async fn test_find_all_5(pool: PgPool) {
     assert_eq!(actual_dto.len(), 5);
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("user", "videos"))]
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/user", "../../../test/fixtures/videos")
+)]
 async fn test_find_by_id_get_not_found(pool: PgPool) {
     let pool = Arc::new(pool);
 
@@ -174,7 +198,10 @@ async fn test_find_by_id_get_not_found(pool: PgPool) {
     assert_eq!(response.status().as_u16(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("user", "videos"))]
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/user", "../../../test/fixtures/videos")
+)]
 async fn test_find_by_id_get_unauthorized(pool: PgPool) {
     let pool = Arc::new(pool);
 
@@ -189,7 +216,10 @@ async fn test_find_by_id_get_unauthorized(pool: PgPool) {
     assert_eq!(response.status().as_u16(), StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("user", "video"))]
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/user", "../../../test/fixtures/video")
+)]
 async fn test_find_by_id_get_deleted(pool: PgPool) {
     let pool = Arc::new(pool);
     let token = get_token!(pool.as_ref());
@@ -205,7 +235,10 @@ async fn test_find_by_id_get_deleted(pool: PgPool) {
     assert_eq!(response.status().as_u16(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("admin", "videos"))]
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/admin", "../../../test/fixtures/videos")
+)]
 async fn test_find_all_admin_offset(pool: PgPool) {
     let pool = Arc::new(pool);
     let admin_id = 1000;
@@ -272,7 +305,11 @@ async fn innit_test_app(
     let app = App::new()
         .app_data(web_data)
         .service(find_by_id)
-        .service(find_all);
+        .service(find_all)
+        .route(
+            "/",
+            post().to(create_video::<AwsCloudService, YoutubeClient>),
+        );
 
     let test_app = test::init_service(app).await;
 

@@ -1,5 +1,3 @@
-use google_youtube3::api::Video;
-use marco_polo_rs_core::database::models::video::VideoWithStorageAndChannel;
 use std::sync::Arc;
 
 use actix_http::Request;
@@ -11,48 +9,21 @@ use actix_web::{
     App,
 };
 use chrono::NaiveDate;
-use marco_polo_rs_core::{
-    database::models::user::{User, UserRole},
-    internals::youtube_client::{channel_info::ChannelInfo, traits},
-    SyncError,
-};
+use marco_polo_rs_core::database::models::user::{User, UserRole};
 use reqwest::StatusCode;
 use sqlx::PgPool;
 
 use crate::{
     auth::gen_token,
-    controllers::channel::{create_youtube_channel, dto::ChannelDTO},
+    controllers::{
+        channel::{create_youtube_channel, dto::ChannelDTO},
+        test::mock::youtube_client::{YoutubeClientMock, CSRF_TOKEN},
+    },
     utils::test::get_token,
     AppPool, AppYoutubeClient,
 };
 
 use super::{find_all, find_by_id};
-
-const CSRF_TOKEN: &str = "111aaa11aa";
-
-struct YoutubeClientMock;
-
-#[async_trait::async_trait]
-impl traits::YoutubeClient for YoutubeClientMock {
-    fn generate_url(&self) -> (String, String) {
-        return (
-            String::from("https://youtube.com"),
-            String::from(CSRF_TOKEN),
-        );
-    }
-
-    async fn get_refresh_token(&self, _code: String) -> Result<String, SyncError> {
-        return Ok(String::from("refresh_token"));
-    }
-
-    async fn get_channel_info(&self, _refresh_token: String) -> Result<ChannelInfo, SyncError> {
-        return Ok(ChannelInfo::default());
-    }
-
-    async fn upload_video(&self, _: &VideoWithStorageAndChannel) -> Result<Video, SyncError> {
-        return Ok(Default::default());
-    }
-}
 
 #[sqlx::test(migrations = "../migrations")]
 async fn test_create_channel_unauthorized(pool: PgPool) {
@@ -70,7 +41,7 @@ async fn test_create_channel_unauthorized(pool: PgPool) {
     assert_eq!(response.status().as_u16(), StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("user"))]
+#[sqlx::test(migrations = "../migrations", fixtures("../../../test/fixtures/user"))]
 async fn test_create_channel_authorized(pool: PgPool) {
     let pool = Arc::new(pool);
 
@@ -105,7 +76,10 @@ async fn test_create_channel_authorized(pool: PgPool) {
     assert_eq!(record.count.unwrap(), 1);
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("user", "channel"))]
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/user", "../../../test/fixtures/channel")
+)]
 async fn test_find_by_id_get_deleted(pool: PgPool) {
     let pool = Arc::new(pool);
 
@@ -126,7 +100,10 @@ async fn test_find_by_id_get_deleted(pool: PgPool) {
     assert_eq!(response.status().as_u16(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("user", "channel"))]
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/user", "../../../test/fixtures/channel")
+)]
 async fn test_find_by_id_get_ok(pool: PgPool) {
     let pool = Arc::new(pool);
 
@@ -161,7 +138,10 @@ async fn test_find_by_id_get_ok(pool: PgPool) {
     assert_eq!(actual_dto, expected_dto);
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("user", "channel"))]
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/user", "../../../test/fixtures/channel")
+)]
 async fn test_find_by_id_get_not_found(pool: PgPool) {
     let pool = Arc::new(pool);
 
@@ -182,7 +162,10 @@ async fn test_find_by_id_get_not_found(pool: PgPool) {
     assert_eq!(response.status().as_u16(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("user", "channel"))]
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/user", "../../../test/fixtures/channel")
+)]
 async fn test_find_by_id_get_unauthorized(pool: PgPool) {
     let pool = Arc::new(pool);
 
@@ -200,7 +183,10 @@ async fn test_find_by_id_get_unauthorized(pool: PgPool) {
     assert_eq!(response.status().as_u16(), StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("admin", "channels"))]
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/admin", "../../../test/fixtures/channels")
+)]
 async fn test_find_all_admin(pool: PgPool) {
     let pool = Arc::new(pool);
     let admin_id = 1000;
@@ -231,7 +217,10 @@ async fn test_find_all_admin(pool: PgPool) {
     assert_eq!(actual_channels_ids, expected_channels_ids);
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("admin", "channels"))]
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/admin", "../../../test/fixtures/channels")
+)]
 async fn test_find_all_admin_offset(pool: PgPool) {
     let pool = Arc::new(pool);
     let admin_id = 1000;
@@ -280,7 +269,10 @@ async fn test_find_all_admin_offset(pool: PgPool) {
     assert_eq!(actual_channels_ids, expected_channels_ids_second);
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("channels"))]
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/channels")
+)]
 async fn test_find_all_user(pool: PgPool) {
     let pool = Arc::new(pool);
     let user_id = 1;
