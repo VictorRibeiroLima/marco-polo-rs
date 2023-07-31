@@ -3,7 +3,10 @@ use sqlx::PgPool;
 use crate::database::{
     models::channel::ChannelOrderFields,
     queries::{
-        channel::{create, find_all, find_all_by_owner, find_by_id},
+        channel::{
+            change_error_state, create, find_all, find_all_by_owner, find_by_and_creator,
+            find_by_id,
+        },
         pagination::Pagination,
     },
 };
@@ -76,4 +79,62 @@ async fn test_find_all_by_owner_owner_not_found(pool: PgPool) {
         .unwrap();
 
     assert_eq!(channels.len(), 0);
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("channels"))]
+async fn test_find_by_id_and_creator_id(pool: PgPool) {
+    let channel_id = 1;
+    let creator_id = 1;
+
+    let channel = find_by_and_creator(&pool, channel_id, creator_id)
+        .await
+        .unwrap();
+
+    assert_eq!(channel.id, channel_id);
+    assert_eq!(channel.creator_id, creator_id);
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("channels"))]
+async fn test_find_by_id_and_creator_id_not_found(pool: PgPool) {
+    let channel_id = 1;
+    let creator_id = 2;
+
+    let channel = find_by_and_creator(&pool, channel_id, creator_id).await;
+
+    assert!(channel.is_err());
+
+    match channel {
+        Err(error) => match error {
+            sqlx::Error::RowNotFound => {}
+            _ => panic!("Unexpected error"),
+        },
+        _ => {}
+    }
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("channel"))]
+async fn test_change_error_state(pool: PgPool) {
+    let channel_id = 666;
+
+    let result = change_error_state(&pool, channel_id, true).await;
+
+    assert!(result.is_ok());
+
+    let record = sqlx::query!(
+        r#"
+            SELECT error,updated_at FROM channels WHERE id = $1
+        "#,
+        channel_id
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+
+    let error = record.error;
+    let updated_at = record.updated_at;
+
+    let today = chrono::Utc::now().date_naive();
+
+    assert!(error);
+    assert_eq!(updated_at.date(), today);
 }

@@ -52,7 +52,9 @@ pub async fn change_stage(
     sqlx::query!(
         r#"
         UPDATE videos
-        SET stage = $1
+        SET 
+        stage = $1,
+        updated_at = NOW()
         WHERE id = $2
         "#,
         stage as VideoStage,
@@ -72,7 +74,9 @@ pub async fn change_error_state(
     sqlx::query!(
         r#"
         UPDATE videos
-        SET error = $1
+        SET 
+        error = $1,
+        updated_at = NOW()
         WHERE id = $2
         "#,
         error,
@@ -90,7 +94,9 @@ pub async fn create_error(pool: &PgPool, dto: CreateErrorDto<'_>) -> Result<i64,
     sqlx::query!(
         r#"
         UPDATE videos
-        SET error = true
+        SET 
+        error = true,
+        updated_at = NOW()
         WHERE id = $1
     "#,
         dto.video_id

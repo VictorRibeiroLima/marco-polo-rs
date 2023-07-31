@@ -1,0 +1,3 @@
+--This is just a file to make the fixtures folder appear in the repo
+--there is a pr to add the feature to change the path of the fixtures folder on the sqlx repo
+--until then, this file will be here,for the relative path to work

@@ -21,11 +21,12 @@ pub async fn find_by_id(pool: &PgPool, id: i32) -> Result<Channel, sqlx::Error> 
             name,
             csrf_token,
             creator_id,
+            error,
             refresh_token,
             created_at as "created_at: chrono::NaiveDateTime",
             updated_at as "updated_at: chrono::NaiveDateTime",
             deleted_at as "deleted_at: chrono::NaiveDateTime"
-        FROM channels WHERE id = $1 AND deleted_at IS NULL
+        FROM channels WHERE id = $1 AND deleted_at IS NULL AND error = FALSE
         "#,
         id
     )
@@ -33,6 +34,51 @@ pub async fn find_by_id(pool: &PgPool, id: i32) -> Result<Channel, sqlx::Error> 
     .await?;
 
     return Ok(channel);
+}
+
+pub async fn find_by_and_creator(
+    pool: &PgPool,
+    id: i32,
+    creator_id: i32,
+) -> Result<Channel, sqlx::Error> {
+    let channel = sqlx::query_as!(
+        Channel,
+        r#"
+        SELECT 
+            id,
+            name,
+            csrf_token,
+            creator_id,
+            error,
+            refresh_token,
+            created_at as "created_at: chrono::NaiveDateTime",
+            updated_at as "updated_at: chrono::NaiveDateTime",
+            deleted_at as "deleted_at: chrono::NaiveDateTime"
+        FROM channels WHERE id = $1 AND creator_id = $2 AND deleted_at IS NULL
+        "#,
+        id,
+        creator_id
+    )
+    .fetch_one(pool)
+    .await?;
+
+    return Ok(channel);
+}
+
+pub async fn change_error_state(pool: &PgPool, id: i32, error: bool) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"
+    UPDATE channels SET 
+        error = $1,
+        updated_at = NOW()
+    WHERE id = $2
+    "#,
+        error,
+        id
+    )
+    .execute(pool)
+    .await?;
+    Ok(())
 }
 
 pub async fn create(pool: &PgPool, csrf_token: String, creator_id: i32) -> Result<(), sqlx::Error> {
@@ -58,6 +104,7 @@ pub async fn find_by_csrf_token(pool: &PgPool, csrf_token: String) -> Result<Cha
             name,
             creator_id,
             csrf_token,
+            error,
             refresh_token,
             created_at as "created_at: chrono::NaiveDateTime",
             updated_at as "updated_at: chrono::NaiveDateTime",

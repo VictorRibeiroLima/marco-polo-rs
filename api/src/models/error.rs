@@ -6,9 +6,9 @@ use actix_web::{
     HttpResponse,
 };
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct AppErrorResponse {
     pub errors: Vec<String>,
 }

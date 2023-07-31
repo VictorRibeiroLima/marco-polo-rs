@@ -1,27 +1,28 @@
-use crate::internals::ServiceProvider;
 use async_trait::async_trait;
-
-use super::{
-    models::payload::{PayloadType, SrtPayload},
-    traits::{CloudService, QueueClient, QueueMessage},
+use marco_polo_rs_core::internals::{
+    cloud::{
+        models::payload::{PayloadType, SrtPayload},
+        traits::{BucketClient, CloudService, QueueClient, QueueMessage},
+    },
+    ServiceProvider,
 };
 
-pub struct TestClient;
+pub struct ServiceProviderMock;
 #[allow(dead_code)]
-impl TestClient {
+impl ServiceProviderMock {
     pub fn new() -> Self {
         Self {}
     }
 }
 
-impl ServiceProvider for TestClient {
+impl ServiceProvider for ServiceProviderMock {
     fn id(&self) -> i32 {
         return 1;
     }
 }
 
 #[async_trait]
-impl crate::internals::cloud::traits::BucketClient for TestClient {
+impl BucketClient for ServiceProviderMock {
     async fn upload_file(
         &self,
         _file_uri: &str,
@@ -100,25 +101,16 @@ impl QueueMessage for TestMessage {
         String::from("test")
     }
 
-    fn to_payload(
-        &self,
-    ) -> Result<
-        crate::internals::cloud::models::payload::PayloadType,
-        Box<dyn std::error::Error + Sync + Send>,
-    > {
-        Ok(
-            crate::internals::cloud::models::payload::PayloadType::BatukaSrtTranscriptionUpload(
-                SrtPayload {
-                    srt_uri: String::from("test"),
-                    video_id: uuid::Uuid::new_v4(),
-                },
-            ),
-        )
+    fn to_payload(&self) -> Result<PayloadType, Box<dyn std::error::Error + Sync + Send>> {
+        Ok(PayloadType::BatukaSrtTranscriptionUpload(SrtPayload {
+            srt_uri: String::from("test"),
+            video_id: uuid::Uuid::new_v4(),
+        }))
     }
 }
 
 #[async_trait]
-impl QueueClient for TestClient {
+impl QueueClient for ServiceProviderMock {
     type M = TestMessage;
 
     async fn receive_message(
@@ -150,30 +142,30 @@ impl QueueClient for TestClient {
     }
 }
 
-pub struct TestCloudService {
-    pub bucket_client: TestClient,
-    pub queue_client: TestClient,
+pub struct CloudServiceMock {
+    pub bucket_client: ServiceProviderMock,
+    pub queue_client: ServiceProviderMock,
 }
 
 #[allow(dead_code)]
-impl TestCloudService {
+impl CloudServiceMock {
     pub fn new() -> Self {
         Self {
-            bucket_client: TestClient::new(),
-            queue_client: TestClient::new(),
+            bucket_client: ServiceProviderMock::new(),
+            queue_client: ServiceProviderMock::new(),
         }
     }
 }
 
-impl ServiceProvider for TestCloudService {
+impl ServiceProvider for CloudServiceMock {
     fn id(&self) -> i32 {
         return 1;
     }
 }
 
-impl CloudService for TestCloudService {
-    type BC = TestClient;
-    type QC = TestClient;
+impl CloudService for CloudServiceMock {
+    type BC = ServiceProviderMock;
+    type QC = ServiceProviderMock;
 
     fn bucket_client(&self) -> &Self::BC {
         &self.bucket_client

@@ -100,7 +100,7 @@ async fn test_create_user_invalid_password(pool: PgPool) {
     assert_eq!(response.status().as_u16(), StatusCode::BAD_REQUEST);
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("user"))]
+#[sqlx::test(migrations = "../migrations", fixtures("../../../test/fixtures/user"))]
 async fn test_find_by_id_get_unauthorized(pool: PgPool) {
     let pool = Arc::new(pool);
 
@@ -115,7 +115,7 @@ async fn test_find_by_id_get_unauthorized(pool: PgPool) {
     assert_eq!(response.status().as_u16(), StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("user"))]
+#[sqlx::test(migrations = "../migrations", fixtures("../../../test/fixtures/user"))]
 async fn test_find_by_id_get_not_found(pool: PgPool) {
     let pool = Arc::new(pool);
 
@@ -133,7 +133,7 @@ async fn test_find_by_id_get_not_found(pool: PgPool) {
     assert_eq!(response.status().as_u16(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("user"))]
+#[sqlx::test(migrations = "../migrations", fixtures("../../../test/fixtures/user"))]
 async fn test_find_by_id_get_deleted(pool: PgPool) {
     let pool = Arc::new(pool);
 
@@ -151,7 +151,7 @@ async fn test_find_by_id_get_deleted(pool: PgPool) {
     assert_eq!(response.status().as_u16(), StatusCode::NOT_FOUND);
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("user"))]
+#[sqlx::test(migrations = "../migrations", fixtures("../../../test/fixtures/user"))]
 async fn test_find_by_id_get_ok(pool: PgPool) {
     let pool = Arc::new(pool);
 
@@ -185,7 +185,7 @@ async fn test_find_by_id_get_ok(pool: PgPool) {
     assert_eq!(actual_dto, expected_dto);
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("users"))]
+#[sqlx::test(migrations = "../migrations", fixtures("../../../test/fixtures/users"))]
 async fn test_find_all(pool: PgPool) {
     let pool = Arc::new(pool);
     let token = get_token!(pool.as_ref());
@@ -204,7 +204,7 @@ async fn test_find_all(pool: PgPool) {
     assert_eq!(actual_dto.len(), 10);
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("users"))]
+#[sqlx::test(migrations = "../migrations", fixtures("../../../test/fixtures/users"))]
 async fn test_find_all_unauthorized(pool: PgPool) {
     let pool = Arc::new(pool);
 
@@ -219,7 +219,7 @@ async fn test_find_all_unauthorized(pool: PgPool) {
     assert_eq!(response.status().as_u16(), StatusCode::UNAUTHORIZED);
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("users"))]
+#[sqlx::test(migrations = "../migrations", fixtures("../../../test/fixtures/users"))]
 async fn test_find_all_15(pool: PgPool) {
     let pool = Arc::new(pool);
     let token = get_token!(pool.as_ref());
@@ -238,7 +238,7 @@ async fn test_find_all_15(pool: PgPool) {
     assert_eq!(actual_dto.len(), 15);
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("users"))]
+#[sqlx::test(migrations = "../migrations", fixtures("../../../test/fixtures/users"))]
 async fn test_find_all_asc(pool: PgPool) {
     let pool = Arc::new(pool);
     let token = get_token!(pool.as_ref());
@@ -267,7 +267,7 @@ async fn test_find_all_asc(pool: PgPool) {
     }
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("users"))]
+#[sqlx::test(migrations = "../migrations", fixtures("../../../test/fixtures/users"))]
 async fn test_find_all_desc(pool: PgPool) {
     let pool = Arc::new(pool);
     let token = get_token!(pool.as_ref());
@@ -296,7 +296,7 @@ async fn test_find_all_desc(pool: PgPool) {
     }
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("users"))]
+#[sqlx::test(migrations = "../migrations", fixtures("../../../test/fixtures/users"))]
 async fn test_find_all_error(pool: PgPool) {
     let pool = Arc::new(pool);
     let token = get_token!(pool.as_ref());
