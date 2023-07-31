@@ -7,6 +7,7 @@ use sqlx::FromRow;
 pub struct Channel {
     pub id: i32,
     pub creator_id: i32,
+    pub error: bool,
     pub name: Option<String>,
     pub csrf_token: Option<String>,
     pub refresh_token: Option<String>,
