@@ -13,6 +13,33 @@
     },
     "query": "\n    UPDATE channels SET \n        error = $1,\n        updated_at = NOW()\n    WHERE id = $2\n    "
   },
+  "0ff2a320e8e7a43b395a2cd37681438c2561ac6a1333004548f2a02efbc0d9f5": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "DOWNLOADING",
+                  "TRANSCRIBING",
+                  "TRANSLATING",
+                  "SUBTITLING",
+                  "DONE",
+                  "UPLOADING"
+                ]
+              },
+              "name": "videos_video_stages"
+            }
+          },
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n        UPDATE videos\n        SET \n        stage = $1,\n        updated_at = NOW()\n        WHERE id = $2\n        "
+  },
   "1c103849145de2e73e893b8d3b159a338c86341484843e854fe31a07ca8d9393": {
     "describe": {
       "columns": [],
@@ -25,75 +52,6 @@
       }
     },
     "query": "\n    INSERT INTO channels (csrf_token,creator_id) \n    VALUES ($1,$2)\n    "
-  },
-  "2405e2788244447e709e0e7397bda8b672dbe8b855ce9aed6216cf5fc94b0074": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Int4"
-        },
-        {
-          "name": "name",
-          "ordinal": 1,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "csrf_token",
-          "ordinal": 2,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "creator_id",
-          "ordinal": 3,
-          "type_info": "Int4"
-        },
-        {
-          "name": "error",
-          "ordinal": 4,
-          "type_info": "Bool"
-        },
-        {
-          "name": "refresh_token",
-          "ordinal": 5,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "created_at: chrono::NaiveDateTime",
-          "ordinal": 6,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "updated_at: chrono::NaiveDateTime",
-          "ordinal": 7,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "deleted_at: chrono::NaiveDateTime",
-          "ordinal": 8,
-          "type_info": "Timestamp"
-        }
-      ],
-      "nullable": [
-        false,
-        true,
-        true,
-        false,
-        false,
-        true,
-        false,
-        false,
-        true
-      ],
-      "parameters": {
-        "Left": [
-          "Int4",
-          "Int4"
-        ]
-      }
-    },
-    "query": "\n        SELECT \n            id,\n            name,\n            csrf_token,\n            creator_id,\n            error,\n            refresh_token,\n            created_at as \"created_at: chrono::NaiveDateTime\",\n            updated_at as \"updated_at: chrono::NaiveDateTime\",\n            deleted_at as \"deleted_at: chrono::NaiveDateTime\"\n        FROM channels WHERE id = $1 AND creator_id = $2 AND deleted_at IS NULL AND error = FALSE\n        "
   },
   "28c3cc46ca261ddac740d6ab35f44aa23388d21086872102df103dc19437c28b": {
     "describe": {
@@ -373,6 +331,31 @@
       }
     },
     "query": "SELECT id, \n                name, \n                email, \n                password, \n                role as \"role: UserRole\",\n                created_at as \"created_at: chrono::NaiveDateTime\",\n                updated_at as \"updated_at: chrono::NaiveDateTime\",\n                deleted_at as \"deleted_at: chrono::NaiveDateTime\"\n                FROM users WHERE id = $1"
+  },
+  "4b5a46ab95b9eb27bc3d7555c3c190c6a9cecafdbf67a4f569e07a625b66843d": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Bool",
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n        UPDATE videos\n        SET \n        error = $1,\n        updated_at = NOW()\n        WHERE id = $2\n        "
+  },
+  "523b26e06f37d520fd5e784cf4273b0d96c5267747a92fccaf52ae1a51468533": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n        UPDATE videos\n        SET \n        error = true,\n        updated_at = NOW()\n        WHERE id = $1\n    "
   },
   "6494ab199b653c16012cd3c48c700cecf1c2d1f8708a17796ef9867b57a41b73": {
     "describe": {
@@ -707,6 +690,75 @@
     },
     "query": "\n        SELECT\n          video_id as \"video_id: Uuid\",\n          transcriber_id,\n          transcription_id,\n          storage_id,\n          path,\n          created_at as \"created_at: DateTime<Utc>\",\n          updated_at as \"updated_at: DateTime<Utc>\",\n          deleted_at as \"deleted_at: DateTime<Utc>\"\n         FROM videos_transcriptions vt\n        WHERE video_id = $1\n        "
   },
+  "a333fd4fe93a9805b074dd598a27cd858fc2bac39119dbf1cefb76932b391227": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "csrf_token",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "creator_id",
+          "ordinal": 3,
+          "type_info": "Int4"
+        },
+        {
+          "name": "error",
+          "ordinal": 4,
+          "type_info": "Bool"
+        },
+        {
+          "name": "refresh_token",
+          "ordinal": 5,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "created_at: chrono::NaiveDateTime",
+          "ordinal": 6,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "updated_at: chrono::NaiveDateTime",
+          "ordinal": 7,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "deleted_at: chrono::NaiveDateTime",
+          "ordinal": 8,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        true,
+        false,
+        false,
+        true,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n        SELECT \n            id,\n            name,\n            csrf_token,\n            creator_id,\n            error,\n            refresh_token,\n            created_at as \"created_at: chrono::NaiveDateTime\",\n            updated_at as \"updated_at: chrono::NaiveDateTime\",\n            deleted_at as \"deleted_at: chrono::NaiveDateTime\"\n        FROM channels WHERE id = $1 AND creator_id = $2 AND deleted_at IS NULL\n        "
+  },
   "a3907c388014733f4487f723bf20307a3619a281bb75a2aa1435b8c73893bb22": {
     "describe": {
       "columns": [],
@@ -720,18 +772,6 @@
       }
     },
     "query": "\n            UPDATE videos_transcriptions SET storage_id = $1, path = $2, updated_at = NOW()\n            WHERE video_id = $3;\n        "
-  },
-  "a39ad9377f1a8bb840c8d481087cd35d9fa4d5d9f028e9e1bebcd0fb1b767ba5": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Left": [
-          "Uuid"
-        ]
-      }
-    },
-    "query": "\n        UPDATE videos\n        SET error = true\n        WHERE id = $1\n    "
   },
   "a6cd05254d6a100d1aa5b5f6fd6d524da3b18696520907dbcbf5249cfe70347d": {
     "describe": {
@@ -800,46 +840,6 @@
       }
     },
     "query": "SELECT COUNT(*) FROM videos_transcriptions where video_id = $1"
-  },
-  "ae4fa9598614733362300d46e506f5e70938c7a1d1e5bddb1078d2d4033abc12": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Left": [
-          "Bool",
-          "Uuid"
-        ]
-      }
-    },
-    "query": "\n        UPDATE videos\n        SET error = $1\n        WHERE id = $2\n        "
-  },
-  "b1ab23585c9c9541a7757e186033b913b745e3a58040265fdde13a14dbd881d4": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Left": [
-          {
-            "Custom": {
-              "kind": {
-                "Enum": [
-                  "DOWNLOADING",
-                  "TRANSCRIBING",
-                  "TRANSLATING",
-                  "SUBTITLING",
-                  "DONE",
-                  "UPLOADING"
-                ]
-              },
-              "name": "videos_video_stages"
-            }
-          },
-          "Uuid"
-        ]
-      }
-    },
-    "query": "\n        UPDATE videos\n        SET stage = $1\n        WHERE id = $2\n        "
   },
   "b226f239d065491b664d52cdc1e86368380f04a0c063fdc8dc4a1b4cb5add3e2": {
     "describe": {
@@ -1241,6 +1241,32 @@
       }
     },
     "query": "\n        SELECT\n          video_id as \"video_id: Uuid\",\n          subtitler_id,\n          subtitling_id,\n          created_at as \"created_at: DateTime<Utc>\",\n          updated_at as \"updated_at: DateTime<Utc>\",\n          deleted_at as \"deleted_at: DateTime<Utc>\"\n         FROM videos_subtitlings vs\n        WHERE video_id = $1\n        "
+  },
+  "fc1ad006597bbb5d4b1ebfc4b6ef5bc2b726ff6c606a6a78545cc8fcffe15a7d": {
+    "describe": {
+      "columns": [
+        {
+          "name": "error",
+          "ordinal": 0,
+          "type_info": "Bool"
+        },
+        {
+          "name": "updated_at",
+          "ordinal": 1,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n            SELECT error,updated_at FROM channels WHERE id = $1\n        "
   },
   "fc5bf1640301a744cfde51ad92238b883f8030fe1634391a2e27c58f6ef13f57": {
     "describe": {
