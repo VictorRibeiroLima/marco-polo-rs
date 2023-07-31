@@ -9,12 +9,9 @@ use actix_web::{
     web::{self, post},
     App,
 };
-use marco_polo_rs_core::{
-    database::models::{
-        user::{User, UserRole},
-        video::VideoStage,
-    },
-    internals::{cloud::aws::AwsCloudService, youtube_client::client::YoutubeClient},
+use marco_polo_rs_core::database::models::{
+    user::{User, UserRole},
+    video::VideoStage,
 };
 use reqwest::StatusCode;
 use sqlx::PgPool;
@@ -22,7 +19,11 @@ use sqlx::PgPool;
 use chrono::NaiveDate;
 use uuid::Uuid;
 
-use crate::auth::gen_token;
+use crate::{
+    auth::gen_token,
+    controllers::test::mock::{cloud_service::CloudServiceMock, youtube_client::YoutubeClientMock},
+    AppCloudService, AppYoutubeClient,
+};
 
 use crate::controllers::video::dtos::VideoDTO;
 
@@ -302,13 +303,21 @@ async fn innit_test_app(
 ) -> impl actix_web::dev::Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
     let pool = AppPool { pool };
     let web_data = web::Data::new(pool);
+    let app_cloud_service = web::Data::new(AppCloudService {
+        client: Arc::new(CloudServiceMock::new()),
+    });
+    let app_youtube_client = web::Data::new(AppYoutubeClient {
+        client: Arc::new(YoutubeClientMock::new()),
+    });
     let app = App::new()
         .app_data(web_data)
+        .app_data(app_cloud_service)
+        .app_data(app_youtube_client)
         .service(find_by_id)
         .service(find_all)
         .route(
             "/",
-            post().to(create_video::<AwsCloudService, YoutubeClient>),
+            post().to(create_video::<CloudServiceMock, YoutubeClientMock>),
         );
 
     let test_app = test::init_service(app).await;

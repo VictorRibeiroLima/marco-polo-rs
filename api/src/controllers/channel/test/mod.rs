@@ -27,7 +27,7 @@ use super::{find_all, find_by_id};
 
 #[sqlx::test(migrations = "../migrations")]
 async fn test_create_channel_unauthorized(pool: PgPool) {
-    let youtube_client = YoutubeClientMock;
+    let youtube_client = YoutubeClientMock::new();
     let youtube_client = Arc::new(youtube_client);
     let test_app = innit_test_app(Arc::new(pool), youtube_client).await;
 
@@ -45,7 +45,7 @@ async fn test_create_channel_unauthorized(pool: PgPool) {
 async fn test_create_channel_authorized(pool: PgPool) {
     let pool = Arc::new(pool);
 
-    let youtube_client = YoutubeClientMock;
+    let youtube_client = YoutubeClientMock::new();
     let youtube_client = Arc::new(youtube_client);
 
     let token = get_token!(pool.as_ref());
@@ -83,7 +83,7 @@ async fn test_create_channel_authorized(pool: PgPool) {
 async fn test_find_by_id_get_deleted(pool: PgPool) {
     let pool = Arc::new(pool);
 
-    let youtube_client = YoutubeClientMock;
+    let youtube_client = YoutubeClientMock::new();
     let youtube_client = Arc::new(youtube_client);
 
     let token = get_token!(pool.as_ref());
@@ -107,7 +107,7 @@ async fn test_find_by_id_get_deleted(pool: PgPool) {
 async fn test_find_by_id_get_ok(pool: PgPool) {
     let pool = Arc::new(pool);
 
-    let youtube_client = YoutubeClientMock;
+    let youtube_client = YoutubeClientMock::new();
     let youtube_client = Arc::new(youtube_client);
 
     let token = get_token!(pool.as_ref());
@@ -145,7 +145,7 @@ async fn test_find_by_id_get_ok(pool: PgPool) {
 async fn test_find_by_id_get_not_found(pool: PgPool) {
     let pool = Arc::new(pool);
 
-    let youtube_client = YoutubeClientMock;
+    let youtube_client = YoutubeClientMock::new();
     let youtube_client = Arc::new(youtube_client);
 
     let token = get_token!(pool.as_ref());
@@ -169,7 +169,7 @@ async fn test_find_by_id_get_not_found(pool: PgPool) {
 async fn test_find_by_id_get_unauthorized(pool: PgPool) {
     let pool = Arc::new(pool);
 
-    let youtube_client = YoutubeClientMock;
+    let youtube_client = YoutubeClientMock::new();
     let youtube_client = Arc::new(youtube_client);
 
     let test_app = innit_test_app(pool.clone(), youtube_client).await;
@@ -196,7 +196,7 @@ async fn test_find_all_admin(pool: PgPool) {
         expected_channels_ids.push(i);
     }
 
-    let youtube_client = YoutubeClientMock;
+    let youtube_client = YoutubeClientMock::new();
     let youtube_client = Arc::new(youtube_client);
 
     let token = get_token!(pool.as_ref(), admin_id);
@@ -235,7 +235,7 @@ async fn test_find_all_admin_offset(pool: PgPool) {
         expected_channels_ids_second.push(i);
     }
 
-    let youtube_client = YoutubeClientMock;
+    let youtube_client = YoutubeClientMock::new();
     let youtube_client = Arc::new(youtube_client);
 
     let token = get_token!(pool.as_ref(), admin_id);
@@ -279,7 +279,7 @@ async fn test_find_all_user(pool: PgPool) {
 
     let expected_channels_ids = vec![1, 4, 7, 10, 13, 16, 19, 22, 25, 28];
 
-    let youtube_client = YoutubeClientMock;
+    let youtube_client = YoutubeClientMock::new();
     let youtube_client = Arc::new(youtube_client);
 
     let token = get_token!(pool.as_ref(), user_id);
