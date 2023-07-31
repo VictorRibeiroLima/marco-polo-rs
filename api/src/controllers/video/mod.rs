@@ -9,9 +9,12 @@ use marco_polo_rs_core::{
         models::{user::UserRole, video::Video},
         queries::{self, filter::Filter, pagination::Pagination},
     },
-    internals::cloud::{
-        aws::AwsCloudService,
-        traits::{CloudService, QueueClient},
+    internals::{
+        cloud::{
+            aws::AwsCloudService,
+            traits::{CloudService, QueueClient},
+        },
+        youtube_client::{self, client::YoutubeClient},
     },
 };
 use uuid::Uuid;
@@ -19,6 +22,7 @@ use validator::Validate;
 
 use crate::{
     middleware::jwt_token::TokenClaims, models::error::AppError, AppCloudService, AppPool,
+    AppYoutubeClient,
 };
 
 use self::dtos::{create::CreateVideo, VideoDTO};
@@ -28,16 +32,49 @@ mod service;
 #[cfg(test)]
 mod test;
 
-async fn create_video<CS: CloudService>(
+async fn create_video<CS: CloudService, YC: youtube_client::traits::YoutubeClient>(
     pool: web::Data<AppPool>,
     cloud_service: web::Data<AppCloudService<CS>>,
+    youtube_client: web::Data<AppYoutubeClient<YC>>,
     jwt: TokenClaims,
     body: Json<CreateVideo>,
 ) -> Result<impl Responder, AppError> {
     body.validate()?;
     let pool = &pool.pool;
     let body = body.into_inner();
-    queries::channel::find_by_id(pool, body.channel_id).await?;
+    let youtube_client = &youtube_client.client;
+
+    let channel = match jwt.role {
+        UserRole::Admin => queries::channel::find_by_id(pool, body.channel_id).await?,
+        UserRole::User => {
+            let user_id = jwt.id;
+            queries::channel::find_by_and_creator(pool, body.channel_id, user_id).await?
+        }
+    };
+
+    if channel.error {
+        return Err(AppError::bad_request(
+            "Channel has errors. Please contact admins".to_string(),
+        ));
+    };
+
+    let refresh_token = match channel.refresh_token {
+        Some(refresh_token) => refresh_token,
+        None => {
+            return Err(AppError::bad_request(
+                "Youtube channel not linked".to_string(),
+            ))
+        }
+    };
+
+    let result = youtube_client.get_channel_info(refresh_token).await;
+
+    if result.is_err() {
+        queries::channel::change_error_state(pool, body.channel_id, true).await?;
+        return Err(AppError::bad_request(
+            "Channel has errors. Please contact admins".to_string(),
+        ));
+    }
 
     let video_id = uuid::Uuid::new_v4();
 
@@ -93,7 +130,10 @@ async fn find_all(
 pub fn init_routes(config: &mut web::ServiceConfig) {
     let scope = web::scope("/video");
     let scope = scope
-        .route("/", post().to(create_video::<AwsCloudService>))
+        .route(
+            "/",
+            post().to(create_video::<AwsCloudService, YoutubeClient>),
+        )
         .service(find_by_id)
         .service(find_all);
     config.service(scope);
