@@ -3,7 +3,13 @@ use marco_polo_rs_core::database::models::video::VideoWithStorageAndChannel;
 use std::sync::Arc;
 
 use actix_http::Request;
-use actix_web::{dev::ServiceResponse, http::header::ContentType, test, web, App};
+use actix_web::{
+    dev::ServiceResponse,
+    http::header::ContentType,
+    test,
+    web::{self, post},
+    App,
+};
 use chrono::NaiveDate;
 use marco_polo_rs_core::{
     database::models::user::{User, UserRole},
@@ -315,7 +321,10 @@ async fn innit_test_app(
     let app = App::new()
         .app_data(web_data)
         .app_data(web::Data::new(youtube_client))
-        .service(create_youtube_channel)
+        .route(
+            "youtube",
+            post().to(create_youtube_channel::<YoutubeClientMock>),
+        )
         .service(find_by_id)
         .service(find_all);
 

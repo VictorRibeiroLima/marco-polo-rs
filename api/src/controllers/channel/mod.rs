@@ -1,11 +1,16 @@
 use actix_web::{
-    get, post,
-    web::{self, Json},
+    get,
+    web::{self, post, Json},
     HttpResponse, Responder,
 };
-use marco_polo_rs_core::database::{
-    models::{channel::Channel, user::UserRole},
-    queries::{self, channel::UpdateChannelDto, pagination::Pagination},
+use marco_polo_rs_core::{
+    database::{
+        models::{channel::Channel, user::UserRole},
+        queries::{self, channel::UpdateChannelDto, pagination::Pagination},
+    },
+    internals::youtube_client::{
+        client::YoutubeClient, traits::YoutubeClient as YoutubeClientTrait,
+    },
 };
 
 mod dto;
@@ -19,10 +24,9 @@ use crate::{
     AppPool, AppYoutubeClient,
 };
 
-#[post("youtube")]
-async fn create_youtube_channel(
+async fn create_youtube_channel<YC: YoutubeClientTrait>(
     pool: web::Data<AppPool>,
-    youtube_client: web::Data<AppYoutubeClient>,
+    youtube_client: web::Data<AppYoutubeClient<YC>>,
     jwt: TokenClaims,
 ) -> Result<impl Responder, AppError> {
     let pool = &pool.pool;
@@ -73,10 +77,9 @@ async fn find_all(
     return Ok(Json(dto));
 }
 
-#[get("youtube/oauth/callback")]
-async fn oauth_youtube_callback(
+async fn oauth_youtube_callback<YC: YoutubeClientTrait>(
     pool: web::Data<AppPool>,
-    youtube_client: web::Data<AppYoutubeClient>,
+    youtube_client: web::Data<AppYoutubeClient<YC>>,
     params: web::Query<dto::OauthQueryParams>,
 ) -> Result<impl Responder, AppError> {
     let pool = &pool.pool;
@@ -111,8 +114,16 @@ async fn oauth_youtube_callback(
 
 pub fn init_routes(config: &mut web::ServiceConfig) {
     let channel_scope = web::scope("/channel")
-        .service(create_youtube_channel)
-        .service(oauth_youtube_callback)
+        .route(
+            "youtube",
+            post().to(create_youtube_channel::<YoutubeClient>),
+        )
+        .route(
+            "youtube/oauth/callback",
+            post().to(oauth_youtube_callback::<YoutubeClient>),
+        )
+        //.service(create_youtube_channel)
+        //.service(oauth_youtube_callback)
         .service(find_by_id)
         .service(find_all);
 

@@ -11,7 +11,7 @@ use marco_polo_rs_core::{
     env,
     internals::{
         cloud::{default_cloud_service, traits::CloudService},
-        youtube_client::{client, traits},
+        youtube_client::{client, traits::YoutubeClient},
     },
 };
 use models::{error::AppError, result::AppResult};
@@ -26,8 +26,8 @@ struct AppPool {
     pool: Arc<sqlx::PgPool>,
 }
 
-struct AppYoutubeClient {
-    client: Arc<dyn traits::YoutubeClient>,
+struct AppYoutubeClient<YC: YoutubeClient> {
+    client: Arc<YC>,
 }
 
 struct AppCloudService<CS: CloudService> {
