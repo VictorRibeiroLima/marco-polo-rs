@@ -17,6 +17,9 @@ pub struct CreateVideoDto<'a> {
     pub user_id: i32,
     pub channel_id: i32,
     pub language: &'a str,
+    pub tags: Option<&'a str>,
+    pub start_time: &'a str,
+    pub original_url: &'a str,
 }
 
 pub struct CreateErrorDto<'a> {
@@ -28,8 +31,8 @@ pub struct CreateErrorDto<'a> {
 pub async fn create(pool: &PgPool, dto: CreateVideoDto<'_>) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
-        INSERT INTO videos (id, title, description, user_id, channel_id, language)
-        VALUES ($1, $2, $3, $4, $5, $6);
+        INSERT INTO videos (id, title, description, user_id, channel_id, language, start_time, original_url, tags)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
         "#,
         dto.id,
         dto.title,
@@ -37,6 +40,9 @@ pub async fn create(pool: &PgPool, dto: CreateVideoDto<'_>) -> Result<(), sqlx::
         dto.user_id,
         dto.channel_id,
         dto.language,
+        dto.start_time,
+        dto.original_url,
+        dto.tags,
     )
     .execute(pool)
     .await?;
@@ -168,6 +174,11 @@ pub async fn find_by_transcription_id(
             v.user_id,
             v.channel_id,
             v.error,
+            v.original_url,
+            v.original_end_time,
+            v.start_time,
+            v.end_time,
+            v.tags,
             v.stage as "stage: VideoStage",
             v.created_at as "created_at: NaiveDateTime",
             v.updated_at as "updated_at: NaiveDateTime",
@@ -201,6 +212,11 @@ pub async fn find_by_id(pool: &PgPool, id: &Uuid) -> Result<Video, sqlx::Error> 
             v.user_id,
             v.channel_id,
             v.error,
+            v.original_url,
+            v.original_end_time,
+            v.start_time,
+            v.end_time,
+            v.tags,
             v.stage as "stage: VideoStage",
             v.created_at as "created_at: NaiveDateTime",
             v.updated_at as "updated_at: NaiveDateTime",

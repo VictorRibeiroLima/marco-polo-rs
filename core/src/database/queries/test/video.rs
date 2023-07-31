@@ -200,6 +200,36 @@ async fn test_create_video(pool: PgPool) {
         user_id: 666,
         channel_id: 666,
         language: "en",
+        original_url: "https://www.youtube.com/watch?v=1234567890",
+        start_time: "00:00:00",
+        tags: None,
+    };
+
+    create(&pool, dto).await.unwrap();
+
+    let count = sqlx::query!("SELECT COUNT(*) FROM videos where id = $1", id)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+
+    assert!(count.count.is_some());
+    assert_eq!(count.count.unwrap(), 1);
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("user", "channel"))]
+async fn test_create_video_with_tags(pool: PgPool) {
+    let id = uuid::Uuid::new_v4();
+
+    let dto = CreateVideoDto {
+        id: &id,
+        title: "Test",
+        description: "Test",
+        user_id: 666,
+        channel_id: 666,
+        language: "en",
+        original_url: "https://www.youtube.com/watch?v=1234567890",
+        start_time: "00:00:00",
+        tags: Some("test;test"),
     };
 
     create(&pool, dto).await.unwrap();
@@ -214,7 +244,7 @@ async fn test_create_video(pool: PgPool) {
 }
 
 #[sqlx::test(migrations = "../migrations")]
-async fn test_create_if_foreign_key(pool: PgPool) {
+async fn test_create_fail_if_foreign_key(pool: PgPool) {
     let id = uuid::Uuid::new_v4();
 
     let dto = CreateVideoDto {
@@ -224,6 +254,9 @@ async fn test_create_if_foreign_key(pool: PgPool) {
         user_id: 666,
         channel_id: 666,
         language: "en",
+        original_url: "https://www.youtube.com/watch?v=1234567890",
+        start_time: "00:00:00",
+        tags: None,
     };
 
     let result = create(&pool, dto).await;

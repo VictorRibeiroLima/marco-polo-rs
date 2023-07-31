@@ -152,10 +152,16 @@ impl super::traits::YoutubeClient for YoutubeClient {
         let authenticator = AccessTokenAuthenticator::builder(token).build().await?;
         let hub = google_youtube3::YouTube::new(client, authenticator);
 
+        let tags = match video.tags.as_ref() {
+            Some(tags) => Some(tags.split(";").map(|s| s.to_string()).collect()),
+            None => None,
+        };
+
         let video = Video {
             snippet: Some(VideoSnippet {
                 title: Some(video.title.to_string()),
                 description: Some(video.description.to_string()),
+                tags,
                 ..Default::default()
             }),
             status: Some(VideoStatus {

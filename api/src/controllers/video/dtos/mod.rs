@@ -14,6 +14,8 @@ pub struct VideoDTO {
     pub url: Option<String>,
     pub language: String,
     pub stage: VideoStage,
+    pub error: bool,
+    pub tags: Option<Vec<String>>,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
     pub uploaded_at: Option<NaiveDateTime>,
@@ -21,6 +23,10 @@ pub struct VideoDTO {
 
 impl From<Video> for VideoDTO {
     fn from(value: Video) -> Self {
+        let tags = match value.tags {
+            Some(tags) => Some(tags.split(";").map(|s| s.to_string()).collect()),
+            None => None,
+        };
         return Self {
             id: value.id,
             title: value.title,
@@ -33,6 +39,8 @@ impl From<Video> for VideoDTO {
             updated_at: value.updated_at,
             uploaded_at: value.uploaded_at,
             stage: value.stage,
+            tags,
+            error: value.error,
         };
     }
 }

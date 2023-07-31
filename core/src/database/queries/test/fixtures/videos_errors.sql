@@ -22,7 +22,12 @@ INSERT INTO
     url,
     user_id,
     channel_id,
-    error
+    error,
+    original_url,
+    original_end_time,
+    start_time,
+    end_time,
+    tags
   )
 VALUES
   (
@@ -32,7 +37,12 @@ VALUES
     'https://www.youtube.com/watch?v=1234567890',
     666,
     666,
-    true
+    true,
+    'https://www.youtube.com/watch?v=1234567890',
+    '00:10:00',
+    '00:00:00',
+    '00:10:00',
+    'spacetourism'
   );
 
 INSERT INTO

@@ -23,6 +23,7 @@ pub struct CreateVideo {
     pub format: Option<VideoFormat>,
     pub start_time: Option<String>,
     pub end_time: Option<String>,
+    pub tags: Option<String>,
 }
 
 impl CreateVideo {

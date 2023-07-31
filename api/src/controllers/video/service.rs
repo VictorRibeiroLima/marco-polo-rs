@@ -14,6 +14,16 @@ pub async fn create_video(
         None => "en",
     };
 
+    let start_time = match &body.start_time {
+        Some(start_time) => start_time,
+        None => "00:00:00",
+    };
+
+    let tags: Option<&str> = match &body.tags {
+        Some(tags) => Some(tags),
+        None => None,
+    };
+
     queries::video::create(
         pool,
         CreateVideoDto {
@@ -23,6 +33,9 @@ pub async fn create_video(
             description: &body.description,
             channel_id: body.channel_id,
             language: &language,
+            original_url: &body.video_url,
+            tags,
+            start_time,
         },
     )
     .await?;

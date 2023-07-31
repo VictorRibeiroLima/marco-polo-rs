@@ -57,8 +57,10 @@ async fn test_find_by_id_get_ok(pool: PgPool) {
         language: "English".to_string(),
         created_at: date,
         updated_at: date,
+        tags: Some(vec!["elon-musk".to_string(), "test".to_string()]),
         uploaded_at: Some(date),
         stage: VideoStage::Downloading,
+        error: false,
     };
 
     let test_app = innit_test_app(pool.clone()).await;
@@ -86,6 +88,7 @@ async fn test_find_all_user(pool: PgPool) {
 
     let expected_videos_id: Vec<Uuid> = vec![
         "09a9e5f5-2c3b-4a54-bb1f-8a4d67c6156f",
+        "2c20e6d2-7bce-47b7-b02d-7f45fb106df5",
         "48f6cbe7-4b88-45f1-8b7e-cac11dbf8f2e",
         "4e87a122-6f59-4a48-9ff6-6a5c9d7082e0",
     ]
@@ -105,7 +108,7 @@ async fn test_find_all_user(pool: PgPool) {
     assert_eq!(response.status().as_u16(), StatusCode::OK);
 
     let actual_dto: Vec<VideoDTO> = test::read_body_json(response).await;
-    assert_eq!(actual_dto.len(), 3);
+    assert_eq!(actual_dto.len(), 4);
 
     let actual_videos_ids: Vec<Uuid> = actual_dto.iter().map(|video| video.id).collect();
     assert_eq!(actual_videos_ids, expected_videos_id);
@@ -124,6 +127,7 @@ async fn test_find_all_admin(pool: PgPool) {
         "07cc7053-6aee-4e27-9310-0e8593aee422",
         "09a9e5f5-2c3b-4a54-bb1f-8a4d67c6156f",
         "1c7b8db2-bd92-434b-9b4f-63d643a6f81d",
+        "2c20e6d2-7bce-47b7-b02d-7f45fb106df5",
         "2c20e6d2-7bce-47b7-b02d-7f45fb106df7",
         "48f6cbe7-4b88-45f1-8b7e-cac11dbf8f2e",
         "4e87a122-6f59-4a48-9ff6-6a5c9d7082e0",
@@ -132,7 +136,6 @@ async fn test_find_all_admin(pool: PgPool) {
         "ac9a10b9-17e9-412f-a166-144a07a30e6d",
         "b7a720e3-010e-4d88-919b-7aee4d7a3144",
         "e4a399d1-7d97-432d-8681-30a6a94f88f5",
-        "fe0a2ab6-3d94-4db7-8a89-58b77a0f367e",
     ]
     .iter()
     .map(|s| Uuid::from_str(s).unwrap())
@@ -250,19 +253,19 @@ async fn test_find_all_admin_offset(pool: PgPool) {
         "07cc7053-6aee-4e27-9310-0e8593aee422",
         "09a9e5f5-2c3b-4a54-bb1f-8a4d67c6156f",
         "1c7b8db2-bd92-434b-9b4f-63d643a6f81d",
-        "2c20e6d2-7bce-47b7-b02d-7f45fb106df7",
+        "2c20e6d2-7bce-47b7-b02d-7f45fb106df5",
     ]
     .iter()
     .map(|s| Uuid::from_str(s).unwrap())
     .collect();
 
     let expected_videos_ids_second: Vec<Uuid> = vec![
+        "48f6cbe7-4b88-45f1-8b7e-cac11dbf8f2e",
         "4e87a122-6f59-4a48-9ff6-6a5c9d7082e0",
         "806b57d2-f221-11ed-a05b-0242ac120003",
         "9b594b49-c2b9-40a1-a20d-8d18a50dcd8d",
         "ac9a10b9-17e9-412f-a166-144a07a30e6d",
         "b7a720e3-010e-4d88-919b-7aee4d7a3144",
-        "e4a399d1-7d97-432d-8681-30a6a94f88f5",
     ]
     .iter()
     .map(|s| Uuid::from_str(s).unwrap())
