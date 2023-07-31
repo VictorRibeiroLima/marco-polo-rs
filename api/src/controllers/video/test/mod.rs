@@ -11,7 +11,7 @@ use actix_web::{
 };
 use marco_polo_rs_core::database::models::{
     user::{User, UserRole},
-    video::VideoStage,
+    video::{Video, VideoStage},
 };
 use reqwest::StatusCode;
 use sqlx::PgPool;
@@ -22,10 +22,11 @@ use uuid::Uuid;
 use crate::{
     auth::gen_token,
     controllers::test::mock::{cloud_service::CloudServiceMock, youtube_client::YoutubeClientMock},
+    models::error::AppErrorResponse,
     AppCloudService, AppYoutubeClient,
 };
 
-use crate::controllers::video::dtos::VideoDTO;
+use crate::controllers::video::dtos::{create::CreateVideo, VideoDTO};
 
 use crate::utils::test::get_token;
 use crate::AppPool;
@@ -296,6 +297,235 @@ async fn test_find_all_admin_offset(pool: PgPool) {
     assert_eq!(actual_dto.len(), 6);
     let actual_videos_ids: Vec<Uuid> = actual_dto.iter().map(|video| video.id).collect();
     assert_eq!(actual_videos_ids, expected_videos_ids_second);
+}
+
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/channels")
+)]
+async fn test_create_video_ok(pool: PgPool) {
+    let jwt = get_token!(&pool, 1);
+    let pool = Arc::new(pool);
+    let app = innit_test_app(pool.clone()).await;
+
+    let dto = CreateVideo {
+        channel_id: 1,
+        description: "This is a test video about Elon Musk".to_string(),
+        title: "Elon Musk Test".to_string(),
+        video_url: "https://www.youtube.com/watch?v=1".to_string(),
+        ..Default::default()
+    };
+
+    let request = test::TestRequest::post()
+        .uri("/")
+        .insert_header(("Authorization", jwt))
+        .insert_header(ContentType::json())
+        .set_json(&dto)
+        .to_request();
+
+    let response = test::call_service(&app, request).await;
+
+    assert_eq!(response.status().as_u16(), StatusCode::CREATED);
+
+    let video: Video = sqlx::query_as("SELECT * FROM videos WHERE channel_id = 1")
+        .fetch_one(pool.as_ref())
+        .await
+        .unwrap();
+
+    assert_eq!(video.title, dto.title);
+    assert_eq!(video.description, dto.description);
+    assert_eq!(video.channel_id, dto.channel_id);
+}
+
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/channels", "../../../test/fixtures/admin")
+)]
+async fn test_create_video_ok_admin(pool: PgPool) {
+    let jwt = get_token!(&pool, 1000);
+    let pool = Arc::new(pool);
+    let app = innit_test_app(pool.clone()).await;
+
+    let dto = CreateVideo {
+        channel_id: 1,
+        description: "This is a test video about Elon Musk".to_string(),
+        title: "Elon Musk Test".to_string(),
+        video_url: "https://www.youtube.com/watch?v=1".to_string(),
+        ..Default::default()
+    };
+
+    let request = test::TestRequest::post()
+        .uri("/")
+        .insert_header(("Authorization", jwt))
+        .insert_header(ContentType::json())
+        .set_json(&dto)
+        .to_request();
+
+    let response = test::call_service(&app, request).await;
+
+    assert_eq!(response.status().as_u16(), StatusCode::CREATED);
+
+    let video: Video = sqlx::query_as("SELECT * FROM videos WHERE channel_id = 1")
+        .fetch_one(pool.as_ref())
+        .await
+        .unwrap();
+
+    assert_eq!(video.title, dto.title);
+    assert_eq!(video.description, dto.description);
+    assert_eq!(video.channel_id, dto.channel_id);
+}
+
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/channels")
+)]
+async fn test_create_video_not_found_when_channel_does_not_belong(pool: PgPool) {
+    let jwt = get_token!(&pool, 1);
+    let pool = Arc::new(pool);
+    let app = innit_test_app(pool.clone()).await;
+
+    let dto = CreateVideo {
+        channel_id: 2,
+        description: "This is a test video about Elon Musk".to_string(),
+        title: "Elon Musk Test".to_string(),
+        video_url: "https://www.youtube.com/watch?v=1".to_string(),
+        ..Default::default()
+    };
+
+    let request = test::TestRequest::post()
+        .uri("/")
+        .insert_header(("Authorization", jwt))
+        .insert_header(ContentType::json())
+        .set_json(&dto)
+        .to_request();
+
+    let response = test::call_service(&app, request).await;
+
+    assert_eq!(response.status().as_u16(), StatusCode::NOT_FOUND);
+}
+
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/channels")
+)]
+async fn test_create_video_channel_has_error(pool: PgPool) {
+    let jwt = get_token!(&pool, 1);
+    let pool = Arc::new(pool);
+    let app = innit_test_app(pool.clone()).await;
+
+    let dto = CreateVideo {
+        channel_id: 46,
+        description: "This is a test video about Elon Musk".to_string(),
+        title: "Elon Musk Test".to_string(),
+        video_url: "https://www.youtube.com/watch?v=1".to_string(),
+        ..Default::default()
+    };
+
+    let request = test::TestRequest::post()
+        .uri("/")
+        .insert_header(("Authorization", jwt))
+        .insert_header(ContentType::json())
+        .set_json(&dto)
+        .to_request();
+
+    let response = test::call_service(&app, request).await;
+
+    assert_eq!(response.status().as_u16(), StatusCode::BAD_REQUEST);
+
+    let body: AppErrorResponse = test::read_body_json(response).await;
+
+    assert_eq!(
+        body.errors[0],
+        "Channel has errors. Please contact admins".to_string()
+    );
+}
+
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/channels")
+)]
+async fn test_create_video_channel_does_not_has_refresh_token(pool: PgPool) {
+    let jwt = get_token!(&pool, 1);
+    let pool = Arc::new(pool);
+    let app = innit_test_app(pool.clone()).await;
+
+    let dto = CreateVideo {
+        channel_id: 52,
+        description: "This is a test video about Elon Musk".to_string(),
+        title: "Elon Musk Test".to_string(),
+        video_url: "https://www.youtube.com/watch?v=1".to_string(),
+        ..Default::default()
+    };
+
+    let request = test::TestRequest::post()
+        .uri("/")
+        .insert_header(("Authorization", jwt))
+        .insert_header(ContentType::json())
+        .set_json(&dto)
+        .to_request();
+
+    let response = test::call_service(&app, request).await;
+
+    assert_eq!(response.status().as_u16(), StatusCode::BAD_REQUEST);
+
+    let body: AppErrorResponse = test::read_body_json(response).await;
+
+    assert_eq!(body.errors[0], "Youtube channel not linked".to_string());
+}
+
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/channels")
+)]
+async fn test_create_video_channel_error_when_getting_info(pool: PgPool) {
+    let jwt = get_token!(&pool, 1);
+    let pool = Arc::new(pool);
+
+    let pool = AppPool { pool };
+
+    let web_data = web::Data::new(pool);
+    let app_cloud_service = web::Data::new(AppCloudService {
+        client: Arc::new(CloudServiceMock::new()),
+    });
+    let app_youtube_client = web::Data::new(AppYoutubeClient {
+        client: Arc::new(YoutubeClientMock::with_error()),
+    });
+    let app = App::new()
+        .app_data(web_data)
+        .app_data(app_cloud_service)
+        .app_data(app_youtube_client)
+        .route(
+            "/",
+            post().to(create_video::<CloudServiceMock, YoutubeClientMock>),
+        );
+
+    let test_app = test::init_service(app).await;
+
+    let dto = CreateVideo {
+        channel_id: 1,
+        description: "This is a test video about Elon Musk".to_string(),
+        title: "Elon Musk Test".to_string(),
+        video_url: "https://www.youtube.com/watch?v=1".to_string(),
+        ..Default::default()
+    };
+
+    let request = test::TestRequest::post()
+        .uri("/")
+        .insert_header(("Authorization", jwt))
+        .insert_header(ContentType::json())
+        .set_json(&dto)
+        .to_request();
+
+    let response = test::call_service(&test_app, request).await;
+
+    assert_eq!(response.status().as_u16(), StatusCode::BAD_REQUEST);
+
+    let body: AppErrorResponse = test::read_body_json(response).await;
+
+    assert_eq!(
+        body.errors[0],
+        "Channel has errors. Please contact admins".to_string()
+    );
 }
 
 async fn innit_test_app(

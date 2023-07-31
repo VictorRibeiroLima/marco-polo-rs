@@ -12,7 +12,7 @@ lazy_static! {
     static ref YOUTUBE_URL: Regex = Regex::new(r#"^((?:https?:)?//)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(/(?:[\w\-]+\?v=|embed/|v/)?)([\w\-]+)(\S+)?$"#).unwrap();
 }
 
-#[derive(Debug, Validate, Deserialize, Serialize, Clone)]
+#[derive(Debug, Default, Validate, Deserialize, Serialize, Clone)]
 pub struct CreateVideo {
     pub title: String,
     pub description: String,

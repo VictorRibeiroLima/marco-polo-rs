@@ -67,6 +67,8 @@ async fn create_video<CS: CloudService, YC: youtube_client::traits::YoutubeClien
         }
     };
 
+    println!("HELOOOOOOOOOOO");
+
     let result = youtube_client.get_channel_info(refresh_token).await;
 
     if result.is_err() {

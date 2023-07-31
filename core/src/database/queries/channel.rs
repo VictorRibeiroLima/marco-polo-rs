@@ -54,7 +54,7 @@ pub async fn find_by_and_creator(
             created_at as "created_at: chrono::NaiveDateTime",
             updated_at as "updated_at: chrono::NaiveDateTime",
             deleted_at as "deleted_at: chrono::NaiveDateTime"
-        FROM channels WHERE id = $1 AND creator_id = $2 AND deleted_at IS NULL AND error = FALSE
+        FROM channels WHERE id = $1 AND creator_id = $2 AND deleted_at IS NULL
         "#,
         id,
         creator_id
