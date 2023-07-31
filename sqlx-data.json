@@ -1,5 +1,18 @@
 {
   "db": "PostgreSQL",
+  "019cee7e3d6654133d49d93740d7b756e14987e6343361524ae298aed933f06e": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Bool",
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n    UPDATE channels SET \n        error = $1,\n        updated_at = NOW()\n    WHERE id = $2\n    "
+  },
   "1c103849145de2e73e893b8d3b159a338c86341484843e854fe31a07ca8d9393": {
     "describe": {
       "columns": [],
@@ -12,6 +25,75 @@
       }
     },
     "query": "\n    INSERT INTO channels (csrf_token,creator_id) \n    VALUES ($1,$2)\n    "
+  },
+  "2405e2788244447e709e0e7397bda8b672dbe8b855ce9aed6216cf5fc94b0074": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "csrf_token",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "creator_id",
+          "ordinal": 3,
+          "type_info": "Int4"
+        },
+        {
+          "name": "error",
+          "ordinal": 4,
+          "type_info": "Bool"
+        },
+        {
+          "name": "refresh_token",
+          "ordinal": 5,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "created_at: chrono::NaiveDateTime",
+          "ordinal": 6,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "updated_at: chrono::NaiveDateTime",
+          "ordinal": 7,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "deleted_at: chrono::NaiveDateTime",
+          "ordinal": 8,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        true,
+        false,
+        false,
+        true,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n        SELECT \n            id,\n            name,\n            csrf_token,\n            creator_id,\n            error,\n            refresh_token,\n            created_at as \"created_at: chrono::NaiveDateTime\",\n            updated_at as \"updated_at: chrono::NaiveDateTime\",\n            deleted_at as \"deleted_at: chrono::NaiveDateTime\"\n        FROM channels WHERE id = $1 AND creator_id = $2 AND deleted_at IS NULL AND error = FALSE\n        "
   },
   "28c3cc46ca261ddac740d6ab35f44aa23388d21086872102df103dc19437c28b": {
     "describe": {
@@ -151,6 +233,74 @@
       }
     },
     "query": "\n        SELECT \n            id,\n            video_id as \"video_id: Uuid\",\n            storage_id,\n            video_path,\n            format as \"format: VideoFormat\",\n            stage as \"stage: StorageVideoStage\",\n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        FROM videos_storages\n            WHERE video_id = $1 AND stage = $2\n        "
+  },
+  "4321112f015d9ab714e24cf533c6679fa3cb30822b8c6b463ce9fa54c47baa5f": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "creator_id",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "csrf_token",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "error",
+          "ordinal": 4,
+          "type_info": "Bool"
+        },
+        {
+          "name": "refresh_token",
+          "ordinal": 5,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "created_at: chrono::NaiveDateTime",
+          "ordinal": 6,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "updated_at: chrono::NaiveDateTime",
+          "ordinal": 7,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "deleted_at: chrono::NaiveDateTime",
+          "ordinal": 8,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        false,
+        true,
+        false,
+        true,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        SELECT \n            id,\n            name,\n            creator_id,\n            csrf_token,\n            error,\n            refresh_token,\n            created_at as \"created_at: chrono::NaiveDateTime\",\n            updated_at as \"updated_at: chrono::NaiveDateTime\",\n            deleted_at as \"deleted_at: chrono::NaiveDateTime\"\n        FROM channels WHERE csrf_token = $1\n        "
   },
   "4536639bfd85118ac238229f0ca4179668653d20819b53db687cbe2d464d095f": {
     "describe": {
@@ -424,68 +574,6 @@
       }
     },
     "query": "\n        SELECT COUNT(*) FROM users WHERE name = $1\n        "
-  },
-  "99f823121449704ac947640fad60e231e1b09d729960db0fcbc0b89f64a17d40": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Int4"
-        },
-        {
-          "name": "name",
-          "ordinal": 1,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "creator_id",
-          "ordinal": 2,
-          "type_info": "Int4"
-        },
-        {
-          "name": "csrf_token",
-          "ordinal": 3,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "refresh_token",
-          "ordinal": 4,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "created_at: chrono::NaiveDateTime",
-          "ordinal": 5,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "updated_at: chrono::NaiveDateTime",
-          "ordinal": 6,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "deleted_at: chrono::NaiveDateTime",
-          "ordinal": 7,
-          "type_info": "Timestamp"
-        }
-      ],
-      "nullable": [
-        false,
-        true,
-        false,
-        true,
-        true,
-        false,
-        false,
-        true
-      ],
-      "parameters": {
-        "Left": [
-          "Text"
-        ]
-      }
-    },
-    "query": "\n        SELECT \n            id,\n            name,\n            creator_id,\n            csrf_token,\n            refresh_token,\n            created_at as \"created_at: chrono::NaiveDateTime\",\n            updated_at as \"updated_at: chrono::NaiveDateTime\",\n            deleted_at as \"deleted_at: chrono::NaiveDateTime\"\n        FROM channels WHERE csrf_token = $1\n        "
   },
   "a1c10b0716bfaa99da8bcf97c0c49eeae1accf3de0ec3012817c55b5baa9db52": {
     "describe": {
@@ -931,24 +1019,7 @@
     },
     "query": "\n        SELECT \n            v.id as \"id: Uuid\", \n            v.title,\n            v.description,\n            v.url,\n            v.language,\n            v.user_id,\n            v.channel_id,\n            v.error,\n            v.stage as \"stage: VideoStage\",\n            v.created_at as \"created_at: NaiveDateTime\",\n            v.updated_at as \"updated_at: NaiveDateTime\",\n            v.deleted_at as \"deleted_at: NaiveDateTime\",\n            v.uploaded_at as \"uploaded_at: NaiveDateTime\"\n        FROM \n            videos v\n        WHERE \n            v.id = $1 AND deleted_at IS NULL\n    "
   },
-  "babea2c4398c8010f490603c2cf328ae398a13093d79253e5007b58fbea4628a": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Left": [
-          "Uuid",
-          "Varchar",
-          "Text",
-          "Int4",
-          "Int4",
-          "Varchar"
-        ]
-      }
-    },
-    "query": "\n        INSERT INTO videos (id, title, description, user_id, channel_id, language)\n        VALUES ($1, $2, $3, $4, $5, $6);\n        "
-  },
-  "c4f6565616cd20dc9821ed96c0be0da68641105429434b121e62f46ddee7814b": {
+  "b5a28ccd523cae364afff18b0a71d0cca9e7321fa410f2a3cf041c3c2f7bf54e": {
     "describe": {
       "columns": [
         {
@@ -972,23 +1043,28 @@
           "type_info": "Int4"
         },
         {
-          "name": "refresh_token",
+          "name": "error",
           "ordinal": 4,
+          "type_info": "Bool"
+        },
+        {
+          "name": "refresh_token",
+          "ordinal": 5,
           "type_info": "Varchar"
         },
         {
           "name": "created_at: chrono::NaiveDateTime",
-          "ordinal": 5,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "updated_at: chrono::NaiveDateTime",
           "ordinal": 6,
           "type_info": "Timestamp"
         },
         {
-          "name": "deleted_at: chrono::NaiveDateTime",
+          "name": "updated_at: chrono::NaiveDateTime",
           "ordinal": 7,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "deleted_at: chrono::NaiveDateTime",
+          "ordinal": 8,
           "type_info": "Timestamp"
         }
       ],
@@ -996,6 +1072,7 @@
         false,
         true,
         true,
+        false,
         false,
         true,
         false,
@@ -1008,7 +1085,24 @@
         ]
       }
     },
-    "query": "\n        SELECT \n            id,\n            name,\n            csrf_token,\n            creator_id,\n            refresh_token,\n            created_at as \"created_at: chrono::NaiveDateTime\",\n            updated_at as \"updated_at: chrono::NaiveDateTime\",\n            deleted_at as \"deleted_at: chrono::NaiveDateTime\"\n        FROM channels WHERE id = $1 AND deleted_at IS NULL\n        "
+    "query": "\n        SELECT \n            id,\n            name,\n            csrf_token,\n            creator_id,\n            error,\n            refresh_token,\n            created_at as \"created_at: chrono::NaiveDateTime\",\n            updated_at as \"updated_at: chrono::NaiveDateTime\",\n            deleted_at as \"deleted_at: chrono::NaiveDateTime\"\n        FROM channels WHERE id = $1 AND deleted_at IS NULL AND error = FALSE\n        "
+  },
+  "babea2c4398c8010f490603c2cf328ae398a13093d79253e5007b58fbea4628a": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Varchar",
+          "Text",
+          "Int4",
+          "Int4",
+          "Varchar"
+        ]
+      }
+    },
+    "query": "\n        INSERT INTO videos (id, title, description, user_id, channel_id, language)\n        VALUES ($1, $2, $3, $4, $5, $6);\n        "
   },
   "c63d015969ef0ed31e8f314a6a7a5b1ccb4c578773e5d70ee40eba67218d697f": {
     "describe": {
