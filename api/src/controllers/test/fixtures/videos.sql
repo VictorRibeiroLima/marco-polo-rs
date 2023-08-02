@@ -43,7 +43,7 @@ INSERT INTO
     updated_at,
     uploaded_at,
     original_url,
-    original_end_time,
+    original_duration,
     start_time,
     end_time,
     tags

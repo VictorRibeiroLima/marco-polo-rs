@@ -35,7 +35,7 @@ impl<BC: BucketClient> SubtitlerClient<BC> for LocalClient {
         &self,
         video: &VideoWithStorage,
         bucket_client: &BC,
-    ) -> Result<Option<String>, Box<dyn std::error::Error + Sync + Send>> {
+    ) -> Result<String, Box<dyn std::error::Error + Sync + Send>> {
         let video_id = video.video.id.to_string();
         let temp_dir = create_temp_dir()?;
         let temp_file_paths =
@@ -51,16 +51,9 @@ impl<BC: BucketClient> SubtitlerClient<BC> for LocalClient {
                 util::delete_temp_files(temp_file_paths)?;
                 return Err(e);
             }
-        }
-        match util::upload_output_file(bucket_client, &temp_file_paths[2], &video_id).await {
-            Ok(_) => {}
-            Err(e) => {
-                util::delete_temp_files(temp_file_paths)?;
-                return Err(e);
-            }
-        }
+        };
         let to_delete = temp_file_paths[0..2].to_vec();
         util::delete_temp_files(to_delete)?;
-        Ok(None)
+        Ok(temp_file_paths[2].to_str().unwrap().to_string())
     }
 }

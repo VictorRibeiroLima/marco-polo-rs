@@ -19,7 +19,7 @@ pub struct Video {
     pub stage: VideoStage,
     pub error: bool,
     pub original_url: String,
-    pub original_end_time: Option<String>,
+    pub original_duration: Option<String>,
     pub start_time: String,
     pub end_time: Option<String>,
     pub tags: Option<String>,

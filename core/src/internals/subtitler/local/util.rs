@@ -46,19 +46,6 @@ pub fn _read_output_file(
     Ok(output_bytes)
 }
 
-pub async fn upload_output_file<BC: BucketClient + Sync>(
-    bucket_client: &BC,
-    file: &PathBuf,
-    video_id: &str,
-) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {
-    let output_uri = format!("videos/processed/{}.{}", video_id, "mkv");
-    bucket_client
-        .upload_file_from_path(&output_uri, file.to_str().unwrap())
-        .await?;
-
-    Ok(())
-}
-
 pub fn delete_temp_files(
     temp_file_paths: Vec<PathBuf>,
 ) -> Result<(), Box<dyn std::error::Error + Sync + Send>> {

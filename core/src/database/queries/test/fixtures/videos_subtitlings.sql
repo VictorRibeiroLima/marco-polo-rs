@@ -23,7 +23,7 @@ INSERT INTO
     user_id,
     channel_id,
     original_url,
-    original_end_time,
+    original_duration,
     start_time,
     end_time,
     tags

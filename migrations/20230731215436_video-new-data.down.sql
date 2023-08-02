@@ -3,7 +3,7 @@ ALTER TABLE
   videos DROP COLUMN original_url;
 
 ALTER TABLE
-  videos DROP COLUMN original_end_time;
+  videos DROP COLUMN original_duration;
 
 ALTER TABLE
   videos DROP COLUMN start_time;

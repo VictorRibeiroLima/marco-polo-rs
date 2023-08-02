@@ -49,7 +49,7 @@ impl SubtitlerClient<S3Client> for VideoBoxClient {
         &self,
         video: &VideoWithStorage,
         bucket_client: &S3Client,
-    ) -> Result<Option<String>, Box<dyn std::error::Error + Sync + Send>> {
+    ) -> Result<String, Box<dyn std::error::Error + Sync + Send>> {
         let file_name = format!("{}.{}", video.video.id, video.storage.format.to_string());
 
         let video_uri = format!("videos/raw/{}", file_name);
@@ -103,7 +103,7 @@ impl SubtitlerClient<S3Client> for VideoBoxClient {
                 None => return Err("Failed to create task. No id was received by VideoBox".into()),
             };
 
-            return Ok(Some(task_id.to_string()));
+            return Ok(task_id.to_string());
         }
 
         Err("Failed to create task".into())

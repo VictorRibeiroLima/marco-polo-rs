@@ -17,6 +17,7 @@ async fn test_create_storage(pool: PgPool) {
         storage_id: 1234,
         format: VideoFormat::Mp4,
         stage: StorageVideoStage::Raw,
+        size: 1234,
     };
 
     let result = create(&pool, dto).await;
@@ -43,6 +44,7 @@ async fn test_create_storage_if_foreign_key(pool: PgPool) {
         storage_id: 1234,
         format: VideoFormat::Mp4,
         stage: StorageVideoStage::Raw,
+        size: 1234,
     };
 
     let result = create(&pool, dto).await;

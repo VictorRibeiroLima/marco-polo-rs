@@ -1,6 +1,6 @@
 use marco_polo_rs_core::{
     database::{
-        models::{video::VideoStage, video_storage::StorageVideoStage},
+        models::video_storage::StorageVideoStage,
         queries::{self, storage::CreateStorageDto},
     },
     internals::{
@@ -11,6 +11,7 @@ use marco_polo_rs_core::{
         yt_downloader::traits::YoutubeDownloader,
         ServiceProvider,
     },
+    util::{ffmpeg, fs},
 };
 
 use crate::error::HandlerError;
@@ -32,14 +33,53 @@ pub async fn handle<CS: CloudService>(
         .change_message_visibility(message, 4000) // TODO: Make this configurable
         .await?;
 
-    let output_file = video_downloader.download(payload.into()).await?;
+    let output_file = video_downloader.download(&payload.video_url).await?;
+
+    let raw_path = std::path::PathBuf::from(&output_file);
+
+    let original_video_duration = match ffmpeg::get_video_duration(&raw_path) {
+        Ok(duration) => duration,
+        Err(e) => {
+            std::fs::remove_file(output_file)?;
+            return Err(HandlerError::Final(e.into()));
+        }
+    };
+
+    let end_time = match &payload.end_time {
+        Some(end_time) => end_time,
+        None => &original_video_duration,
+    };
+
+    let start_time = match &payload.start_time {
+        Some(start_time) => start_time,
+        None => "00:00:00",
+    };
+
+    let cut_output = match ffmpeg::cut_video(&raw_path, &start_time, &end_time) {
+        Ok(output) => output,
+        Err(e) => {
+            std::fs::remove_file(output_file)?;
+            return Err(HandlerError::Final(e.into()));
+        }
+    };
+
+    let cut_path = std::path::PathBuf::from(&cut_output);
+
+    let cut_size = match fs::check_file_size(&cut_path) {
+        Ok(size) => size,
+        Err(e) => {
+            eprintln!("Failed to check file size: {}", e);
+            0
+        }
+    };
 
     cloud_service
         .bucket_client()
-        .upload_file_from_path(&video_uri, &output_file)
+        .upload_file_from_path(&video_uri, &cut_output)
         .await?;
 
     std::fs::remove_file(output_file)?;
+    std::fs::remove_file(cut_output)?;
 
     let storage_dto = CreateStorageDto {
         video_id: &video_id,
@@ -47,11 +87,12 @@ pub async fn handle<CS: CloudService>(
         video_uri: &video_uri,
         storage_id: cloud_service.bucket_client().id(),
         stage: StorageVideoStage::Raw,
+        size: cut_size as i64, //if some day a negative value appears on the database, this is the reason
     };
 
     queries::storage::create(pool, storage_dto).await?;
 
-    queries::video::change_stage(pool, &video_id, VideoStage::Transcribing).await?;
+    queries::video::update_metadata(pool, &video_id, &original_video_duration, end_time).await?;
 
     Ok(())
 }

@@ -72,6 +72,31 @@ pub async fn change_stage(
     Ok(())
 }
 
+pub async fn update_metadata(
+    pool: &PgPool,
+    video_id: &Uuid,
+    original_duration: &str,
+    end_time: &str,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"
+        UPDATE videos
+        SET 
+        original_duration = $1,
+        end_time = $2,
+        updated_at = NOW()
+        WHERE id = $3
+        "#,
+        original_duration,
+        end_time,
+        video_id,
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
 pub async fn change_error_state(
     pool: &PgPool,
     video_id: &Uuid,
@@ -175,7 +200,7 @@ pub async fn find_by_transcription_id(
             v.channel_id,
             v.error,
             v.original_url,
-            v.original_end_time,
+            v.original_duration,
             v.start_time,
             v.end_time,
             v.tags,
@@ -213,7 +238,7 @@ pub async fn find_by_id(pool: &PgPool, id: &Uuid) -> Result<Video, sqlx::Error> 
             v.channel_id,
             v.error,
             v.original_url,
-            v.original_end_time,
+            v.original_duration,
             v.start_time,
             v.end_time,
             v.tags,

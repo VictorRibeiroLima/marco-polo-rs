@@ -1,8 +1,8 @@
 use std::process::Command;
 
-use crate::{database::models::video_storage::VideoFormat, util::fs::create_temp_dir};
+use crate::{database::models::video_storage::VideoFormat, util::fs::create_temp_dir, SyncError};
 
-use super::traits::{YoutubeDownloader, YoutubeVideoConfig};
+use super::traits::YoutubeDownloader;
 use async_trait::async_trait;
 
 #[derive(Clone)]
@@ -16,24 +16,8 @@ impl YtDl {
 
 #[async_trait]
 impl YoutubeDownloader for YtDl {
-    async fn download(
-        &self,
-        config: YoutubeVideoConfig,
-    ) -> Result<String, Box<dyn std::error::Error + Sync + Send>> {
-        let format: String = match config.format {
-            Some(format) => format.to_string(),
-            None => VideoFormat::Mkv.into(),
-        };
-        let start_time = match config.start_time {
-            Some(start_time) => start_time.to_string(),
-            None => "00:00:00".to_string(),
-        };
-
-        let mut cut = format!("-ss {}", start_time);
-
-        if let Some(end_time) = config.end_time {
-            cut.push_str(&format!(" -to {}", end_time));
-        }
+    async fn download(&self, url: &str) -> Result<String, SyncError> {
+        let format: String = VideoFormat::Mkv.into();
 
         let video_id = uuid::Uuid::new_v4();
 
@@ -50,9 +34,7 @@ impl YoutubeDownloader for YtDl {
             .arg("bestvideo+bestaudio")
             .arg("--merge-output-format")
             .arg(format)
-            .arg("--postprocessor-args")
-            .arg(cut)
-            .arg(&config.url)
+            .arg(url)
             .output()?;
 
         if !output.status.success() {

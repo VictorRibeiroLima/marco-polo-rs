@@ -24,7 +24,7 @@ INSERT INTO
     channel_id,
     error,
     original_url,
-    original_end_time,
+    original_duration,
     start_time,
     end_time,
     tags

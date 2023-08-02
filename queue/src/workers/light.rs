@@ -92,7 +92,6 @@ impl LightWorker {
                 return processed_upload::handle(&self.pool, &self.youtube_client, payload).await;
             }
 
-            //Maybe heavy worker should handle this
             PayloadType::BatukaDownloadVideo(payload) => {
                 println!("Light Worker {} handling video download...", self.id);
                 let download_result: Result<(), HandlerError> = download_video::handle(
@@ -103,6 +102,8 @@ impl LightWorker {
                     message,
                 )
                 .await;
+
+                //TODO: check result and update video table if necessary
                 return download_result;
             }
 

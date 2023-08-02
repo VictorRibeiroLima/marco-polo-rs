@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::NaiveDateTime;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -10,6 +10,7 @@ pub struct CreateStorageDto<'a> {
     pub storage_id: i32,
     pub format: VideoFormat,
     pub stage: StorageVideoStage,
+    pub size: i64,
 }
 
 pub async fn create(pool: &PgPool, dto: CreateStorageDto<'_>) -> Result<(), sqlx::Error> {
@@ -45,9 +46,9 @@ pub async fn find_by_video_id_and_stage(
             video_path,
             format as "format: VideoFormat",
             stage as "stage: StorageVideoStage",
-            created_at as "created_at: DateTime<Utc>",
-            updated_at as "updated_at: DateTime<Utc>",
-            deleted_at as "deleted_at: DateTime<Utc>"
+            created_at as "created_at: NaiveDateTime",
+            updated_at as "updated_at: NaiveDateTime",
+            deleted_at as "deleted_at: NaiveDateTime"
         FROM videos_storages
             WHERE video_id = $1 AND stage = $2
         "#,

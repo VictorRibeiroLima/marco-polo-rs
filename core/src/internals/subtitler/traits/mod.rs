@@ -12,5 +12,5 @@ pub trait SubtitlerClient<BC: BucketClient>: ServiceProvider {
         &self,
         payload: &VideoWithStorage,
         bucket_client: &BC,
-    ) -> Result<Option<String>, Box<dyn std::error::Error + Sync + Send>>;
+    ) -> Result<String, Box<dyn std::error::Error + Sync + Send>>;
 }

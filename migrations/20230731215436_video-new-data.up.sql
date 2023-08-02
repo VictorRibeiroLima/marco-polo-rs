@@ -19,7 +19,7 @@ SET
 ALTER TABLE
   videos
 ADD
-  COLUMN original_end_time VARCHAR(255);
+  COLUMN original_duration VARCHAR(255);
 
 ALTER TABLE
   videos

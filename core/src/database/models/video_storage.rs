@@ -1,5 +1,6 @@
-use chrono::{DateTime, Utc};
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 use uuid::Uuid;
 
 #[derive(Debug, sqlx::Type, Serialize, Deserialize, Clone)]
@@ -52,7 +53,7 @@ pub enum StorageVideoStage {
     Processed,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct VideosStorage {
     pub id: i32,
     pub video_id: Uuid,
@@ -60,7 +61,7 @@ pub struct VideosStorage {
     pub stage: StorageVideoStage,
     pub format: VideoFormat,
     pub video_path: String,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-    pub deleted_at: Option<DateTime<Utc>>,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+    pub deleted_at: Option<NaiveDateTime>,
 }

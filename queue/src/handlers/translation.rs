@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 
 use marco_polo_rs_core::{
     database::{
@@ -8,11 +8,12 @@ use marco_polo_rs_core::{
     internals::{
         cloud::{
             models::payload::SrtPayload,
-            traits::{CloudService, QueueClient},
+            traits::{BucketClient, CloudService, QueueClient},
         },
         subtitler::traits::SubtitlerClient,
         ServiceProvider,
     },
+    util::fs,
 };
 
 use crate::error::HandlerError;
@@ -64,15 +65,31 @@ where
             .change_message_visibility(&self.message, estimation as usize)
             .await?;
 
-        self.subtitler_client
+        let subtitle_path = self
+            .subtitler_client
             .subtitle(&video, bucket_client)
-            .await?;
+            .await?; // this is a path only because of the local client,would be a uri otherwise
 
         let video_uri = format!(
             "videos/processed/{}.{}",
             payload.video_id,
             video.storage.format.to_string()
         );
+
+        match bucket_client
+            .upload_file_from_path(&video_uri, &subtitle_path)
+            .await
+        {
+            Ok(_) => {}
+            Err(e) => {
+                std::fs::remove_file(&subtitle_path)?;
+                return Err(e.into());
+            }
+        };
+
+        let sub_path = PathBuf::from(&subtitle_path);
+
+        let size = fs::check_file_size(&sub_path)? as i64;
 
         queries::storage::create(
             &self.pool,
@@ -82,6 +99,7 @@ where
                 video_id: &payload.video_id,
                 video_uri: &video_uri,
                 stage: StorageVideoStage::Processed,
+                size,
             },
         )
         .await?;
