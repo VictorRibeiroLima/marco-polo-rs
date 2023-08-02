@@ -13,33 +13,6 @@
     },
     "query": "\n    UPDATE channels SET \n        error = $1,\n        updated_at = NOW()\n    WHERE id = $2\n    "
   },
-  "0ff2a320e8e7a43b395a2cd37681438c2561ac6a1333004548f2a02efbc0d9f5": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Left": [
-          {
-            "Custom": {
-              "kind": {
-                "Enum": [
-                  "DOWNLOADING",
-                  "TRANSCRIBING",
-                  "TRANSLATING",
-                  "SUBTITLING",
-                  "DONE",
-                  "UPLOADING"
-                ]
-              },
-              "name": "videos_video_stages"
-            }
-          },
-          "Uuid"
-        ]
-      }
-    },
-    "query": "\n        UPDATE videos\n        SET \n        stage = $1,\n        updated_at = NOW()\n        WHERE id = $2\n        "
-  },
   "1c103849145de2e73e893b8d3b159a338c86341484843e854fe31a07ca8d9393": {
     "describe": {
       "columns": [],
@@ -53,144 +26,38 @@
     },
     "query": "\n    INSERT INTO channels (csrf_token,creator_id) \n    VALUES ($1,$2)\n    "
   },
-  "28c3cc46ca261ddac740d6ab35f44aa23388d21086872102df103dc19437c28b": {
+  "3c2053febd5da7122ddd7035c68556b0c3a24cca012f36e8be32cfa042a3db4f": {
     "describe": {
       "columns": [],
       "nullable": [],
       "parameters": {
         "Left": [
           "Uuid",
+          "Varchar",
+          "Text",
+          "Int4",
           "Int4",
           "Varchar",
-          {
-            "Custom": {
-              "kind": {
-                "Enum": [
-                  "MP4",
-                  "AVI",
-                  "MOV",
-                  "MKV"
-                ]
-              },
-              "name": "video_format"
-            }
-          },
-          {
-            "Custom": {
-              "kind": {
-                "Enum": [
-                  "RAW",
-                  "PROCESSED"
-                ]
-              },
-              "name": "video_stage"
-            }
-          }
+          "Varchar",
+          "Varchar",
+          "Varchar"
         ]
       }
     },
-    "query": "\n        INSERT INTO videos_storages (video_id, storage_id, video_path, format, stage)\n        VALUES ($1, $2, $3, $4, $5);\n        "
+    "query": "\n        INSERT INTO videos (id, title, description, user_id, channel_id, language, start_time, original_url, tags)\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);\n        "
   },
-  "38dd3d61f8db48fef0909af654ef39d9539d4da662a76f4d48e00bad6612f24d": {
+  "3e40305a9195352281879d6e1ef498437fc98926214a10ef5ac5f647926a0c62": {
     "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Int4"
-        },
-        {
-          "name": "video_id: Uuid",
-          "ordinal": 1,
-          "type_info": "Uuid"
-        },
-        {
-          "name": "storage_id",
-          "ordinal": 2,
-          "type_info": "Int4"
-        },
-        {
-          "name": "video_path",
-          "ordinal": 3,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "format: VideoFormat",
-          "ordinal": 4,
-          "type_info": {
-            "Custom": {
-              "kind": {
-                "Enum": [
-                  "MP4",
-                  "AVI",
-                  "MOV",
-                  "MKV"
-                ]
-              },
-              "name": "video_format"
-            }
-          }
-        },
-        {
-          "name": "stage: StorageVideoStage",
-          "ordinal": 5,
-          "type_info": {
-            "Custom": {
-              "kind": {
-                "Enum": [
-                  "RAW",
-                  "PROCESSED"
-                ]
-              },
-              "name": "video_stage"
-            }
-          }
-        },
-        {
-          "name": "created_at: DateTime<Utc>",
-          "ordinal": 6,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "updated_at: DateTime<Utc>",
-          "ordinal": 7,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "deleted_at: DateTime<Utc>",
-          "ordinal": 8,
-          "type_info": "Timestamp"
-        }
-      ],
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        true
-      ],
+      "columns": [],
+      "nullable": [],
       "parameters": {
         "Left": [
-          "Uuid",
-          {
-            "Custom": {
-              "kind": {
-                "Enum": [
-                  "RAW",
-                  "PROCESSED"
-                ]
-              },
-              "name": "video_stage"
-            }
-          }
+          "Varchar",
+          "Uuid"
         ]
       }
     },
-    "query": "\n        SELECT \n            id,\n            video_id as \"video_id: Uuid\",\n            storage_id,\n            video_path,\n            format as \"format: VideoFormat\",\n            stage as \"stage: StorageVideoStage\",\n            created_at as \"created_at: DateTime<Utc>\",\n            updated_at as \"updated_at: DateTime<Utc>\",\n            deleted_at as \"deleted_at: DateTime<Utc>\"\n        FROM videos_storages\n            WHERE video_id = $1 AND stage = $2\n        "
+    "query": "\n        UPDATE videos\n        SET url = $1, stage = 'DONE', uploaded_at = NOW(), error = false\n        WHERE id = $2\n        "
   },
   "4321112f015d9ab714e24cf533c6679fa3cb30822b8c6b463ce9fa54c47baa5f": {
     "describe": {
@@ -345,17 +212,44 @@
     },
     "query": "\n        UPDATE videos\n        SET \n        error = $1,\n        updated_at = NOW()\n        WHERE id = $2\n        "
   },
-  "523b26e06f37d520fd5e784cf4273b0d96c5267747a92fccaf52ae1a51468533": {
+  "5cebfb8ef7b3a973e2f6957a942d1b86027b868c73e19036cb2d104b72d409b4": {
     "describe": {
       "columns": [],
       "nullable": [],
       "parameters": {
         "Left": [
-          "Uuid"
+          "Uuid",
+          "Int4",
+          "Varchar",
+          {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "MP4",
+                  "AVI",
+                  "MOV",
+                  "MKV"
+                ]
+              },
+              "name": "video_format"
+            }
+          },
+          {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "RAW",
+                  "PROCESSED"
+                ]
+              },
+              "name": "video_stage"
+            }
+          },
+          "Int8"
         ]
       }
     },
-    "query": "\n        UPDATE videos\n        SET \n        error = true,\n        updated_at = NOW()\n        WHERE id = $1\n    "
+    "query": "\n        INSERT INTO videos_storages (video_id, storage_id, video_path, format, stage,size)\n        VALUES ($1, $2, $3, $4, $5, $6);\n        "
   },
   "6494ab199b653c16012cd3c48c700cecf1c2d1f8708a17796ef9867b57a41b73": {
     "describe": {
@@ -376,6 +270,40 @@
       }
     },
     "query": "\n            SELECT COUNT(*) FROM channels WHERE csrf_token = $1\n        "
+  },
+  "65b7f6b5893adeb021338836370cbc9b280208ba368817448c9d10971ecd416f": {
+    "describe": {
+      "columns": [
+        {
+          "name": "stage: VideoStage",
+          "ordinal": 0,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "DOWNLOADING",
+                  "TRANSCRIBING",
+                  "TRANSLATING",
+                  "SUBTITLING",
+                  "DONE",
+                  "UPLOADING"
+                ]
+              },
+              "name": "videos_video_stages"
+            }
+          }
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n        UPDATE videos\n        SET \n        error = true,\n        updated_at = NOW()\n        WHERE id = $1\n        RETURNING stage as \"stage: VideoStage\"\n    "
   },
   "6bdde6cb7f8e0b79726202291c3cf0fc11b96a6251cf3de54f8e99f767ce45f1": {
     "describe": {
@@ -449,6 +377,154 @@
     },
     "query": "\n        SELECT \n            id,\n            name, \n            email,\n            password,\n            role as \"role: UserRole\", \n            created_at as \"created_at: NaiveDateTime\",\n            updated_at as \"updated_at: NaiveDateTime\",\n            deleted_at as \"deleted_at: NaiveDateTime\"\n        FROM \n            users \n        WHERE \n            id = $1 AND deleted_at IS NULL\n        "
   },
+  "716c521abd630d3512cebc415147d81af7c0a271781ab7633be1a01d61d7512c": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n        UPDATE videos\n        SET stage = 'UPLOADING'\n        WHERE id = $1\n        "
+  },
+  "747b2fa57d35259e3d383e24a16e4b3d0197f678de5274b6a155b1fb467a69c4": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id: Uuid",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "title",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "description",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "url",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "language",
+          "ordinal": 4,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "user_id",
+          "ordinal": 5,
+          "type_info": "Int4"
+        },
+        {
+          "name": "channel_id",
+          "ordinal": 6,
+          "type_info": "Int4"
+        },
+        {
+          "name": "error",
+          "ordinal": 7,
+          "type_info": "Bool"
+        },
+        {
+          "name": "original_url",
+          "ordinal": 8,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "original_duration",
+          "ordinal": 9,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "start_time",
+          "ordinal": 10,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "end_time",
+          "ordinal": 11,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "tags",
+          "ordinal": 12,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "stage: VideoStage",
+          "ordinal": 13,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "DOWNLOADING",
+                  "TRANSCRIBING",
+                  "TRANSLATING",
+                  "SUBTITLING",
+                  "DONE",
+                  "UPLOADING"
+                ]
+              },
+              "name": "videos_video_stages"
+            }
+          }
+        },
+        {
+          "name": "created_at: NaiveDateTime",
+          "ordinal": 14,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "updated_at: NaiveDateTime",
+          "ordinal": 15,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "deleted_at: NaiveDateTime",
+          "ordinal": 16,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "uploaded_at: NaiveDateTime",
+          "ordinal": 17,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        true,
+        true,
+        false,
+        false,
+        false,
+        true,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n        SELECT \n            v.id as \"id: Uuid\", \n            v.title,\n            v.description,\n            v.url,\n            v.language,\n            v.user_id,\n            v.channel_id,\n            v.error,\n            v.original_url,\n            v.original_duration,\n            v.start_time,\n            v.end_time,\n            v.tags,\n            v.stage as \"stage: VideoStage\",\n            v.created_at as \"created_at: NaiveDateTime\",\n            v.updated_at as \"updated_at: NaiveDateTime\",\n            v.deleted_at as \"deleted_at: NaiveDateTime\",\n            v.uploaded_at as \"uploaded_at: NaiveDateTime\"\n        FROM \n            videos v\n        WHERE \n            v.id = $1 AND deleted_at IS NULL\n    "
+  },
   "7ee07024cf6ce7ffe40ff47a48623cbe94952b22bb7cd39f711e789c035e0b4b": {
     "describe": {
       "columns": [
@@ -503,6 +579,142 @@
       }
     },
     "query": "\n        SELECT COUNT(*) as \"count!: i64\"\n        FROM videos_errors\n        WHERE video_id = $1 and stage = $2"
+  },
+  "84ae294cc09fda5aad1e62a68ebddc35085ff9c8865b41d252c0b714e6573995": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id: Uuid",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "title",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "description",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "url",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "language",
+          "ordinal": 4,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "user_id",
+          "ordinal": 5,
+          "type_info": "Int4"
+        },
+        {
+          "name": "channel_id",
+          "ordinal": 6,
+          "type_info": "Int4"
+        },
+        {
+          "name": "error",
+          "ordinal": 7,
+          "type_info": "Bool"
+        },
+        {
+          "name": "original_url",
+          "ordinal": 8,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "original_duration",
+          "ordinal": 9,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "start_time",
+          "ordinal": 10,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "end_time",
+          "ordinal": 11,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "tags",
+          "ordinal": 12,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "stage: VideoStage",
+          "ordinal": 13,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "DOWNLOADING",
+                  "TRANSCRIBING",
+                  "TRANSLATING",
+                  "SUBTITLING",
+                  "DONE",
+                  "UPLOADING"
+                ]
+              },
+              "name": "videos_video_stages"
+            }
+          }
+        },
+        {
+          "name": "created_at: NaiveDateTime",
+          "ordinal": 14,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "updated_at: NaiveDateTime",
+          "ordinal": 15,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "deleted_at: NaiveDateTime",
+          "ordinal": 16,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "uploaded_at: NaiveDateTime",
+          "ordinal": 17,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        true,
+        true,
+        false,
+        false,
+        false,
+        true,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        SELECT \n            v.id as \"id: Uuid\", \n            v.title,\n            v.description,\n            v.url,\n            v.language,\n            v.user_id,\n            v.channel_id,\n            v.error,\n            v.original_url,\n            v.original_duration,\n            v.start_time,\n            v.end_time,\n            v.tags,\n            v.stage as \"stage: VideoStage\",\n            v.created_at as \"created_at: NaiveDateTime\",\n            v.updated_at as \"updated_at: NaiveDateTime\",\n            v.deleted_at as \"deleted_at: NaiveDateTime\",\n            v.uploaded_at as \"uploaded_at: NaiveDateTime\"\n        FROM \n            videos v\n        INNER JOIN \n            videos_transcriptions vt ON v.id = vt.video_id\n        WHERE \n            vt.transcription_id = $1\n    "
   },
   "92084c04d89928521716f5dc3dd519fb8ba3d1fb4af752e3f7383b19c03e5987": {
     "describe": {
@@ -627,6 +839,33 @@
       }
     },
     "query": "SELECT id, \n                name, \n                email, \n                password, \n                role as \"role: UserRole\",\n                created_at as \"created_at: chrono::NaiveDateTime\",\n                updated_at as \"updated_at: chrono::NaiveDateTime\",\n                deleted_at as \"deleted_at: chrono::NaiveDateTime\"\n                FROM users WHERE id = 666"
+  },
+  "a255c4bae8fe27dd782834cf5f7522e4ec5baae0faefa47c34ad28d44ae698ca": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "DOWNLOADING",
+                  "TRANSCRIBING",
+                  "TRANSLATING",
+                  "SUBTITLING",
+                  "DONE",
+                  "UPLOADING"
+                ]
+              },
+              "name": "videos_video_stages"
+            }
+          },
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n        UPDATE videos\n        SET \n        stage = $1,\n        updated_at = NOW(),\n        error = false\n        WHERE id = $2\n        "
   },
   "a2942ce2cc35f204ded8852e2319cb460e1715d7e4dc17d70867abfaadabe83f": {
     "describe": {
@@ -913,112 +1152,6 @@
     },
     "query": "\n        SELECT  \n            id,\n            name,\n            email,\n            password,\n            role as \"role: UserRole\",\n            created_at as \"created_at: NaiveDateTime\",\n            updated_at as \"updated_at: NaiveDateTime\",\n            deleted_at as \"deleted_at: NaiveDateTime\"\n        \n        FROM users WHERE email = $1\n        "
   },
-  "b41d22d1392967bc4afe83729c835dffebc06c76c4fc75042e61d8f71dabf000": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id: Uuid",
-          "ordinal": 0,
-          "type_info": "Uuid"
-        },
-        {
-          "name": "title",
-          "ordinal": 1,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "description",
-          "ordinal": 2,
-          "type_info": "Text"
-        },
-        {
-          "name": "url",
-          "ordinal": 3,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "language",
-          "ordinal": 4,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "user_id",
-          "ordinal": 5,
-          "type_info": "Int4"
-        },
-        {
-          "name": "channel_id",
-          "ordinal": 6,
-          "type_info": "Int4"
-        },
-        {
-          "name": "error",
-          "ordinal": 7,
-          "type_info": "Bool"
-        },
-        {
-          "name": "stage: VideoStage",
-          "ordinal": 8,
-          "type_info": {
-            "Custom": {
-              "kind": {
-                "Enum": [
-                  "DOWNLOADING",
-                  "TRANSCRIBING",
-                  "TRANSLATING",
-                  "SUBTITLING",
-                  "DONE",
-                  "UPLOADING"
-                ]
-              },
-              "name": "videos_video_stages"
-            }
-          }
-        },
-        {
-          "name": "created_at: NaiveDateTime",
-          "ordinal": 9,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "updated_at: NaiveDateTime",
-          "ordinal": 10,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "deleted_at: NaiveDateTime",
-          "ordinal": 11,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "uploaded_at: NaiveDateTime",
-          "ordinal": 12,
-          "type_info": "Timestamp"
-        }
-      ],
-      "nullable": [
-        false,
-        false,
-        false,
-        true,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        true,
-        true
-      ],
-      "parameters": {
-        "Left": [
-          "Uuid"
-        ]
-      }
-    },
-    "query": "\n        SELECT \n            v.id as \"id: Uuid\", \n            v.title,\n            v.description,\n            v.url,\n            v.language,\n            v.user_id,\n            v.channel_id,\n            v.error,\n            v.stage as \"stage: VideoStage\",\n            v.created_at as \"created_at: NaiveDateTime\",\n            v.updated_at as \"updated_at: NaiveDateTime\",\n            v.deleted_at as \"deleted_at: NaiveDateTime\",\n            v.uploaded_at as \"uploaded_at: NaiveDateTime\"\n        FROM \n            videos v\n        WHERE \n            v.id = $1 AND deleted_at IS NULL\n    "
-  },
   "b5a28ccd523cae364afff18b0a71d0cca9e7321fa410f2a3cf041c3c2f7bf54e": {
     "describe": {
       "columns": [
@@ -1087,22 +1220,19 @@
     },
     "query": "\n        SELECT \n            id,\n            name,\n            csrf_token,\n            creator_id,\n            error,\n            refresh_token,\n            created_at as \"created_at: chrono::NaiveDateTime\",\n            updated_at as \"updated_at: chrono::NaiveDateTime\",\n            deleted_at as \"deleted_at: chrono::NaiveDateTime\"\n        FROM channels WHERE id = $1 AND deleted_at IS NULL AND error = FALSE\n        "
   },
-  "babea2c4398c8010f490603c2cf328ae398a13093d79253e5007b58fbea4628a": {
+  "c46afa1dc2031605ca6a3fdd50ad5c29bde3a649c56178b08542ce93187fb8d4": {
     "describe": {
       "columns": [],
       "nullable": [],
       "parameters": {
         "Left": [
-          "Uuid",
           "Varchar",
-          "Text",
-          "Int4",
-          "Int4",
-          "Varchar"
+          "Varchar",
+          "Uuid"
         ]
       }
     },
-    "query": "\n        INSERT INTO videos (id, title, description, user_id, channel_id, language)\n        VALUES ($1, $2, $3, $4, $5, $6);\n        "
+    "query": "\n        UPDATE videos\n        SET \n        original_duration = $1,\n        end_time = $2,\n        updated_at = NOW()\n        WHERE id = $3\n        "
   },
   "c63d015969ef0ed31e8f314a6a7a5b1ccb4c578773e5d70ee40eba67218d697f": {
     "describe": {
@@ -1149,18 +1279,112 @@
     },
     "query": "\n        INSERT INTO users (name, email, password, role)\n        VALUES ($1, $2, $3, $4)\n        "
   },
-  "e17ea986722e92b58edcf3d36740b2823a02865ec7f97900631735ab568fdd07": {
+  "d9e949ff9dcbb613cea810bfd29d5097a029527cb3f246256c9fec1c1b3798de": {
     "describe": {
-      "columns": [],
-      "nullable": [],
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "video_id: Uuid",
+          "ordinal": 1,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "storage_id",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "video_path",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "size",
+          "ordinal": 4,
+          "type_info": "Int8"
+        },
+        {
+          "name": "format: VideoFormat",
+          "ordinal": 5,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "MP4",
+                  "AVI",
+                  "MOV",
+                  "MKV"
+                ]
+              },
+              "name": "video_format"
+            }
+          }
+        },
+        {
+          "name": "stage: StorageVideoStage",
+          "ordinal": 6,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "RAW",
+                  "PROCESSED"
+                ]
+              },
+              "name": "video_stage"
+            }
+          }
+        },
+        {
+          "name": "created_at: NaiveDateTime",
+          "ordinal": 7,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "updated_at: NaiveDateTime",
+          "ordinal": 8,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "deleted_at: NaiveDateTime",
+          "ordinal": 9,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
       "parameters": {
         "Left": [
-          "Varchar",
-          "Uuid"
+          "Uuid",
+          {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "RAW",
+                  "PROCESSED"
+                ]
+              },
+              "name": "video_stage"
+            }
+          }
         ]
       }
     },
-    "query": "\n        UPDATE videos\n        SET url = $1, stage = 'DONE', uploaded_at = NOW()\n        WHERE id = $2\n        "
+    "query": "\n        SELECT \n            id,\n            video_id as \"video_id: Uuid\",\n            storage_id,\n            video_path,\n            size,\n            format as \"format: VideoFormat\",\n            stage as \"stage: StorageVideoStage\",\n            created_at as \"created_at: NaiveDateTime\",\n            updated_at as \"updated_at: NaiveDateTime\",\n            deleted_at as \"deleted_at: NaiveDateTime\"\n        FROM videos_storages\n            WHERE video_id = $1 AND stage = $2\n        "
   },
   "e6c82bd3af457ed042c08baf5a8aeb9bc95cde104ca4b2137191a13d7ab2d2b9": {
     "describe": {
@@ -1267,111 +1491,5 @@
       }
     },
     "query": "\n            SELECT error,updated_at FROM channels WHERE id = $1\n        "
-  },
-  "fc5bf1640301a744cfde51ad92238b883f8030fe1634391a2e27c58f6ef13f57": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id: Uuid",
-          "ordinal": 0,
-          "type_info": "Uuid"
-        },
-        {
-          "name": "title",
-          "ordinal": 1,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "description",
-          "ordinal": 2,
-          "type_info": "Text"
-        },
-        {
-          "name": "url",
-          "ordinal": 3,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "language",
-          "ordinal": 4,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "user_id",
-          "ordinal": 5,
-          "type_info": "Int4"
-        },
-        {
-          "name": "channel_id",
-          "ordinal": 6,
-          "type_info": "Int4"
-        },
-        {
-          "name": "error",
-          "ordinal": 7,
-          "type_info": "Bool"
-        },
-        {
-          "name": "stage: VideoStage",
-          "ordinal": 8,
-          "type_info": {
-            "Custom": {
-              "kind": {
-                "Enum": [
-                  "DOWNLOADING",
-                  "TRANSCRIBING",
-                  "TRANSLATING",
-                  "SUBTITLING",
-                  "DONE",
-                  "UPLOADING"
-                ]
-              },
-              "name": "videos_video_stages"
-            }
-          }
-        },
-        {
-          "name": "created_at: NaiveDateTime",
-          "ordinal": 9,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "updated_at: NaiveDateTime",
-          "ordinal": 10,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "deleted_at: NaiveDateTime",
-          "ordinal": 11,
-          "type_info": "Timestamp"
-        },
-        {
-          "name": "uploaded_at: NaiveDateTime",
-          "ordinal": 12,
-          "type_info": "Timestamp"
-        }
-      ],
-      "nullable": [
-        false,
-        false,
-        false,
-        true,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        true,
-        true
-      ],
-      "parameters": {
-        "Left": [
-          "Text"
-        ]
-      }
-    },
-    "query": "\n        SELECT \n            v.id as \"id: Uuid\", \n            v.title,\n            v.description,\n            v.url,\n            v.language,\n            v.user_id,\n            v.channel_id,\n            v.error,\n            v.stage as \"stage: VideoStage\",\n            v.created_at as \"created_at: NaiveDateTime\",\n            v.updated_at as \"updated_at: NaiveDateTime\",\n            v.deleted_at as \"deleted_at: NaiveDateTime\",\n            v.uploaded_at as \"uploaded_at: NaiveDateTime\"\n        FROM \n            videos v\n        INNER JOIN \n            videos_transcriptions vt ON v.id = vt.video_id\n        WHERE \n            vt.transcription_id = $1\n    "
   }
 }
