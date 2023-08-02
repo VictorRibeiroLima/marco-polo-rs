@@ -1,15 +1,20 @@
 use std::sync::Arc;
 
 use marco_polo_rs_core::{
+    database::queries::{self, video::CreateErrorDto},
     internals::cloud::{
         models::payload::PayloadType,
         traits::{CloudService, QueueClient},
     },
     util::queue::Queue,
+    SyncError,
 };
 use tokio::sync::Mutex;
 
-use crate::{error::HandlerError, handlers, CloudServiceInUse, Message, SubtitlerClientInUse};
+use crate::{
+    error::HandlerError, handlers, CloudServiceInUse, Message, SubtitlerClientInUse,
+    ERROR_COUNT_THRESHOLD,
+};
 
 use super::Worker;
 
@@ -22,21 +27,12 @@ pub struct HeavyWorker {
 }
 
 impl HeavyWorker {
-    async fn handle_message(&self, message: Message, payload_type: PayloadType) {
-        let queue_client = self.cloud_service.queue_client();
-
-        let result = self.handle_payload(payload_type, &message).await;
-
-        match result {
-            Ok(_) => {}
-            Err(e) => {
-                println!("Heavy Worker {} error: {:?}", self.id, e);
-                return;
-            }
-        }
-
-        //TODO: see what to when delete fails
-        let result = queue_client.delete_message(message).await;
+    async fn delete_message<QC: QueueClient>(
+        &self,
+        queue_client: &QC,
+        message: <QC as QueueClient>::M,
+    ) {
+        let result: Result<(), SyncError> = queue_client.delete_message(message).await;
 
         match result {
             Ok(_) => {}
@@ -45,6 +41,40 @@ impl HeavyWorker {
                 return;
             }
         }
+    }
+
+    async fn handle_message(&self, message: Message, payload_type: PayloadType) {
+        let queue_client = self.cloud_service.queue_client();
+
+        let video_id = payload_type.video_id();
+        let result = self.handle_payload(payload_type, &message).await;
+
+        match result {
+            Ok(_) => {}
+            Err(e) => {
+                println!("Heavy Worker {} error: {:?}", self.id, e);
+                let dto = CreateErrorDto {
+                    video_id: &video_id,
+                    error: &e.to_string(),
+                };
+                let error_count = queries::video::create_error(&self.pool, dto).await.unwrap(); //TODO: unwrap
+                match e {
+                    HandlerError::Retrievable(_) => {
+                        if error_count >= ERROR_COUNT_THRESHOLD {
+                            self.delete_message(queue_client, message).await;
+                        }
+                        return;
+                    }
+                    HandlerError::Final(_) => {
+                        self.delete_message(queue_client, message).await;
+                        return;
+                    }
+                };
+            }
+        }
+
+        //TODO: see what to when delete fails
+        self.delete_message(queue_client, message).await;
     }
 
     async fn handle_payload(

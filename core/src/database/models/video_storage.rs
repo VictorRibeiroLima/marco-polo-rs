@@ -61,6 +61,7 @@ pub struct VideosStorage {
     pub stage: StorageVideoStage,
     pub format: VideoFormat,
     pub video_path: String,
+    pub size: i64,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
     pub deleted_at: Option<NaiveDateTime>,

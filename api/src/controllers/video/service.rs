@@ -19,8 +19,11 @@ pub async fn create_video(
         None => "00:00:00",
     };
 
-    let tags: Option<&str> = match &body.tags {
-        Some(tags) => Some(tags),
+    let tags: Option<String> = match &body.tags {
+        Some(tags) => {
+            let tags = tags.join(";");
+            Some(tags)
+        }
         None => None,
     };
 
@@ -34,7 +37,7 @@ pub async fn create_video(
             channel_id: body.channel_id,
             language: &language,
             original_url: &body.video_url,
-            tags,
+            tags: tags.as_deref(),
             start_time,
         },
     )

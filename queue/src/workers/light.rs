@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use marco_polo_rs_core::{
+    database::queries::{self, video::CreateErrorDto},
     internals::cloud::{
         models::payload::PayloadType,
         traits::{CloudService, QueueClient},
@@ -14,7 +15,7 @@ use crate::{
     error::HandlerError,
     handlers::{download_video, processed_upload, raw_upload, transcription},
     CloudServiceInUse, Message, TranscriberClientInUse, TranslatorClientInUse,
-    VideoDownloaderInUse, YoutubeClientInUse,
+    VideoDownloaderInUse, YoutubeClientInUse, ERROR_COUNT_THRESHOLD,
 };
 
 use super::Worker;
@@ -33,6 +34,7 @@ pub struct LightWorker {
 impl LightWorker {
     async fn handle_message(&self, message: Message, payload_type: PayloadType) {
         let queue_client = self.cloud_service.queue_client();
+        let video_id = payload_type.video_id();
 
         let result: Result<(), HandlerError> = self.handle_payload(payload_type, &message).await;
 
@@ -40,8 +42,16 @@ impl LightWorker {
             Ok(_) => {}
             Err(e) => {
                 println!("Light Worker {} error: {:?}", self.id, e);
+                let dto = CreateErrorDto {
+                    video_id: &video_id,
+                    error: &e.to_string(),
+                };
+                let error_count = queries::video::create_error(&self.pool, dto).await.unwrap(); //TODO: unwrap
                 match e {
                     HandlerError::Retrievable(_) => {
+                        if error_count >= ERROR_COUNT_THRESHOLD {
+                            self.delete_message(queue_client, message).await;
+                        }
                         return;
                     }
                     HandlerError::Final(_) => {
@@ -103,7 +113,6 @@ impl LightWorker {
                 )
                 .await;
 
-                //TODO: check result and update video table if necessary
                 return download_result;
             }
 

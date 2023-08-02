@@ -25,7 +25,6 @@ pub struct CreateVideoDto<'a> {
 pub struct CreateErrorDto<'a> {
     pub video_id: &'a Uuid,
     pub error: &'a str,
-    pub stage: VideoStage,
 }
 
 pub async fn create(pool: &PgPool, dto: CreateVideoDto<'_>) -> Result<(), sqlx::Error> {
@@ -60,7 +59,8 @@ pub async fn change_stage(
         UPDATE videos
         SET 
         stage = $1,
-        updated_at = NOW()
+        updated_at = NOW(),
+        error = false
         WHERE id = $2
         "#,
         stage as VideoStage,
@@ -122,18 +122,21 @@ pub async fn change_error_state(
 pub async fn create_error(pool: &PgPool, dto: CreateErrorDto<'_>) -> Result<i64, sqlx::Error> {
     let mut trx = pool.begin().await?;
 
-    sqlx::query!(
+    let result = sqlx::query!(
         r#"
         UPDATE videos
         SET 
         error = true,
         updated_at = NOW()
         WHERE id = $1
+        RETURNING stage as "stage: VideoStage"
     "#,
         dto.video_id
     )
-    .execute(&mut trx)
+    .fetch_one(&mut trx)
     .await?;
+
+    let stage: VideoStage = result.stage;
 
     sqlx::query!(
         r#"
@@ -142,7 +145,7 @@ pub async fn create_error(pool: &PgPool, dto: CreateErrorDto<'_>) -> Result<i64,
         "#,
         dto.video_id,
         dto.error,
-        &dto.stage as &VideoStage,
+        &stage as &VideoStage,
     )
     .execute(&mut trx)
     .await?;
@@ -153,7 +156,7 @@ pub async fn create_error(pool: &PgPool, dto: CreateErrorDto<'_>) -> Result<i64,
         FROM videos_errors
         WHERE video_id = $1 and stage = $2"#,
         dto.video_id,
-        dto.stage as VideoStage,
+        stage as VideoStage,
     )
     .fetch_optional(&mut trx)
     .await?;
@@ -169,7 +172,7 @@ pub async fn set_url(pool: &PgPool, video_id: &Uuid, url: String) -> Result<(), 
     sqlx::query!(
         r#"
         UPDATE videos
-        SET url = $1, stage = 'DONE', uploaded_at = NOW()
+        SET url = $1, stage = 'DONE', uploaded_at = NOW(), error = false
         WHERE id = $2
         "#,
         url,

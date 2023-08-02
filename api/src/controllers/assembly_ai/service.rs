@@ -1,10 +1,7 @@
 use sqlx::PgPool;
 
 use marco_polo_rs_core::{
-    database::{
-        models::video::VideoStage,
-        queries::{self, transcription::UpdateVideoTranscriptionDto, video::CreateErrorDto},
-    },
+    database::queries::{self, transcription::UpdateVideoTranscriptionDto, video::CreateErrorDto},
     internals::cloud::traits::BucketClient,
 };
 use uuid::Uuid;
@@ -67,11 +64,7 @@ where
 }
 
 async fn transcription_error(pool: &PgPool, video_id: &Uuid, error: &str) -> Result<(), AppError> {
-    let dto: CreateErrorDto = CreateErrorDto {
-        video_id,
-        error,
-        stage: VideoStage::Transcribing,
-    };
+    let dto: CreateErrorDto = CreateErrorDto { video_id, error };
     queries::video::create_error(&pool, dto).await?;
     Ok(())
 }

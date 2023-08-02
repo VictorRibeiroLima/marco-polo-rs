@@ -16,14 +16,15 @@ pub struct CreateStorageDto<'a> {
 pub async fn create(pool: &PgPool, dto: CreateStorageDto<'_>) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
-        INSERT INTO videos_storages (video_id, storage_id, video_path, format, stage)
-        VALUES ($1, $2, $3, $4, $5);
+        INSERT INTO videos_storages (video_id, storage_id, video_path, format, stage,size)
+        VALUES ($1, $2, $3, $4, $5, $6);
         "#,
         dto.video_id,
         dto.storage_id,
         dto.video_uri,
         dto.format as VideoFormat,
         dto.stage as StorageVideoStage,
+        dto.size,
     )
     .execute(pool)
     .await?;
@@ -44,6 +45,7 @@ pub async fn find_by_video_id_and_stage(
             video_id as "video_id: Uuid",
             storage_id,
             video_path,
+            size,
             format as "format: VideoFormat",
             stage as "stage: StorageVideoStage",
             created_at as "created_at: NaiveDateTime",
