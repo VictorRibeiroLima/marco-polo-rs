@@ -1,5 +1,8 @@
-use serde_derive::Deserialize;
-use serde_derive::Serialize;
+use std::{io, process::Command};
+
+use serde::{Deserialize, Serialize};
+
+use crate::util::ffmpeg::SECONDS_TO_REDUCE;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -64,54 +67,41 @@ pub struct Frame {
     pub color_transfer: String,
 }
 
-fn get_nearest_keyframe_in_seconds(
-  output_file: &str,
-  reduced_seconds: &i32,
-) -> Result<String, io::Error> {
-  let output = Command::new("ffprobe")
-      .arg("-select_streams")
-      .arg("v:0")
-      .arg("-show_frames")
-      .arg("-read_intervals")
-      .arg("%+#1")
-      .arg("-skip_frame")
-      .arg("nokey")
-      .arg("-print_format")
-      .arg("json")
-      .arg("-i")
-      .arg(&output_file)
-      .output()?;
+pub fn get_nearest_keyframe_in_seconds(output_file: &str) -> Result<String, io::Error> {
+    let output = Command::new("ffprobe")
+        .arg("-select_streams")
+        .arg("v:0")
+        .arg("-show_frames")
+        .arg("-read_intervals")
+        .arg("%+#200")
+        .arg("-skip_frame")
+        .arg("nokey")
+        .arg("-print_format")
+        .arg("json")
+        .arg("-i")
+        .arg(&output_file)
+        .output()?;
 
-  if !output.status.success() {
-      println!(
-          "get_nearest_keyframe_in_seconds failed. Error message: {}",
-          String::from_utf8_lossy(&output.stderr)
-      );
-      return Err(io::Error::new(
-          io::ErrorKind::Other,
-          "Failed to get video keyframes",
-      ));
-  }
-
-  let output = String::from_utf8_lossy(&output.stdout);
-  let ffprobe_result: FFProbeResult = serde_json::from_str(&output).unwrap();
-
-  println!("ffprobe_result: {:?}", ffprobe_result);
-
-  return Ok("".to_string());
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn test_get_nearest_keyframe_in_seconds() {
-        let output_file = "../videos/output.mkv";
-        let reduced_seconds = 5;
-
-        let keyframe = get_nearest_keyframe_in_seconds(output_file, &reduced_seconds).unwrap();
-
-        assert_eq!(keyframe, "");
+    if !output.status.success() {
+        println!(
+            "get_nearest_keyframe_in_seconds failed. Error message: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        return Err(io::Error::new(
+            io::ErrorKind::Other,
+            "Failed to get video keyframes",
+        ));
     }
+
+    let output = String::from_utf8_lossy(&output.stdout);
+    let ffprobe_result: FFProbeResult = serde_json::from_str(&output)?;
+    let mut frames = ffprobe_result.frames;
+    frames.reverse();
+    let milliseconds_to_reduce: i64 = (SECONDS_TO_REDUCE as i64) * 1000;
+    let keyframe = frames
+        .iter()
+        .find(|frame| frame.key_frame == 1 && frame.pkt_dts <= milliseconds_to_reduce)
+        .unwrap_or(&frames[0]);
+
+    return Ok(keyframe.pkt_dts_time.to_string());
 }
