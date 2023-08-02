@@ -115,15 +115,7 @@ pub fn get_video_duration(video_path: &PathBuf) -> Result<String, io::Error> {
 
     let output = String::from_utf8_lossy(&output.stderr); // ffmpeg will error cause because none output file is specified,this is ok
 
-    let duration = output
-        .lines()
-        .find(|line| line.contains("Duration:"))
-        .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "ffmpeg failed to probe video"))?
-        .split_whitespace()
-        .nth(1)
-        .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "ffmpeg failed to probe video"))?;
-
-    Ok(duration.to_string())
+    parse_ffmpeg_output_duration(&output)
 }
 
 pub fn cut_video(
@@ -160,4 +152,33 @@ pub fn cut_video(
     }
 
     return Ok(output_file);
+}
+
+fn parse_ffmpeg_output_duration(output: &str) -> Result<String, io::Error> {
+    let duration = output
+        .lines()
+        .find(|line| line.contains("Duration:"))
+        .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "ffmpeg failed to probe video"))?
+        .split_whitespace()
+        .nth(1)
+        .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "ffmpeg failed to probe video"))?
+        .split(",")
+        .next()
+        .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "ffmpeg failed to probe video"))?;
+
+    Ok(duration.to_string())
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_parse_ffmpeg_output_duration() {
+        let output = "  Duration: 00:00:00.04, start: 0.000000, bitrate: 102 kb/s\n";
+
+        let duration = parse_ffmpeg_output_duration(output).unwrap();
+
+        assert_eq!(duration, "00:00:00.04");
+    }
 }
