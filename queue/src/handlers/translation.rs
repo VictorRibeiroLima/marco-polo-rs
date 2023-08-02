@@ -2,7 +2,10 @@ use std::{path::PathBuf, sync::Arc};
 
 use marco_polo_rs_core::{
     database::{
-        models::video_storage::{StorageVideoStage, VideoFormat},
+        models::{
+            video::VideoStage,
+            video_storage::{StorageVideoStage, VideoFormat},
+        },
         queries::{self, storage::CreateStorageDto},
     },
     internals::{
@@ -64,6 +67,8 @@ where
         queue_client
             .change_message_visibility(&self.message, estimation as usize)
             .await?;
+
+        queries::video::change_stage(&self.pool, &payload.video_id, VideoStage::Subtitling).await?;
 
         let subtitle_path = self
             .subtitler_client

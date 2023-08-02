@@ -1,5 +1,8 @@
 use marco_polo_rs_core::{
-    database::queries::{self, transcription::CreateTranscriptionDto},
+    database::{
+        models::video::VideoStage,
+        queries::{self, transcription::CreateTranscriptionDto},
+    },
     internals::{
         cloud::{
             models::payload::VideoPayload,
@@ -27,6 +30,8 @@ pub async fn handle<CS: CloudService>(
     let signed_url = bucket_client
         .create_signed_download_url(&payload.video_uri, None)
         .await?;
+
+    queries::video::change_stage(pool, &payload.video_id, VideoStage::Transcribing).await?;
 
     let transcribe_id = transcriber_client.transcribe(&signed_url).await?;
 

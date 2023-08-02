@@ -38,11 +38,9 @@ impl YoutubeDownloader for YtDl {
             .output()?;
 
         if !output.status.success() {
-            println!(
-                "Video download failed. Error message: {}",
-                String::from_utf8_lossy(&output.stderr)
-            );
-            return Err("Failed to download video".into());
+            let error_message = String::from_utf8_lossy(&output.stderr);
+            println!("Video download failed. Error message: {}", error_message);
+            return Err(error_message.into()); // TODO: change to stderr
         }
 
         Ok(output_file)
