@@ -6,6 +6,8 @@ use crate::SyncError;
 
 use super::fs::create_temp_dir;
 
+const SECONDS_TO_REDUCE: i32 = 5;
+
 pub fn check() -> Result<(), io::Error> {
     let ffmpeg_output = Command::new("ffmpeg").arg("-version").output()?;
 
@@ -124,11 +126,64 @@ pub fn cut_video(
     end_time: &str,
 ) -> Result<String, io::Error> {
     let output_id = uuid::Uuid::new_v4();
-
     let temp_dir = create_temp_dir()?;
-
     let output_file = format!("{}/{}.mkv", temp_dir.to_str().unwrap(), output_id);
 
+    let reduced_start_time = reduce_start_time(start_time)?;
+
+    call_cut_command(video_path, &reduced_start_time, end_time, &output_file)?;
+
+    return Ok(output_file);
+}
+
+fn parse_ffmpeg_output_duration(output: &str) -> Result<String, io::Error> {
+    let duration = output
+        .lines()
+        .find(|line| line.contains("Duration:"))
+        .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "ffmpeg failed to probe video"))?
+        .split_whitespace()
+        .nth(1)
+        .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "ffmpeg failed to probe video"))?
+        .split(",")
+        .next()
+        .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "ffmpeg failed to probe video"))?;
+
+    Ok(duration.to_string())
+}
+
+fn reduce_start_time(start_time: &str) -> Result<String, io::Error> {
+    if start_time == "00:00:00" {
+        return Ok(start_time.to_string());
+    }
+
+    let start_time = start_time.split(":").collect::<Vec<&str>>();
+
+    let mut hours = start_time[0].parse::<i32>().unwrap();
+    let mut minutes = start_time[1].parse::<i32>().unwrap();
+    let mut seconds = start_time[2].parse::<i32>().unwrap();
+
+    seconds -= SECONDS_TO_REDUCE;
+    if seconds < 0 {
+        seconds += 60;
+        minutes -= 1;
+    }
+
+    if minutes < 0 {
+        minutes += 60;
+        hours -= 1;
+    }
+
+    let final_start_time = format!("{:02}:{:02}:{:02}", hours, minutes, seconds);
+
+    return Ok(final_start_time);
+}
+
+fn call_cut_command(
+    video_path: &PathBuf,
+    start_time: &str,
+    end_time: &str,
+    output_file: &str,
+) -> Result<(), io::Error> {
     let output = Command::new("ffmpeg")
         .arg("-ss")
         .arg(start_time)
@@ -151,22 +206,7 @@ pub fn cut_video(
         return Err(io::Error::new(io::ErrorKind::Other, "Failed to cut video"));
     }
 
-    return Ok(output_file);
-}
-
-fn parse_ffmpeg_output_duration(output: &str) -> Result<String, io::Error> {
-    let duration = output
-        .lines()
-        .find(|line| line.contains("Duration:"))
-        .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "ffmpeg failed to probe video"))?
-        .split_whitespace()
-        .nth(1)
-        .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "ffmpeg failed to probe video"))?
-        .split(",")
-        .next()
-        .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "ffmpeg failed to probe video"))?;
-
-    Ok(duration.to_string())
+    return Ok(());
 }
 
 #[cfg(test)]
