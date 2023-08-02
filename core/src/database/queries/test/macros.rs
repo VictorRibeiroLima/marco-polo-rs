@@ -3,8 +3,9 @@ macro_rules! test_find_all {
         #[sqlx::test(migrations = "../migrations", fixtures($fixture_name))]
         async fn test_find_all(pool: sqlx::PgPool) {
             let pagination = crate::database::queries::pagination::Pagination::default();
+            let filter = crate::database::queries::filter::Filter::default();
 
-            let result = $find_all(&pool, pagination).await;
+            let result = $find_all(&pool, pagination, filter).await;
             let list = result.unwrap();
             let list_len = list.len();
 
@@ -19,7 +20,8 @@ macro_rules! test_find_all {
                 order_by: None,
                 order: None,
             };
-            let result = $find_all(&pool, pagination).await;
+            let filter = crate::database::queries::filter::Filter::default();
+            let result = $find_all(&pool, pagination, filter).await;
             let list = result.unwrap();
             let list_len = list.len();
 
@@ -34,7 +36,8 @@ macro_rules! test_find_all {
                 order_by: Some(<$enum>::Id),
                 order: Some(crate::database::queries::pagination::PaginationOrder::Desc),
             };
-            let result = $find_all(&pool, pagination).await;
+            let filter = crate::database::queries::filter::Filter::default();
+            let result = $find_all(&pool, pagination, filter).await;
             let list = result.unwrap();
             let list_len = list.len();
 
@@ -58,7 +61,8 @@ macro_rules! test_find_all {
                 order_by: Some(<$enum>::Id),
                 order: Some(crate::database::queries::pagination::PaginationOrder::Asc),
             };
-            let result = $find_all(&pool, pagination).await;
+            let filter = crate::database::queries::filter::Filter::default();
+            let result = $find_all(&pool, pagination, filter).await;
             let list = result.unwrap();
             let list_len = list.len();
 
@@ -83,7 +87,9 @@ macro_rules! test_find_all {
                 order: Some(crate::database::queries::pagination::PaginationOrder::Asc),
             };
 
-            let mut result = $find_all(&pool, pagination).await.unwrap();
+            let filter = crate::database::queries::filter::Filter::default();
+
+            let mut result = $find_all(&pool, pagination, filter).await.unwrap();
             let last_member = result.pop().unwrap();
 
             let pagination = crate::database::queries::pagination::Pagination {
@@ -92,8 +98,9 @@ macro_rules! test_find_all {
                 order_by: Some(<$enum>::Id),
                 order: Some(crate::database::queries::pagination::PaginationOrder::Asc),
             };
+            let filter = crate::database::queries::filter::Filter::default();
 
-            let result = $find_all(&pool, pagination).await.unwrap();
+            let result = $find_all(&pool, pagination, filter).await.unwrap();
             let member = &result[0];
 
             assert_eq!(member.id, last_member.id + 1)

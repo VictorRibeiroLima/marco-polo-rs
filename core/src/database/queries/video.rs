@@ -305,12 +305,11 @@ pub async fn find_all_by_owner(
         param_count + 2,
     );
 
-    let videos: Vec<Video> = sqlx::query_as(&sql)
-        .bind(owner_id)
-        .bind(limit)
-        .bind(offset)
-        .fetch_all(pool)
-        .await?;
+    let mut query = sqlx::query_as(&sql);
+    query = filter.apply(query);
+    query = query.bind(limit).bind(offset);
+
+    let videos: Vec<Video> = query.fetch_all(pool).await?;
 
     return Ok(videos);
 }

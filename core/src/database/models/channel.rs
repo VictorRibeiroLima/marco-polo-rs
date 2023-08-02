@@ -1,9 +1,9 @@
 use chrono::NaiveDateTime;
-use marco_polo_rs_macros::Paginate;
+use marco_polo_rs_macros::{Filtrate, Paginate};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
-#[derive(Debug, Serialize, Deserialize, FromRow, Paginate)]
+#[derive(Debug, Serialize, Deserialize, FromRow, Filtrate, Paginate)]
 pub struct Channel {
     pub id: i32,
     pub creator_id: i32,
