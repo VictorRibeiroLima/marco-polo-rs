@@ -6,7 +6,7 @@ use actix_web::{
 use marco_polo_rs_core::{
     database::{
         models::{channel::Channel, user::UserRole},
-        queries::{self, channel::UpdateChannelDto, pagination::Pagination},
+        queries::{self, channel::UpdateChannelDto, filter::Filter, pagination::Pagination},
     },
     internals::youtube_client::{
         client::YoutubeClient, traits::YoutubeClient as YoutubeClientTrait,
@@ -59,13 +59,15 @@ async fn find_by_id(
 async fn find_all(
     pool: web::Data<AppPool>,
     pagination: web::Query<Pagination<Channel>>,
+    filter: web::Query<Filter<Channel>>,
     jwt: TokenClaims,
 ) -> Result<impl Responder, AppError> {
     let pool = &pool.pool;
+    let filter = filter.into_inner();
     let pagination = pagination.into_inner();
 
     let channels = match jwt.role {
-        UserRole::Admin => queries::channel::find_all(pool, pagination).await,
+        UserRole::Admin => queries::channel::find_all(pool, pagination, filter).await,
         UserRole::User => {
             let user_id = jwt.id;
             queries::channel::find_all_by_owner(pool, user_id, pagination).await

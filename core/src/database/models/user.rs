@@ -1,5 +1,5 @@
 use chrono::NaiveDateTime;
-use marco_polo_rs_macros::Paginate;
+use marco_polo_rs_macros::{Filtrate, Paginate};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
@@ -10,7 +10,7 @@ pub enum UserRole {
     User,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Paginate, FromRow)]
+#[derive(Debug, Serialize, Deserialize, Clone, Filtrate, Paginate, FromRow)]
 pub struct User {
     pub id: i32,
     pub name: String,

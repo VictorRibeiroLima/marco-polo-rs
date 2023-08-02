@@ -117,7 +117,7 @@ async fn find_all(
     let pool = &pool.pool;
 
     let channels = match jwt.role {
-        UserRole::Admin => queries::video::find_all(pool, pagination).await,
+        UserRole::Admin => queries::video::find_all(pool, pagination, filter).await,
         UserRole::User => {
             let user_id = jwt.id;
             queries::video::find_all_by_owner(pool, user_id, pagination, filter).await

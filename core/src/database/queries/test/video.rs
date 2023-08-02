@@ -93,8 +93,9 @@ async fn filtration_test_id_deleted_at_none(pool: sqlx::PgPool) {
 #[sqlx::test(migrations = "../migrations", fixtures("videos"))]
 async fn test_find_all(pool: sqlx::PgPool) {
     let pagination = crate::database::queries::pagination::Pagination::default();
+    let filter = crate::database::queries::filter::Filter::default();
 
-    let result = find_all(&pool, pagination).await;
+    let result = find_all(&pool, pagination, filter).await;
     let list = result.unwrap();
     let list_len = list.len();
 
@@ -109,7 +110,8 @@ async fn test_find_all_limit_20(pool: sqlx::PgPool) {
         order_by: None,
         order: None,
     };
-    let result = find_all(&pool, pagination).await;
+    let filter = crate::database::queries::filter::Filter::default();
+    let result = find_all(&pool, pagination, filter).await;
     let list = result.unwrap();
     let list_len = list.len();
 
@@ -124,7 +126,8 @@ async fn test_find_all_order_by_id_asc(pool: sqlx::PgPool) {
         order_by: Some(<VideoOrderFields>::Id),
         order: Some(crate::database::queries::pagination::PaginationOrder::Asc),
     };
-    let result = find_all(&pool, pagination).await;
+    let filter = crate::database::queries::filter::Filter::default();
+    let result = find_all(&pool, pagination, filter).await;
     let list = result.unwrap();
     let list_len = list.len();
 
@@ -148,7 +151,8 @@ async fn test_find_all_order_by_id_desc(pool: sqlx::PgPool) {
         order_by: Some(<VideoOrderFields>::Id),
         order: Some(crate::database::queries::pagination::PaginationOrder::Desc),
     };
-    let result = find_all(&pool, pagination).await;
+    let filter = crate::database::queries::filter::Filter::default();
+    let result = find_all(&pool, pagination, filter).await;
     let list = result.unwrap();
     let list_len = list.len();
 
@@ -173,7 +177,8 @@ async fn test_offset(pool: sqlx::PgPool) {
         order: None,
     };
 
-    let result = find_all(&pool, pagination).await.unwrap();
+    let filter = crate::database::queries::filter::Filter::default();
+    let result = find_all(&pool, pagination, filter.clone()).await.unwrap();
     let expected_member = &result[10];
 
     let pagination = crate::database::queries::pagination::Pagination {
@@ -183,7 +188,7 @@ async fn test_offset(pool: sqlx::PgPool) {
         order: Some(crate::database::queries::pagination::PaginationOrder::Asc),
     };
 
-    let result = find_all(&pool, pagination).await.unwrap();
+    let result = find_all(&pool, pagination, filter).await.unwrap();
     let member = &result[0];
 
     assert_eq!(member.id, expected_member.id)

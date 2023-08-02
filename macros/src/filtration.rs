@@ -11,7 +11,7 @@ struct FiltrationFieldAttributes {
     skip: bool,
 }
 
-enum WhereType {
+enum FieldType {
     Option,
     String,
     NonSpecial,
@@ -265,10 +265,25 @@ Example:
 fn create_apply_block(struct_fields: &Vec<(Ident, Type, String)>) -> Vec<TokenStream> {
     struct_fields
         .iter()
-        .map(|(field_ident, _, _)| {
-            quote! {
-                if self.#field_ident.is_some() {
-                  query = query.bind(self.#field_ident.unwrap());
+        .map(|(field_ident, field_type, _)| {
+            let inner_type = check_where_type(field_type);
+            match inner_type {
+                FieldType::Option => {
+                    quote! {
+                        if self.#field_ident.is_some() {
+                            let value = self.#field_ident.unwrap();
+                            if value.is_some() {
+                                query = query.bind(value.unwrap());
+                            }
+                        }
+                    }
+                }
+                _ => {
+                    quote! {
+                        if self.#field_ident.is_some() {
+                          query = query.bind(self.#field_ident.unwrap());
+                        }
+                    }
                 }
             }
         })
@@ -288,9 +303,9 @@ fn write_where_block(field_ident: &Ident, field_type: &Type, meta_name: &String)
     let where_type = check_where_type(field_type);
 
     match where_type {
-        WhereType::Option => create_where_block_option(field_ident, field_type, meta_name),
-        WhereType::String => create_where_block_string(field_ident, meta_name),
-        WhereType::NonSpecial => create_where_block_non_special(field_ident, meta_name),
+        FieldType::Option => create_where_block_option(field_ident, field_type, meta_name),
+        FieldType::String => create_where_block_string(field_ident, meta_name),
+        FieldType::NonSpecial => create_where_block_non_special(field_ident, meta_name),
     }
 }
 
@@ -301,9 +316,9 @@ fn create_where_block_option(
 ) -> TokenStream {
     let inner_type = get_option_inner_type(field_type);
     let statement = match inner_type {
-        WhereType::String => write_string_statement(meta_name),
-        WhereType::NonSpecial => write_non_special_statement(meta_name),
-        WhereType::Option => {
+        FieldType::String => write_string_statement(meta_name),
+        FieldType::NonSpecial => write_non_special_statement(meta_name),
+        FieldType::Option => {
             panic!("Nested option types are not supported")
         }
     };
@@ -372,21 +387,21 @@ fn write_non_special_statement(meta_name: &String) -> TokenStream {
     };
 }
 
-fn check_where_type(field_type: &Type) -> WhereType {
+fn check_where_type(field_type: &Type) -> FieldType {
     if let Type::Path(ref type_path) = field_type {
         if let Some(segment) = type_path.path.segments.last() {
             let ident_string = segment.ident.to_string();
             if ident_string == "Option" {
-                return WhereType::Option;
+                return FieldType::Option;
             } else if ident_string == "String" {
-                return WhereType::String;
+                return FieldType::String;
             }
         }
     }
-    return WhereType::NonSpecial;
+    return FieldType::NonSpecial;
 }
 
-fn get_option_inner_type(field_type: &Type) -> WhereType {
+fn get_option_inner_type(field_type: &Type) -> FieldType {
     match field_type {
         Type::Path(ref type_path) => {
             let path_segment = type_path.path.segments.last().unwrap();
