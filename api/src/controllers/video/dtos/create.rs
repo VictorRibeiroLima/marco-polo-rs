@@ -6,7 +6,7 @@ use marco_polo_rs_core::{
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use validator::Validate;
+use validator::{Validate, ValidationError};
 
 lazy_static! {
     static ref YOUTUBE_URL: Regex = Regex::new(r#"^((?:https?:)?//)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(/(?:[\w\-]+\?v=|embed/|v/)?)([\w\-]+)(\S+)?$"#).unwrap();
@@ -21,7 +21,9 @@ pub struct CreateVideo {
     pub channel_id: i32,
     pub language: Option<String>,
     pub format: Option<VideoFormat>,
+    #[validate(custom(function = "validate_time", message = "Invalid Time Format (HH:MM:SS)"))]
     pub start_time: Option<String>,
+    #[validate(custom(function = "validate_time", message = "Invalid Time Format (HH:MM:SS)"))]
     pub end_time: Option<String>,
     pub tags: Option<Vec<String>>,
 }
@@ -36,4 +38,17 @@ impl CreateVideo {
             video_id: uuid,
         })
     }
+}
+
+fn validate_time(time: &str) -> Result<(), ValidationError> {
+    let times = time.split(":").collect::<Vec<&str>>();
+    if times.len() != 3 {
+        return Err(ValidationError::new("Invalid Time Format"));
+    }
+
+    for time in times {
+        time.parse::<i32>()
+            .map_err(|_| ValidationError::new("Invalid Time Format"))?;
+    }
+    return Ok(());
 }

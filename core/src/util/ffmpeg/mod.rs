@@ -6,6 +6,10 @@ use crate::SyncError;
 
 use super::fs::create_temp_dir;
 
+pub mod ffprobe;
+
+const SECONDS_TO_REDUCE: i8 = 5;
+
 pub fn check() -> Result<(), io::Error> {
     let ffmpeg_output = Command::new("ffmpeg").arg("-version").output()?;
 
@@ -123,35 +127,55 @@ pub fn cut_video(
     start_time: &str,
     end_time: &str,
 ) -> Result<String, io::Error> {
-    let output_id = uuid::Uuid::new_v4();
-
+    let temp_output_id = uuid::Uuid::new_v4();
     let temp_dir = create_temp_dir()?;
+    let temp_output_file = format!("{}/{}.mkv", temp_dir.to_str().unwrap(), temp_output_id);
 
-    let output_file = format!("{}/{}.mkv", temp_dir.to_str().unwrap(), output_id);
+    let reduced_start_time = reduce_start_time(start_time)?;
 
-    let output = Command::new("ffmpeg")
-        .arg("-ss")
-        .arg(start_time)
-        .arg("-noaccurate_seek")
-        .arg("-i")
-        .arg(&video_path)
-        .arg("-to")
-        .arg(end_time)
-        .arg("-c")
-        .arg("copy")
-        .arg(&output_file)
-        .arg("-y")
-        .output()?;
+    call_cut_command(
+        video_path,
+        &reduced_start_time,
+        Some(end_time),
+        &temp_output_file,
+    )?;
 
-    if !output.status.success() {
-        println!(
-            "Video cut failed. Error message: {}",
-            String::from_utf8_lossy(&output.stderr)
-        );
-        return Err(io::Error::new(io::ErrorKind::Other, "Failed to cut video"));
+    let start_time = match ffprobe::get_nearest_keyframe_in_seconds(&temp_output_file) {
+        Ok(start_time) => start_time,
+        Err(err) => {
+            eprintln!("Failed to get nearest keyframe in seconds: {}", err);
+            std::fs::remove_file(&temp_output_file)?;
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Failed to get nearest keyframe in seconds",
+            ));
+        }
+    };
+
+    let output_file_id = uuid::Uuid::new_v4();
+    let output_file = format!("{}/{}.mkv", temp_dir.to_str().unwrap(), output_file_id);
+
+    let temp_output_file_path = PathBuf::from(&temp_output_file);
+
+    match call_cut_command(
+        &temp_output_file_path,
+        &start_time.to_string(),
+        None,
+        &output_file,
+    ) {
+        Ok(_) => {
+            std::fs::remove_file(&temp_output_file)?;
+            Ok(output_file)
+        }
+        Err(err) => {
+            eprintln!("Failed to cut video: {}", err);
+            std::fs::remove_file(&temp_output_file)?;
+            Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Failed to cut video",
+            ))
+        }
     }
-
-    return Ok(output_file);
 }
 
 fn parse_ffmpeg_output_duration(output: &str) -> Result<String, io::Error> {
@@ -167,6 +191,91 @@ fn parse_ffmpeg_output_duration(output: &str) -> Result<String, io::Error> {
         .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "ffmpeg failed to probe video"))?;
 
     Ok(duration.to_string())
+}
+
+fn reduce_start_time(start_time: &str) -> Result<String, io::Error> {
+    let times = start_time.split(":").collect::<Vec<&str>>();
+    if times.len() != 3 {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "Start time is not in HH:MM:SS format",
+        ));
+    }
+
+    if start_time == "00:00:00" {
+        return Ok(start_time.to_string());
+    }
+
+    let mut hours = to_i8(times[0])?;
+    let mut minutes = to_i8(times[1])?;
+    let mut seconds = to_i8(times[2])?;
+
+    if hours < 0 && minutes < 0 && seconds - SECONDS_TO_REDUCE <= 0 {
+        return Ok("00:00:00".to_string());
+    }
+
+    seconds -= SECONDS_TO_REDUCE;
+    if seconds < 0 {
+        seconds += 60;
+        minutes -= 1;
+    }
+
+    if minutes < 0 {
+        minutes += 60;
+        hours -= 1;
+    }
+
+    let final_start_time = format!("{:02}:{:02}:{:02}", hours, minutes, seconds);
+
+    return Ok(final_start_time);
+}
+
+fn call_cut_command(
+    video_path: &PathBuf,
+    start_time: &str,
+    end_time: Option<&str>,
+    output_file: &str,
+) -> Result<(), io::Error> {
+    let mut command = Command::new("ffmpeg");
+
+    command
+        .arg("-i")
+        .arg(&video_path)
+        .arg("-ss")
+        .arg(start_time);
+
+    match end_time {
+        Some(end_time) => {
+            command.arg("-to").arg(end_time);
+        }
+        None => {}
+    };
+    let output = command
+        .arg("-c")
+        .arg("copy")
+        .arg(&output_file)
+        .arg("-y")
+        .output()?;
+
+    if !output.status.success() {
+        println!(
+            "Video cut failed. Error message: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        return Err(io::Error::new(io::ErrorKind::Other, "Failed to cut video"));
+    }
+
+    return Ok(());
+}
+
+fn to_i8(string: &str) -> Result<i8, io::Error> {
+    match string.parse::<i8>() {
+        Ok(i) => Ok(i),
+        Err(_) => Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "Start time is not in HH:MM:SS format",
+        )),
+    }
 }
 
 #[cfg(test)]
