@@ -1,12 +1,19 @@
+use std::str::FromStr;
+
 use actix_web::{
+    cookie::time::macros::date,
     get,
     web::{self, post, Json},
     HttpResponse, Responder,
 };
 
+use chrono::NaiveDate;
 use marco_polo_rs_core::{
     database::{
-        models::{user::UserRole, video::Video},
+        models::{
+            user::UserRole,
+            video::{Video, VideoStage},
+        },
         queries::{self, filter::Filter, pagination::Pagination},
     },
     internals::{
@@ -17,6 +24,7 @@ use marco_polo_rs_core::{
         youtube_client::{self, client::YoutubeClient},
     },
 };
+use serde_json::json;
 use uuid::Uuid;
 use validator::Validate;
 
@@ -85,7 +93,10 @@ async fn create_video<CS: CloudService, YC: youtube_client::traits::YoutubeClien
 
     service::create_video(pool, &body, jwt.id, video_id).await?;
 
-    return Ok(HttpResponse::Created().finish());
+    let video = queries::video::find_by_id(pool, &video_id).await?;
+    let dto: VideoDTO = video.into();
+
+    return Ok(HttpResponse::Created().json(dto));
 }
 
 #[get("/{id}")]
