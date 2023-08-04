@@ -8,13 +8,13 @@
 rm ./target/debug/deps/marco_polo_rs_core*
 rm ./target/debug/deps/libmarco_polo_rs_core*
 
-SQLX_OFFLINE=true cargo build
+SQLX_OFFLINE=true cargo build --tests
 
 if [ $? -eq 0 ]; then
   echo "Cargo build was successful. Running tests now..."
 
   cargo test
 else
-  echo "Cargo build failed. Please run 'cargo sqlx prepare --workspace' and try again."
+  echo "Cargo build failed. Please run 'cargo sqlx prepare --workspace -- --tests ' and try again."
   exit 1
 fi
