@@ -5,21 +5,16 @@
 # Output at /path/to/target/debug/build/cargo-husky-xxxxxx/out
 #
 
-# Run SQLx prepare
-cargo sqlx prepare --workspace
+rm ./target/debug/deps/marco_polo_rs_core*
+rm ./target/debug/deps/libmarco_polo_rs_core*
 
-# Stage the generated file
-git add .sqlx/*
+SQLX_OFFLINE=true cargo build
 
-# Check if there are changes to commit
-if [ -n "$(git status --porcelain .sqlx/* )" ]; then
-  # Commit the changes
-  git commit -m "chore: Generated SQLx file"
-  
- # Get the current branch name
-  BRANCH_NAME=$(git symbolic-ref --short HEAD)
+if [ $? -eq 0 ]; then
+  echo "Cargo build was successful. Running tests now..."
 
-  # Push the changes
-  git push origin "$BRANCH_NAME"
+  cargo test
+else
+  echo "Cargo build failed. Please run 'cargo sqlx prepare --workspace' and try again."
+  exit 1
 fi
-
