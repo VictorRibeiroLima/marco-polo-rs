@@ -22,3 +22,4 @@ if [ -n "$(git status --porcelain .sqlx/* )" ]; then
   # Push the changes
   git push origin "$BRANCH_NAME"
 fi
+
