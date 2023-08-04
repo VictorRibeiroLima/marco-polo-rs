@@ -61,6 +61,9 @@ async fn test_find_by_id_get_ok(pool: PgPool) {
         uploaded_at: Some(date),
         stage: VideoStage::Downloading,
         error: false,
+        end_time: Some("00:05:00".to_string()),
+        original_duration: Some("00:05:00".to_string()),
+        start_time: "00:00:00".to_string(),
     };
 
     let test_app = innit_test_app(pool.clone()).await;
