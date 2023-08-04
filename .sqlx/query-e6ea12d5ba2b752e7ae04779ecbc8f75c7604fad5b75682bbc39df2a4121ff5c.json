@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO videos_translations (video_id, translator_id, translation_id, storage_id, path)\n        VALUES ($1, $2, $3, $4, $5);\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int4",
+        "Varchar",
+        "Int4",
+        "Varchar"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e6ea12d5ba2b752e7ae04779ecbc8f75c7604fad5b75682bbc39df2a4121ff5c"
+}

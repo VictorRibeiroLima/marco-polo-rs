@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE videos\n        SET \n        stage = $1,\n        updated_at = NOW(),\n        error = false\n        WHERE id = $2\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        {
+          "Custom": {
+            "name": "videos_video_stages",
+            "kind": {
+              "Enum": [
+                "DOWNLOADING",
+                "TRANSCRIBING",
+                "TRANSLATING",
+                "SUBTITLING",
+                "DONE",
+                "UPLOADING"
+              ]
+            }
+          }
+        },
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a255c4bae8fe27dd782834cf5f7522e4ec5baae0faefa47c34ad28d44ae698ca"
+}

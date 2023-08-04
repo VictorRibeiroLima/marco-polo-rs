@@ -6,13 +6,13 @@
 #
 
 # Run SQLx prepare
-cargo sqlx prepare --merged -- --all-targets --all-features
+cargo sqlx prepare --workspace
 
 # Stage the generated file
-git add sqlx-data.json
+git add .sqlx/*
 
 # Check if there are changes to commit
-if [ -n "$(git status --porcelain sqlx-data.json)" ]; then
+if [ -n "$(git status --porcelain .sqlx/* )" ]; then
   # Commit the changes
   git commit -m "chore: Generated SQLx file"
   
