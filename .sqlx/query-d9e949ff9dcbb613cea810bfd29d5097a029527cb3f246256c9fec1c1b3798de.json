@@ -1,0 +1,109 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT \n            id,\n            video_id as \"video_id: Uuid\",\n            storage_id,\n            video_path,\n            size,\n            format as \"format: VideoFormat\",\n            stage as \"stage: StorageVideoStage\",\n            created_at as \"created_at: NaiveDateTime\",\n            updated_at as \"updated_at: NaiveDateTime\",\n            deleted_at as \"deleted_at: NaiveDateTime\"\n        FROM videos_storages\n            WHERE video_id = $1 AND stage = $2\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "video_id: Uuid",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "storage_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "video_path",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "size",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 5,
+        "name": "format: VideoFormat",
+        "type_info": {
+          "Custom": {
+            "name": "video_format",
+            "kind": {
+              "Enum": [
+                "MP4",
+                "AVI",
+                "MOV",
+                "MKV"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "stage: StorageVideoStage",
+        "type_info": {
+          "Custom": {
+            "name": "video_stage",
+            "kind": {
+              "Enum": [
+                "RAW",
+                "PROCESSED"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "created_at: NaiveDateTime",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 8,
+        "name": "updated_at: NaiveDateTime",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 9,
+        "name": "deleted_at: NaiveDateTime",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        {
+          "Custom": {
+            "name": "video_stage",
+            "kind": {
+              "Enum": [
+                "RAW",
+                "PROCESSED"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "d9e949ff9dcbb613cea810bfd29d5097a029527cb3f246256c9fec1c1b3798de"
+}

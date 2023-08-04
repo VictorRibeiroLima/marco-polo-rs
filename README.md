@@ -153,10 +153,10 @@ this can cause problems if the database is not running or the URL is not correct
 To mitigate this you can run the `prepare` command:
 
 ```bash
-cargo sqlx prepare --merged
+cargo sqlx prepare --workspace
 ```
 
-This will create a file called `sqlx-data.json` with the database schema, and sqlx will use this file to run the queries instead of the DATABASE_URL env var.
+This will create a folder called `.sqlx` with the database schema, and sqlx will use the files inside to run the queries instead of the DATABASE_URL env var.
 
 ## CLI
 

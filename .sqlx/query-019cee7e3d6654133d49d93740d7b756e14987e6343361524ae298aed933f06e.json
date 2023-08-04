@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n    UPDATE channels SET \n        error = $1,\n        updated_at = NOW()\n    WHERE id = $2\n    ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Bool",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "019cee7e3d6654133d49d93740d7b756e14987e6343361524ae298aed933f06e"
+}

@@ -1,0 +1,70 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT \n            id,\n            name,\n            creator_id,\n            csrf_token,\n            error,\n            refresh_token,\n            created_at as \"created_at: chrono::NaiveDateTime\",\n            updated_at as \"updated_at: chrono::NaiveDateTime\",\n            deleted_at as \"deleted_at: chrono::NaiveDateTime\"\n        FROM channels WHERE csrf_token = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "creator_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "csrf_token",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "error",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 5,
+        "name": "refresh_token",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 6,
+        "name": "created_at: chrono::NaiveDateTime",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 7,
+        "name": "updated_at: chrono::NaiveDateTime",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 8,
+        "name": "deleted_at: chrono::NaiveDateTime",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      true,
+      false,
+      true,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "4321112f015d9ab714e24cf533c6679fa3cb30822b8c6b463ce9fa54c47baa5f"
+}
