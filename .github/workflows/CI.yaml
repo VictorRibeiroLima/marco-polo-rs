@@ -59,4 +59,4 @@ jobs:
       - name: write env
         run: mv .example.env .env
       - name: test
-        run: cargo test
+        run: SQLX_OFFLINE=false cargo test
