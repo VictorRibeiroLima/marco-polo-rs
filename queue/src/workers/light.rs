@@ -46,7 +46,14 @@ impl LightWorker {
                     video_id: &video_id,
                     error: &e.to_string(),
                 };
-                let error_count = queries::video::create_error(&self.pool, dto).await.unwrap(); //TODO: unwrap
+                let error_count = match queries::video::create_error(&self.pool, dto).await {
+                    Ok(count) => count,
+                    Err(e) => {
+                        println!("Light Worker {} error: {:?}", self.id, e);
+                        self.delete_message(queue_client, message).await;
+                        return;
+                    }
+                };
                 match e {
                     HandlerError::Retrievable(_) => {
                         if error_count >= ERROR_COUNT_THRESHOLD {
@@ -59,7 +66,7 @@ impl LightWorker {
                         return;
                     }
                 }
-            }
+            } //TODO: better control flow
         }
 
         self.delete_message(queue_client, message).await;
