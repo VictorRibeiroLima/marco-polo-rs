@@ -44,7 +44,7 @@ pub struct Frame {
     #[serde(rename = "pix_fmt")]
     pub pix_fmt: String,
     #[serde(rename = "sample_aspect_ratio")]
-    pub sample_aspect_ratio: String,
+    pub sample_aspect_ratio: Option<String>,
     #[serde(rename = "pict_type")]
     pub pict_type: String,
     #[serde(rename = "coded_picture_number")]

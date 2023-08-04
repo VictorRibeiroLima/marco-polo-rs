@@ -290,4 +290,15 @@ mod test {
 
         assert_eq!(duration, "00:00:00.04");
     }
+
+    /* local test
+    #[test]
+    fn test_cut_video() {
+        let path = PathBuf::from("../bin/test.mkv");
+        let start_time = "00:41:04";
+        let end_time = "00:47:36";
+
+        let output_file = cut_video(&path, start_time, end_time).unwrap();
+    }
+    */
 }
