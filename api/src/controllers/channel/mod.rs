@@ -1,6 +1,6 @@
 use actix_web::{
     get,
-    web::{self, post, Json},
+    web::{self, get, post, Json},
     HttpResponse, Responder,
 };
 use marco_polo_rs_core::{
@@ -122,10 +122,8 @@ pub fn init_routes(config: &mut web::ServiceConfig) {
         )
         .route(
             "youtube/oauth/callback",
-            post().to(oauth_youtube_callback::<YoutubeClient>),
+            get().to(oauth_youtube_callback::<YoutubeClient>),
         )
-        //.service(create_youtube_channel)
-        //.service(oauth_youtube_callback)
         .service(find_by_id)
         .service(find_all);
 
