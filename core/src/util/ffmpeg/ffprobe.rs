@@ -58,13 +58,13 @@ pub struct Frame {
     #[serde(rename = "repeat_pict")]
     pub repeat_pict: i64,
     #[serde(rename = "color_range")]
-    pub color_range: String,
+    pub color_range: Option<String>,
     #[serde(rename = "color_space")]
-    pub color_space: String,
+    pub color_space: Option<String>,
     #[serde(rename = "color_primaries")]
-    pub color_primaries: String,
+    pub color_primaries: Option<String>,
     #[serde(rename = "color_transfer")]
-    pub color_transfer: String,
+    pub color_transfer: Option<String>,
 }
 
 pub fn get_nearest_keyframe_in_seconds(output_file: &str) -> Result<String, io::Error> {
