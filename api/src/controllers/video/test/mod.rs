@@ -530,6 +530,43 @@ async fn test_create_video_channel_error_when_getting_info(pool: PgPool) {
         "Channel has errors. Please contact admins".to_string()
     );
 }
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/channels")
+)]
+async fn test_returning_id(pool: PgPool) {
+    let jwt = get_token!(&pool, 1);
+    let pool = Arc::new(pool);
+    let app = innit_test_app(pool.clone()).await;
+
+    let dto = CreateVideo {
+        channel_id: 1,
+        description: "This is a test video about Elon Musk".to_string(),
+        title: "Elon Musk Test".to_string(),
+        video_url: "https://www.youtube.com/watch?v=1".to_string(),
+        ..Default::default()
+    };
+
+    let request = test::TestRequest::post()
+        .uri("/")
+        .insert_header(("Authorization", jwt))
+        .insert_header(ContentType::json())
+        .set_json(&dto)
+        .to_request();
+
+    let response = test::call_service(&app, request).await;
+
+    assert_eq!(response.status().as_u16(), StatusCode::CREATED);
+
+    let actual_dto: VideoDTO = test::read_body_json(response).await;
+
+    let video: Video = sqlx::query_as("SELECT * FROM videos WHERE channel_id = 1")
+        .fetch_one(pool.as_ref())
+        .await
+        .unwrap();
+
+    assert_eq!(actual_dto.id, video.id);
+}
 
 async fn innit_test_app(
     pool: Arc<PgPool>,
