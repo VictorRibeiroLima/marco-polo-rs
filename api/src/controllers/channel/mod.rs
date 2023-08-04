@@ -94,9 +94,15 @@ async fn oauth_youtube_callback<YC: YoutubeClientTrait>(
     let channel = queries::channel::find_by_csrf_token(pool, state).await?;
 
     let refresh_token = client.get_refresh_token(code).await?;
+
     let info = client.get_channel_info(refresh_token.clone()).await?;
 
-    let snippet = match info.items.get(0) {
+    let channel_info_items = match info.items {
+        Some(items) => items,
+        None => return Err(AppError::bad_request("It seems that you don't have a Youtube channel. Please, create one and retry.".to_string())),
+    };
+
+    let snippet = match channel_info_items.get(0) {
         Some(item) => &item.snippet,
         None => return Err(AppError::internal_server_error()),
     };
