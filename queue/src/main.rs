@@ -60,7 +60,7 @@ async fn main() {
     let queue_url = std::env::var("AWS_QUEUE_URL").expect("QUEUE_URL not found");
     let cloud_service = CloudServiceInUse::new(queue_url).unwrap();
 
-    let light_message_pool: Queue<(Message, PayloadType)> = Queue::new();
+    let light_message_pool: Queue<(Message, PayloadType)> = Queue::with_capacity(thread_count - 1);
     let light_message_pool = Arc::new(Mutex::new(light_message_pool));
 
     let heavy_message_pool: Queue<(Message, PayloadType)> = Queue::with_capacity(1);

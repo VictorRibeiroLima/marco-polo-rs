@@ -12,6 +12,39 @@ impl YtDl {
     pub fn new() -> Self {
         Self {}
     }
+
+    fn get_video_duration(&self, url: &str) -> Result<String, SyncError> {
+        let output = Command::new("yt-dlp")
+            .arg("--skip-download")
+            .arg("--get-duration")
+            .arg(url)
+            .output()?;
+
+        if !output.status.success() {
+            let error_message = String::from_utf8_lossy(&output.stderr);
+
+            println!(
+                "Video duration estimation failed. Error message: {}",
+                error_message
+            );
+            return Err(error_message.into());
+        }
+
+        let duration = String::from_utf8_lossy(&output.stdout);
+        Ok(duration.to_string())
+    }
+
+    fn parse_duration(duration_str: &str) -> usize {
+        let time_parts: Vec<&str> = duration_str.split(':').collect();
+        if time_parts.len() == 3 {
+            let hours = time_parts[0].parse::<usize>().unwrap_or(0);
+            let minutes = time_parts[1].parse::<usize>().unwrap_or(0);
+            let seconds = time_parts[2].parse::<usize>().unwrap_or(0);
+
+            return hours * 3600 + minutes * 60 + seconds;
+        }
+        0
+    }
 }
 
 #[async_trait]
@@ -31,7 +64,7 @@ impl YoutubeDownloader for YtDl {
             .arg("-o")
             .arg(&output_file)
             .arg("-f")
-            .arg("bestvideo+bestaudio")
+            .arg("bestvideo[height<=1080][fps<=30]+bestaudio/best[height<=1080][fps<=30]")
             .arg("--merge-output-format")
             .arg(format)
             .arg(url)
@@ -40,9 +73,21 @@ impl YoutubeDownloader for YtDl {
         if !output.status.success() {
             let error_message = String::from_utf8_lossy(&output.stderr);
             println!("Video download failed. Error message: {}", error_message);
-            return Err(error_message.into()); // TODO: change to stderr
+            return Err(error_message.into());
         }
 
         Ok(output_file)
+    }
+
+    async fn estimate_time(&self, url: &str) -> Result<usize, SyncError> {
+        let duration = self.get_video_duration(url)?;
+        let duration = Self::parse_duration(&duration);
+        let estimated_time = duration * 2;
+        if estimated_time < 4000 {
+            return Ok(4000);
+        } else if estimated_time > 43200 {
+            return Ok(43200);
+        }
+        Ok(estimated_time)
     }
 }
