@@ -5,6 +5,7 @@ use uuid::Uuid;
 
 use crate::database::models::{
     video::{Video, VideoStage, VideoWithStorage, VideoWithStorageAndChannel},
+    video_error::{self, VideoError},
     video_storage::StorageVideoStage,
 };
 

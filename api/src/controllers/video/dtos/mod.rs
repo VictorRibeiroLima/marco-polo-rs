@@ -1,6 +1,9 @@
 pub mod create;
 use chrono::NaiveDateTime;
-use marco_polo_rs_core::database::models::video::{Video, VideoStage};
+use marco_polo_rs_core::database::models::{
+    video::{Video, VideoStage},
+    video_error::VideoError,
+};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -19,6 +22,27 @@ pub struct VideoDTO {
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
     pub uploaded_at: Option<NaiveDateTime>,
+}
+
+#[derive(Serialize, Debug, PartialEq, Deserialize)]
+pub struct ErrorDTO {
+    pub id: i32,
+    pub video_id: Uuid,
+    pub error: String,
+    pub created_at: NaiveDateTime,
+    pub stage: VideoStage,
+}
+
+impl From<VideoError> for ErrorDTO {
+    fn from(value: VideoError) -> Self {
+        ErrorDTO {
+            id: value.id,
+            video_id: value.video_id,
+            error: value.error,
+            created_at: value.created_at,
+            stage: value.stage,
+        }
+    }
 }
 
 impl From<Video> for VideoDTO {
