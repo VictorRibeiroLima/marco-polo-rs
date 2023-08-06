@@ -6,11 +6,7 @@ use actix_web::{
 
 use marco_polo_rs_core::{
     database::{
-<<<<<<< HEAD
-        models::{user::UserRole, video::Video, video_error::find_by_video_id},
-=======
         models::{user::UserRole, video::Video},
->>>>>>> master
         queries::{self, filter::Filter, pagination::Pagination},
     },
     internals::{

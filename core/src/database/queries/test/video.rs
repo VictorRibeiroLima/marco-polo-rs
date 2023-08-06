@@ -15,6 +15,7 @@ use crate::database::{
             create, create_error, find_all, find_by_id, find_by_id_with_storage,
             find_by_transcription_id, find_today_videos, CreateErrorDto, CreateVideoDto,
         },
+        video_error::find_by_video_id,
     },
 };
 
@@ -415,7 +416,6 @@ async fn test_create_error_1_previous_errors_from_another_stage(pool: PgPool) {
 
     assert_eq!(result, 1);
 }
-<<<<<<< HEAD
 
 #[sqlx::test(migrations = "../migrations", fixtures("videos_errors"))]
 async fn test_find_video_error(pool: PgPool) {
@@ -496,5 +496,3 @@ async fn test_not_find_today_videos(pool: PgPool) {
         assert_ne!(video.created_at.date(), yesterday);
     }
 }
-=======
->>>>>>> master
