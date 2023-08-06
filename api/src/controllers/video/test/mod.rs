@@ -21,7 +21,10 @@ use uuid::Uuid;
 
 use crate::{
     auth::gen_token,
-    controllers::test::mock::{cloud_service::CloudServiceMock, youtube_client::YoutubeClientMock},
+    controllers::{
+        test::mock::{cloud_service::CloudServiceMock, youtube_client::YoutubeClientMock},
+        video::dtos::VideoErrorDTO,
+    },
     models::error::AppErrorResponse,
     AppCloudService, AppYoutubeClient,
 };
@@ -31,7 +34,7 @@ use crate::controllers::video::dtos::{create::CreateVideo, VideoDTO};
 use crate::utils::test::get_token;
 use crate::AppPool;
 
-use super::{create_video, find_all, find_by_id};
+use super::{create_video, find_all, find_by_id, find_video_errors};
 
 #[sqlx::test(
     migrations = "../migrations",
@@ -611,6 +614,114 @@ async fn test_create_video_bad_request_start_time_end_time(pool: PgPool) {
     }
 }
 
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/video", "../../../test/fixtures/admin")
+)]
+async fn test_find_video_errors_no_error(pool: PgPool) {
+    let jwt = get_token!(&pool, 1000);
+    let pool = Arc::new(pool);
+    let app = innit_test_app(pool.clone()).await;
+
+    let video_id = "2c20e6d2-7bce-47b7-b02d-7f45fb106df5";
+
+    let url = format!("/{}/errors", video_id);
+
+    let request = test::TestRequest::get()
+        .uri(&url)
+        .insert_header(("Authorization", jwt))
+        .to_request();
+
+    let response = test::call_service(&app, request).await;
+
+    assert_eq!(response.status().as_u16(), StatusCode::OK);
+
+    let body: Vec<VideoErrorDTO> = test::read_body_json(response).await;
+
+    assert_eq!(body.len(), 0);
+}
+
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/video_error", "../../../test/fixtures/admin")
+)]
+async fn test_find_video_errors_one_error(pool: PgPool) {
+    let jwt = get_token!(&pool, 1000);
+    let pool = Arc::new(pool);
+    let app = innit_test_app(pool.clone()).await;
+
+    let video_id = "2c20e6d2-7bce-47b7-b02d-7f45fb106df5";
+
+    let url = format!("/{}/errors", video_id);
+
+    let request = test::TestRequest::get()
+        .uri(&url)
+        .insert_header(("Authorization", jwt))
+        .to_request();
+
+    let response = test::call_service(&app, request).await;
+
+    assert_eq!(response.status().as_u16(), StatusCode::OK);
+
+    let body: Vec<VideoErrorDTO> = test::read_body_json(response).await;
+
+    assert_eq!(body.len(), 1);
+}
+
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/video_errors", "../../../test/fixtures/admin")
+)]
+async fn test_find_video_errors_three_error(pool: PgPool) {
+    let jwt = get_token!(&pool, 1000);
+    let pool = Arc::new(pool);
+    let app = innit_test_app(pool.clone()).await;
+
+    let video_id = "2c20e6d2-7bce-47b7-b02d-7f45fb106df5";
+
+    let url = format!("/{}/errors", video_id);
+
+    let request = test::TestRequest::get()
+        .uri(&url)
+        .insert_header(("Authorization", jwt))
+        .to_request();
+
+    let response = test::call_service(&app, request).await;
+
+    assert_eq!(response.status().as_u16(), StatusCode::OK);
+
+    let body: Vec<VideoErrorDTO> = test::read_body_json(response).await;
+
+    assert_eq!(body.len(), 3);
+}
+
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/video_errors", "../../../test/fixtures/user")
+)]
+async fn test_find_video_errors_three_errors_from_other_user(pool: PgPool) {
+    let jwt = get_token!(&pool, 666);
+    let pool = Arc::new(pool);
+    let app = innit_test_app(pool.clone()).await;
+
+    let video_id = "2c20e6d2-7bce-47b7-b02d-7f45fb106df5";
+
+    let url = format!("/{}/errors", video_id);
+
+    let request = test::TestRequest::get()
+        .uri(&url)
+        .insert_header(("Authorization", jwt))
+        .to_request();
+
+    let response = test::call_service(&app, request).await;
+
+    assert_eq!(response.status().as_u16(), StatusCode::OK);
+
+    let body: Vec<VideoErrorDTO> = test::read_body_json(response).await;
+
+    assert_eq!(body.len(), 0);
+}
+
 async fn innit_test_app(
     pool: Arc<PgPool>,
 ) -> impl actix_web::dev::Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
@@ -628,6 +739,7 @@ async fn innit_test_app(
         .app_data(app_youtube_client)
         .service(find_by_id)
         .service(find_all)
+        .service(find_video_errors)
         .route(
             "/",
             post().to(create_video::<CloudServiceMock, YoutubeClientMock>),

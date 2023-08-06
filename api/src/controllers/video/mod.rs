@@ -22,11 +22,13 @@ use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
-    middleware::jwt_token::TokenClaims, models::error::AppError, AppCloudService, AppPool,
-    AppYoutubeClient,
+    controllers::video::dtos::{VideoDTO, VideoErrorDTO},
+    middleware::jwt_token::TokenClaims,
+    models::error::AppError,
+    AppCloudService, AppPool, AppYoutubeClient,
 };
 
-use self::dtos::{create::CreateVideo, VideoDTO};
+use self::dtos::create::CreateVideo;
 
 mod dtos;
 mod service;
@@ -131,6 +133,28 @@ async fn find_all(
     return Ok(Json(dto));
 }
 
+#[get("/{id}/errors")]
+async fn find_video_errors(
+    id: web::Path<Uuid>,
+    pool: web::Data<AppPool>,
+    jwt: TokenClaims,
+) -> Result<impl Responder, AppError> {
+    let pool = &pool.pool;
+    let id = id.into_inner();
+
+    let video_errors = match jwt.role {
+        UserRole::Admin => queries::video_error::find_by_video_id(pool, &id).await?,
+        UserRole::User => {
+            let user_id = jwt.id;
+            queries::video_error::find_by_video_id_and_owner(pool, &id, user_id).await?
+        }
+    };
+
+    let dto: Vec<VideoErrorDTO> = video_errors.into_iter().map(|c| c.into()).collect();
+
+    return Ok(Json(dto));
+}
+
 pub fn init_routes(config: &mut web::ServiceConfig) {
     let scope = web::scope("/video");
     let scope = scope
@@ -139,6 +163,7 @@ pub fn init_routes(config: &mut web::ServiceConfig) {
             post().to(create_video::<AwsCloudService, YoutubeClient>),
         )
         .service(find_by_id)
-        .service(find_all);
+        .service(find_all)
+        .service(find_video_errors);
     config.service(scope);
 }
