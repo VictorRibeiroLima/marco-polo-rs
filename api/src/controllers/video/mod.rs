@@ -1,12 +1,19 @@
+use std::intrinsics::mir::Return;
+
 use actix_web::{
     get,
     web::{self, post, Json},
     HttpResponse, Responder,
 };
 
+use dotenv::Error;
 use marco_polo_rs_core::{
     database::{
-        models::{user::UserRole, video::Video},
+        models::{
+            user::UserRole,
+            video::Video,
+            video_error::{self, find_by_video_id},
+        },
         queries::{self, filter::Filter, pagination::Pagination},
     },
     internals::{
@@ -22,8 +29,10 @@ use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
-    controllers::video::dtos::VideoDTO, middleware::jwt_token::TokenClaims,
-    models::error::AppError, AppCloudService, AppPool, AppYoutubeClient,
+    controllers::video::dtos::{ErrorDTO, VideoDTO},
+    middleware::jwt_token::TokenClaims,
+    models::error::AppError,
+    AppCloudService, AppPool, AppYoutubeClient,
 };
 
 use self::dtos::create::CreateVideo;
@@ -127,6 +136,20 @@ async fn find_all(
     }?;
 
     let dto: Vec<VideoDTO> = channels.into_iter().map(|c| c.into()).collect();
+
+    return Ok(Json(dto));
+}
+
+#[get("/videos/{id}/errors")]
+async fn find_video_error(
+    id: web::Path<Uuid>,
+    pool: web::Data<AppPool>,
+    _jwt: TokenClaims,
+) -> Result<impl Responder, AppError> {
+    let pool = &pool.pool;
+    let video_errors = find_by_video_id(pool, &id).await?;
+
+    let dto: Vec<ErrorDTO> = video_errors.into_iter().map(|c| c.into()).collect();
 
     return Ok(Json(dto));
 }
