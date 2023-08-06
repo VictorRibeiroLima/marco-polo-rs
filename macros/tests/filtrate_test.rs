@@ -1,10 +1,34 @@
 #![allow(dead_code)]
 
 use marco_polo_rs_macros::Filtrate;
+use sqlx::{Encode, Postgres, Type};
 
 use crate::database::queries::filter::FilterableOptions;
 
+use serde::{Deserialize, Serialize};
+
 mod database;
+
+#[derive(PartialEq, Clone, Deserialize, Serialize, Debug, Copy)]
+struct TestDate {}
+
+impl<T> Encode<'_, T> for TestDate
+where
+    T: sqlx::database::Database,
+{
+    fn encode_by_ref(
+        &self,
+        _buf: &mut <T as sqlx::database::HasArguments<'_>>::ArgumentBuffer,
+    ) -> sqlx::encode::IsNull {
+        sqlx::encode::IsNull::No
+    }
+}
+
+impl Type<Postgres> for TestDate {
+    fn type_info() -> sqlx::postgres::PgTypeInfo {
+        sqlx::postgres::PgTypeInfo::with_name("date")
+    }
+}
 
 #[derive(Filtrate)]
 struct Test {
@@ -22,6 +46,16 @@ struct Test2 {
     pub c: Option<String>,
     #[filtrate(skip = true)]
     pub d: Option<i32>,
+}
+
+#[derive(Filtrate)]
+struct Test3WithDate {
+    pub a: i32,
+    pub b: String,
+    pub c: Option<String>,
+    pub d: Option<i32>,
+    pub e: TestDate,
+    pub f: Option<TestDate>,
 }
 
 #[test]
@@ -122,4 +156,100 @@ fn test_full_query_with_null() {
         String::from("a = $1 AND b LIKE $2 AND c IS NULL AND d IS NULL")
     );
     assert_eq!(param_count, 2);
+}
+
+#[test]
+fn test_full_query_with_null_and_date() {
+    let test = InternalFiltrationTest3WithDateFilters {
+        a: Some(1),
+        b: Some(String::from("test")),
+        c: Some(None),
+        d: Some(None),
+        e: Some(TestDate {}),
+        f: Some(None),
+        e_end: None,
+        f_end: None,
+        e_start: None,
+        f_start: None,
+    };
+
+    let (where_string, param_count) = test.gen_where_statements(None);
+
+    assert_eq!(
+        where_string,
+        String::from("a = $1 AND b LIKE $2 AND c IS NULL AND d IS NULL AND e = $3 AND f IS NULL")
+    );
+    assert_eq!(param_count, 3);
+}
+
+#[test]
+fn test_between_date() {
+    let test = InternalFiltrationTest3WithDateFilters {
+        a: Some(1),
+        b: Some(String::from("test")),
+        c: Some(None),
+        d: Some(None),
+        e: None,
+        f: Some(None),
+        e_end: Some(TestDate {}),
+        f_end: Some(None),
+        e_start: Some(TestDate {}),
+        f_start: Some(None),
+    };
+
+    let (where_string, param_count) = test.gen_where_statements(None);
+
+    assert_eq!(
+        where_string,
+        String::from("a = $1 AND b LIKE $2 AND c IS NULL AND d IS NULL AND e BETWEEN $3 AND $4 AND f IS NULL")
+    );
+    assert_eq!(param_count, 4);
+}
+
+#[test]
+fn test_start_some_value_end_some_none_date() {
+    let test = InternalFiltrationTest3WithDateFilters {
+        a: Some(1),
+        b: Some(String::from("test")),
+        c: Some(None),
+        d: Some(None),
+        e: None,
+        f: None,
+        e_end: None,
+        f_end: Some(None),
+        e_start: None,
+        f_start: Some(Some(TestDate {})),
+    };
+
+    let (where_string, param_count) = test.gen_where_statements(None);
+
+    assert_eq!(
+        where_string,
+        String::from("a = $1 AND b LIKE $2 AND c IS NULL AND d IS NULL AND f >= $3")
+    );
+    assert_eq!(param_count, 3);
+}
+
+#[test]
+fn test_end_some_none_end_some_value_date() {
+    let test = InternalFiltrationTest3WithDateFilters {
+        a: Some(1),
+        b: Some(String::from("test")),
+        c: Some(None),
+        d: Some(None),
+        e: None,
+        f: None,
+        e_end: None,
+        f_end: Some(Some(TestDate {})),
+        e_start: None,
+        f_start: None,
+    };
+
+    let (where_string, param_count) = test.gen_where_statements(None);
+
+    assert_eq!(
+        where_string,
+        String::from("a = $1 AND b LIKE $2 AND c IS NULL AND d IS NULL AND f <= $3")
+    );
+    assert_eq!(param_count, 3);
 }
