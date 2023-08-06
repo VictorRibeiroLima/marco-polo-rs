@@ -3,6 +3,8 @@ use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use syn::{DeriveInput, GenericArgument, PathArguments, Type};
 
+mod date;
+
 #[derive(deluxe::ExtractAttributes)]
 #[deluxe(attributes(filtrate))]
 struct FiltrationFieldAttributes {
@@ -14,6 +16,7 @@ struct FiltrationFieldAttributes {
 enum FieldType {
     Option,
     String,
+    Date,
     NonSpecial,
 }
 
@@ -151,7 +154,7 @@ pub fn gen_filtration_block(input: TokenStream) -> Result<TokenStream> {
                     None => 0,
                 };
 
-                let mut where_count = 0;
+                let mut and = false;
 
                 #(#where_block)*
 
@@ -220,11 +223,49 @@ fn create_struct_fields(struct_fields: &Vec<(Ident, Type, String)>) -> Vec<Token
     struct_fields
         .iter()
         .map(|(field_ident, field_type, _)| {
-            quote! {
+            let primary_field = quote! {
                 pub #field_ident: Option<#field_type>
+            };
+            let f_type = check_type(field_type);
+            match f_type {
+                FieldType::Date => {
+                    let between_fields = create_date_between_fields(field_ident, field_type);
+                    quote! {
+                        #primary_field,
+                        #between_fields
+                    }
+                }
+                FieldType::Option => {
+                    let inner_type = get_option_inner_type(field_type);
+                    match inner_type {
+                        FieldType::Date => {
+                            let between_fields =
+                                create_date_between_fields(field_ident, field_type);
+                            quote! {
+                                #primary_field,
+                                #between_fields
+                            }
+                        }
+                        FieldType::Option => {
+                            panic!("Nested options are not supported")
+                        }
+                        _ => primary_field,
+                    }
+                }
+                _ => primary_field,
             }
         })
         .collect()
+}
+
+fn create_date_between_fields(field_ident: &Ident, field_type: &Type) -> TokenStream {
+    let string_ident = field_ident.to_string();
+    let start_ident = Ident::new(&format!("{}_start", string_ident), Span::call_site());
+    let end_ident = Ident::new(&format!("{}_end", string_ident), Span::call_site());
+    quote! {
+        pub #start_ident: Option<#field_type>,
+        pub #end_ident: Option<#field_type>
+    }
 }
 
 /* Create the struct filter_fields block
@@ -266,18 +307,26 @@ fn create_apply_block(struct_fields: &Vec<(Ident, Type, String)>) -> Vec<TokenSt
     struct_fields
         .iter()
         .map(|(field_ident, field_type, _)| {
-            let inner_type = check_where_type(field_type);
+            let inner_type = check_type(field_type);
             match inner_type {
                 FieldType::Option => {
-                    quote! {
-                        if self.#field_ident.is_some() {
-                            let value = self.#field_ident.unwrap();
-                            if value.is_some() {
-                                query = query.bind(value.unwrap());
+                    let inner_type = get_option_inner_type(field_type);
+                    match inner_type {
+                        FieldType::Date => date::write_option_date_apply_block(field_ident),
+                        FieldType::Option => panic!("Nested options are not supported"),
+                        _ => {
+                            quote! {
+                                if self.#field_ident.is_some() {
+                                    let value = self.#field_ident.unwrap();
+                                    if value.is_some() {
+                                        query = query.bind(value.unwrap());
+                                    }
+                                }
                             }
                         }
                     }
                 }
+                FieldType::Date => date::write_date_apply_block(field_ident),
                 _ => {
                     quote! {
                         if self.#field_ident.is_some() {
@@ -300,11 +349,12 @@ fn create_where_block(struct_fields: &Vec<(Ident, Type, String)>) -> Vec<TokenSt
 }
 
 fn write_where_block(field_ident: &Ident, field_type: &Type, meta_name: &String) -> TokenStream {
-    let where_type = check_where_type(field_type);
+    let where_type = check_type(field_type);
 
     match where_type {
         FieldType::Option => create_where_block_option(field_ident, field_type, meta_name),
         FieldType::String => create_where_block_string(field_ident, meta_name),
+        FieldType::Date => create_where_block_date(field_ident, meta_name),
         FieldType::NonSpecial => create_where_block_non_special(field_ident, meta_name),
     }
 }
@@ -315,33 +365,58 @@ fn create_where_block_option(
     meta_name: &String,
 ) -> TokenStream {
     let inner_type = get_option_inner_type(field_type);
-    let statement = match inner_type {
-        FieldType::String => write_string_statement(meta_name),
-        FieldType::NonSpecial => write_non_special_statement(meta_name),
-        FieldType::Option => {
-            panic!("Nested option types are not supported")
-        }
-    };
-    return quote! {
+    match inner_type {
+        FieldType::String => {
+            let statement = write_string_statement(meta_name);
+            quote! {
 
-        if self.#field_ident.is_some() {
-            where_count = where_count + 1;
-            let value = self.#field_ident.as_ref().unwrap();
-            match value {
-                Some(_) => {
-                    param_count = param_count + 1;
-                   #statement
-                }
-                None => {
-                    if where_count == 1 {
-                        sql.push_str(&format!("{} IS NULL", #meta_name));
-                    } else {
-                        sql.push_str(&format!(" AND {} IS NULL", #meta_name));
+                if self.#field_ident.is_some() {
+                    let value = self.#field_ident.as_ref().unwrap();
+                    match value {
+                        Some(_) => {
+                            param_count = param_count + 1;
+                           #statement
+                        }
+                        None => {
+                            if !and {
+                                sql.push_str(&format!("{} IS NULL", #meta_name));
+                            } else {
+                                sql.push_str(&format!(" AND {} IS NULL", #meta_name));
+                            }
+                            and = true;
+                        }
                     }
                 }
             }
         }
-    };
+        FieldType::NonSpecial => {
+            let statement = write_non_special_statement(meta_name);
+            quote! {
+
+                if self.#field_ident.is_some() {
+                    let value = self.#field_ident.as_ref().unwrap();
+                    match value {
+                        Some(_) => {
+                            param_count = param_count + 1;
+                           #statement
+                        }
+                        None => {
+                            if !and {
+                                sql.push_str(&format!("{} IS NULL", #meta_name));
+                            } else {
+                                sql.push_str(&format!(" AND {} IS NULL", #meta_name));
+                            }
+                            and = true;
+                        }
+                    }
+                }
+            }
+        }
+        FieldType::Date => date::write_option_date_statement(field_ident, meta_name),
+        FieldType::Option => {
+            panic!("Nested option types are not supported")
+        }
+    }
 }
 
 fn create_where_block_string(field_ident: &Ident, meta_name: &String) -> TokenStream {
@@ -349,20 +424,28 @@ fn create_where_block_string(field_ident: &Ident, meta_name: &String) -> TokenSt
     return quote! {
 
         if self.#field_ident.is_some() {
-            where_count = where_count + 1;
             param_count = param_count + 1;
             #string_statement
         }
     };
 }
 
+fn create_where_block_date(field_ident: &Ident, meta_name: &String) -> TokenStream {
+    let date_statement = date::write_date_statement(field_ident, meta_name);
+    return quote! {
+
+        #date_statement
+    };
+}
+
 fn write_string_statement(meta_name: &String) -> TokenStream {
     return quote! {
-        if where_count == 1 {
+        if !and {
             sql.push_str(&format!("{} LIKE ${}", #meta_name, param_count));
         } else {
             sql.push_str(&format!(" AND {} LIKE ${}", #meta_name, param_count));
         }
+        and = true;
     };
 }
 
@@ -370,7 +453,6 @@ fn create_where_block_non_special(field_ident: &Ident, meta_name: &String) -> To
     let non_special_statement = write_non_special_statement(meta_name);
     return quote! {
         if self.#field_ident.is_some() {
-            where_count = where_count + 1;
             param_count = param_count + 1;
             #non_special_statement
         }
@@ -379,15 +461,16 @@ fn create_where_block_non_special(field_ident: &Ident, meta_name: &String) -> To
 
 fn write_non_special_statement(meta_name: &String) -> TokenStream {
     return quote! {
-        if where_count == 1 {
+        if !and  {
             sql.push_str(&format!("{} = ${}", #meta_name, param_count));
         } else {
             sql.push_str(&format!(" AND {} = ${}", #meta_name, param_count));
         }
+        and = true;
     };
 }
 
-fn check_where_type(field_type: &Type) -> FieldType {
+fn check_type(field_type: &Type) -> FieldType {
     if let Type::Path(ref type_path) = field_type {
         if let Some(segment) = type_path.path.segments.last() {
             let ident_string = segment.ident.to_string();
@@ -395,6 +478,8 @@ fn check_where_type(field_type: &Type) -> FieldType {
                 return FieldType::Option;
             } else if ident_string == "String" {
                 return FieldType::String;
+            } else if ident_string.contains("Date") {
+                return FieldType::Date;
             }
         }
     }
@@ -410,7 +495,7 @@ fn get_option_inner_type(field_type: &Type) -> FieldType {
                     let generic_arg = args.args.first().unwrap();
                     match generic_arg {
                         GenericArgument::Type(ref inner_type) => {
-                            return check_where_type(inner_type);
+                            return check_type(inner_type);
                         }
                         _ => {
                             panic!("Only option types are supported")

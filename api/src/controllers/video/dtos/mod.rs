@@ -27,27 +27,6 @@ pub struct VideoDTO {
     pub uploaded_at: Option<NaiveDateTime>,
 }
 
-#[derive(Serialize, Debug, PartialEq, Deserialize)]
-pub struct ErrorDTO {
-    pub id: i32,
-    pub video_id: Uuid,
-    pub error: String,
-    pub created_at: NaiveDateTime,
-    pub stage: VideoStage,
-}
-
-impl From<VideoError> for ErrorDTO {
-    fn from(value: VideoError) -> Self {
-        ErrorDTO {
-            id: value.id,
-            video_id: value.video_id,
-            error: value.error,
-            created_at: value.created_at,
-            stage: value.stage,
-        }
-    }
-}
-
 impl From<Video> for VideoDTO {
     fn from(value: Video) -> Self {
         let tags = match value.tags {
@@ -72,5 +51,26 @@ impl From<Video> for VideoDTO {
             tags,
             error: value.error,
         };
+    }
+}
+
+#[derive(Serialize, Debug, PartialEq, Deserialize)]
+pub struct VideoErrorDTO {
+    pub id: i32,
+    pub video_id: Uuid,
+    pub error: String,
+    pub created_at: NaiveDateTime,
+    pub stage: VideoStage,
+}
+
+impl From<VideoError> for VideoErrorDTO {
+    fn from(value: VideoError) -> Self {
+        VideoErrorDTO {
+            id: value.id,
+            video_id: value.video_id,
+            error: value.error,
+            created_at: value.created_at,
+            stage: value.stage,
+        }
     }
 }

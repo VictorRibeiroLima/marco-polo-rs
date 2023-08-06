@@ -1,6 +1,7 @@
 -- Add up migration script here
-ALTER TABLE videos
-ADD COLUMN error BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE videos ADD COLUMN error BOOLEAN NOT NULL DEFAULT FALSE;
+
+
 CREATE TABLE videos_errors (
   id SERIAL PRIMARY KEY,
   video_id UUID NOT NULL REFERENCES videos(id),
