@@ -17,7 +17,13 @@
     "sslmode",
     "subtitler",
     "subtitlings",
-    "tlsv"
+    "tlsv",
+    "Uuid",
+    "uuid",
+    "youtube",
+    "Youtube",
+    "Elon",
+    "elon"
   ],
   "rust-analyzer.showUnlinkedFileNotification": false
 }

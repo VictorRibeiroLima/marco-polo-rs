@@ -1,0 +1,41 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO videos_storages (video_id, storage_id, video_path, format, stage,size)\n        VALUES ($1, $2, $3, $4, $5, $6);\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int4",
+        "Varchar",
+        {
+          "Custom": {
+            "name": "video_format",
+            "kind": {
+              "Enum": [
+                "MP4",
+                "AVI",
+                "MOV",
+                "MKV"
+              ]
+            }
+          }
+        },
+        {
+          "Custom": {
+            "name": "video_stage",
+            "kind": {
+              "Enum": [
+                "RAW",
+                "PROCESSED"
+              ]
+            }
+          }
+        },
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5cebfb8ef7b3a973e2f6957a942d1b86027b868c73e19036cb2d104b72d409b4"
+}

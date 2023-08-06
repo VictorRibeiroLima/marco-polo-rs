@@ -7,7 +7,7 @@ pub struct ChannelInfo {
     pub kind: String,
     pub etag: String,
     pub page_info: PageInfo,
-    pub items: Vec<Item>,
+    pub items: Option<Vec<Item>>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]

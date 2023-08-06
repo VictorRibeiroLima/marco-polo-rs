@@ -1,0 +1,138 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT \n            v.id as \"id: Uuid\", \n            v.title,\n            v.description,\n            v.url,\n            v.language,\n            v.user_id,\n            v.channel_id,\n            v.error,\n            v.original_url,\n            v.original_duration,\n            v.start_time,\n            v.end_time,\n            v.tags,\n            v.stage as \"stage: VideoStage\",\n            v.created_at as \"created_at: NaiveDateTime\",\n            v.updated_at as \"updated_at: NaiveDateTime\",\n            v.deleted_at as \"deleted_at: NaiveDateTime\",\n            v.uploaded_at as \"uploaded_at: NaiveDateTime\"\n        FROM \n            videos v\n        INNER JOIN \n            videos_transcriptions vt ON v.id = vt.video_id\n        WHERE \n            vt.transcription_id = $1\n    ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id: Uuid",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "title",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "url",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "language",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "user_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "channel_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 7,
+        "name": "error",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 8,
+        "name": "original_url",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 9,
+        "name": "original_duration",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 10,
+        "name": "start_time",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 11,
+        "name": "end_time",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 12,
+        "name": "tags",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 13,
+        "name": "stage: VideoStage",
+        "type_info": {
+          "Custom": {
+            "name": "videos_video_stages",
+            "kind": {
+              "Enum": [
+                "DOWNLOADING",
+                "TRANSCRIBING",
+                "TRANSLATING",
+                "SUBTITLING",
+                "DONE",
+                "UPLOADING"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "created_at: NaiveDateTime",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 15,
+        "name": "updated_at: NaiveDateTime",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 16,
+        "name": "deleted_at: NaiveDateTime",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 17,
+        "name": "uploaded_at: NaiveDateTime",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      true,
+      true,
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "84ae294cc09fda5aad1e62a68ebddc35085ff9c8865b41d252c0b714e6573995"
+}

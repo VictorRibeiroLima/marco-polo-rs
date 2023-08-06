@@ -61,6 +61,9 @@ async fn test_find_by_id_get_ok(pool: PgPool) {
         uploaded_at: Some(date),
         stage: VideoStage::Downloading,
         error: false,
+        end_time: Some("00:05:00".to_string()),
+        original_duration: Some("00:05:00".to_string()),
+        start_time: "00:00:00".to_string(),
     };
 
     let test_app = innit_test_app(pool.clone()).await;
@@ -354,6 +357,8 @@ async fn test_create_video_ok_admin(pool: PgPool) {
         description: "This is a test video about Elon Musk".to_string(),
         title: "Elon Musk Test".to_string(),
         video_url: "https://www.youtube.com/watch?v=1".to_string(),
+        start_time: Some("00:00:00".to_string()),
+        end_time: Some("00:10:00".to_string()),
         ..Default::default()
     };
 
@@ -566,6 +571,44 @@ async fn test_returning_id(pool: PgPool) {
         .unwrap();
 
     assert_eq!(actual_dto.id, video.id);
+}
+
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/channels")
+)]
+async fn test_create_video_bad_request_start_time_end_time(pool: PgPool) {
+    let jwt = get_token!(&pool, 1);
+    let pool = Arc::new(pool);
+    let app = innit_test_app(pool.clone()).await;
+
+    let dto = CreateVideo {
+        channel_id: 1,
+        description: "This is a test video about Elon Musk".to_string(),
+        title: "Elon Musk Test".to_string(),
+        video_url: "https://www.youtube.com/watch?v=1".to_string(),
+        start_time: Some("test:00".to_string()),
+        end_time: Some("test:00".to_string()),
+        ..Default::default()
+    };
+
+    let request = test::TestRequest::post()
+        .uri("/")
+        .insert_header(("Authorization", jwt))
+        .insert_header(ContentType::json())
+        .set_json(&dto)
+        .to_request();
+
+    let response = test::call_service(&app, request).await;
+
+    let body: AppErrorResponse = test::read_body_json(response).await;
+
+    assert_eq!(body.errors.len(), 2);
+
+    for error in body.errors {
+        let error = error.split(": ").collect::<Vec<&str>>().pop().unwrap();
+        assert_eq!(error, "Invalid Time Format (HH:MM:SS)".to_string());
+    }
 }
 
 async fn innit_test_app(

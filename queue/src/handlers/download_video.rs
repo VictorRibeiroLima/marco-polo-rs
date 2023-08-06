@@ -28,9 +28,11 @@ pub async fn handle<CS: CloudService>(
     let format_extension = format.to_string();
     let video_uri = format!("videos/raw/{}.{}", video_id, format_extension);
 
+    let estimated_time = video_downloader.estimate_time(&payload.video_url).await?;
+
     cloud_service
         .queue_client()
-        .change_message_visibility(message, 4000) // TODO: Make this configurable
+        .change_message_visibility(message, estimated_time) // TODO: Make this configurable
         .await?;
 
     let output_file = video_downloader.download(&payload.video_url).await?;

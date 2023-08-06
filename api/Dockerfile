@@ -16,7 +16,7 @@ RUN apk add --no-cache pkgconfig
 WORKDIR /
 
 # Copy database files
-COPY sqlx-data.json sqlx-data.json
+COPY ./.sqlx ./.sqlx
 COPY ./migrations ./migrations
 
 # Copy the Cargo files for dependency resolution

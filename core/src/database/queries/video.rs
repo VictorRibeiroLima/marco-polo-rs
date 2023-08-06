@@ -133,7 +133,7 @@ pub async fn create_error(pool: &PgPool, dto: CreateErrorDto<'_>) -> Result<i64,
     "#,
         dto.video_id
     )
-    .fetch_one(&mut trx)
+    .fetch_one(&mut *trx)
     .await?;
 
     let stage: VideoStage = result.stage;
@@ -147,7 +147,7 @@ pub async fn create_error(pool: &PgPool, dto: CreateErrorDto<'_>) -> Result<i64,
         dto.error,
         &stage as &VideoStage,
     )
-    .execute(&mut trx)
+    .execute(&mut *trx)
     .await?;
 
     let count_result = sqlx::query!(
@@ -158,7 +158,7 @@ pub async fn create_error(pool: &PgPool, dto: CreateErrorDto<'_>) -> Result<i64,
         dto.video_id,
         stage as VideoStage,
     )
-    .fetch_optional(&mut trx)
+    .fetch_optional(&mut *trx)
     .await?;
 
     let count = count_result.map(|row| row.count).unwrap_or_default();

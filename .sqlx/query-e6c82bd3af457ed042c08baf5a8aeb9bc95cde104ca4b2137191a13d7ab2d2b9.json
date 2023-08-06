@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO videos_transcriptions (video_id, transcription_id, transcriber_id)\n        VALUES ($1, $2, $3);\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Varchar",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e6c82bd3af457ed042c08baf5a8aeb9bc95cde104ca4b2137191a13d7ab2d2b9"
+}

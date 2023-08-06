@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE videos\n        SET url = $1, stage = 'DONE', uploaded_at = NOW(), error = false\n        WHERE id = $2\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3e40305a9195352281879d6e1ef498437fc98926214a10ef5ac5f647926a0c62"
+}
