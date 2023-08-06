@@ -9,7 +9,7 @@ path = "src/lib.rs"
 proc-macro = true
 
 [dependencies]
-syn = { version = "2", features = ["derive", "printing", "extra-traits"] }
+syn = { version = "2", features = ["derive", "extra-traits"] }
 quote = "1"
 proc-macro2 = "1.0.63"
 heck = "0.4.1"
