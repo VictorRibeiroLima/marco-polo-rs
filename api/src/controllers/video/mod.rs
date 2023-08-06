@@ -1,19 +1,12 @@
-use std::intrinsics::mir::Return;
-
 use actix_web::{
     get,
     web::{self, post, Json},
     HttpResponse, Responder,
 };
 
-use dotenv::Error;
 use marco_polo_rs_core::{
     database::{
-        models::{
-            user::UserRole,
-            video::Video,
-            video_error::{self, find_by_video_id},
-        },
+        models::{user::UserRole, video::Video},
         queries::{self, filter::Filter, pagination::Pagination},
     },
     internals::{
@@ -29,7 +22,7 @@ use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
-    controllers::video::dtos::{ErrorDTO, VideoDTO},
+    controllers::video::dtos::{VideoDTO, VideoErrorDTO},
     middleware::jwt_token::TokenClaims,
     models::error::AppError,
     AppCloudService, AppPool, AppYoutubeClient,
@@ -140,16 +133,24 @@ async fn find_all(
     return Ok(Json(dto));
 }
 
-#[get("/videos/{id}/errors")]
-async fn find_video_error(
+#[get("/{id}/errors")]
+async fn find_video_errors(
     id: web::Path<Uuid>,
     pool: web::Data<AppPool>,
-    _jwt: TokenClaims,
+    jwt: TokenClaims,
 ) -> Result<impl Responder, AppError> {
     let pool = &pool.pool;
-    let video_errors = find_by_video_id(pool, &id).await?;
+    let id = id.into_inner();
 
-    let dto: Vec<ErrorDTO> = video_errors.into_iter().map(|c| c.into()).collect();
+    let video_errors = match jwt.role {
+        UserRole::Admin => queries::video_error::find_by_video_id(pool, &id).await?,
+        UserRole::User => {
+            let user_id = jwt.id;
+            queries::video_error::find_by_video_id_and_owner(pool, &id, user_id).await?
+        }
+    };
+
+    let dto: Vec<VideoErrorDTO> = video_errors.into_iter().map(|c| c.into()).collect();
 
     return Ok(Json(dto));
 }
@@ -162,6 +163,7 @@ pub fn init_routes(config: &mut web::ServiceConfig) {
             post().to(create_video::<AwsCloudService, YoutubeClient>),
         )
         .service(find_by_id)
-        .service(find_all);
+        .service(find_all)
+        .service(find_video_errors);
     config.service(scope);
 }
