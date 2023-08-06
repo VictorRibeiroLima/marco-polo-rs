@@ -1,19 +1,12 @@
-use std::intrinsics::mir::Return;
-
 use actix_web::{
     get,
     web::{self, post, Json},
     HttpResponse, Responder,
 };
 
-use dotenv::Error;
 use marco_polo_rs_core::{
     database::{
-        models::{
-            user::UserRole,
-            video::Video,
-            video_error::{self, find_by_video_id},
-        },
+        models::{user::UserRole, video::Video, video_error::find_by_video_id},
         queries::{self, filter::Filter, pagination::Pagination},
     },
     internals::{
@@ -97,6 +90,14 @@ async fn create_video<CS: CloudService, YC: youtube_client::traits::YoutubeClien
 
     let video = queries::video::find_by_id(pool, &video_id).await?;
     let dto: VideoDTO = video.into();
+
+    let video_count = queries::video::find_today_videos(pool).await?;
+
+    if video_count.len() >= 6 {
+        return Err(AppError::bad_request(
+            "Video creation limit exceeded for today".to_string(),
+        ));
+    }
 
     return Ok(HttpResponse::Created().json(dto));
 }

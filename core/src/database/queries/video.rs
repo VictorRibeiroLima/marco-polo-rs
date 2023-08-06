@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, Utc};
 
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -261,6 +261,44 @@ pub async fn find_by_id(pool: &PgPool, id: &Uuid) -> Result<Video, sqlx::Error> 
     .await?;
 
     Ok(video)
+}
+
+pub async fn find_today_videos(pool: &PgPool) -> Result<Vec<Video>, sqlx::Error> {
+    let today = Utc::now().naive_utc().date();
+
+    let videos = sqlx::query_as!(
+        Video,
+        r#"
+        SELECT 
+            v.id as "id: Uuid", 
+            v.title,
+            v.description,
+            v.url,
+            v.language,
+            v.user_id,
+            v.channel_id,
+            v.error,
+            v.original_url,
+            v.original_duration,
+            v.start_time,
+            v.end_time,
+            v.tags,
+            v.stage as "stage: VideoStage",
+            v.created_at as "created_at: NaiveDateTime",
+            v.updated_at as "updated_at: NaiveDateTime",
+            v.deleted_at as "deleted_at: NaiveDateTime",
+            v.uploaded_at as "uploaded_at: NaiveDateTime"
+        FROM 
+            videos v
+        WHERE 
+            v.created_at::date = $1::date AND deleted_at IS NULL
+    "#,
+        today
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(videos)
 }
 
 pub async fn find_by_id_with_storage(
