@@ -1,20 +1,13 @@
-use std::{process::id, str::FromStr};
-
 use actix_web::{
     get,
     web::{self, post, Json},
     HttpResponse, Responder,
 };
 
-use chrono::{NaiveDateTime, Utc};
 use marco_polo_rs_core::{
     database::{
-        models::{
-            user::UserRole,
-            video::{Video, VideoStage},
-            video_error::{self, VideoError},
-        },
-        queries::{self, filter::Filter, pagination::Pagination, video::CreateErrorDto},
+        models::{user::UserRole, video::Video},
+        queries::{self, filter::Filter, pagination::Pagination},
     },
     internals::{
         cloud::{
@@ -25,16 +18,15 @@ use marco_polo_rs_core::{
     },
 };
 
-use serde_json::{json, value};
 use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
-    middleware::jwt_token::TokenClaims, models::error::AppError, AppCloudService, AppPool,
-    AppYoutubeClient,
+    controllers::video::dtos::VideoDTO, middleware::jwt_token::TokenClaims,
+    models::error::AppError, AppCloudService, AppPool, AppYoutubeClient,
 };
 
-use self::dtos::{create::CreateVideo, ErrorDTO, VideoDTO};
+use self::dtos::create::CreateVideo;
 
 mod dtos;
 mod service;
@@ -115,30 +107,6 @@ async fn find_by_id(
     return Ok(Json(dto));
 }
 
-#[get("/videos/{id}/errors")]
-async fn find_video_error(
-    id: web::Path<Uuid>,
-    pool: web::Data<AppPool>,
-    _jwt: TokenClaims,
-) -> Result<impl Responder, AppError> {
-    let pool = &pool.pool;
-    let video: Video = queries::video::find_by_id(pool, &id).await?;
-    let dto: VideoDTO = video.into();
-
-    
-
-    let error_dto = ErrorDTO {
-        id: error_data.id,
-        video_id: error_data.video_id,
-        error: error_data.error,
-        created_at: error_data.created_at,
-        stage:error_data.stage,
-
-    return Ok(Json(error_dto));
-};
-}
-
-
 #[get("/")]
 async fn find_all(
     pool: web::Data<AppPool>,
@@ -171,7 +139,6 @@ pub fn init_routes(config: &mut web::ServiceConfig) {
             post().to(create_video::<AwsCloudService, YoutubeClient>),
         )
         .service(find_by_id)
-        .service(find_all)
-        .service(find_video_error);
+        .service(find_all);
     config.service(scope);
 }

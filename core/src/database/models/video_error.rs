@@ -14,8 +14,8 @@ pub struct VideoError {
     pub stage: VideoStage,
 }
 
-pub async fn find_video_error(pool: &PgPool, id: &Uuid) -> Result<VideoError, sqlx::Error> {
-    let video_error: VideoError = sqlx::query_as!(
+pub async fn find_by_video_id(pool: &PgPool, id: &Uuid) -> Result<Vec<VideoError>, sqlx::Error> {
+    let video_errors: Vec<VideoError> = sqlx::query_as!(
         VideoError,
         r#"
         SELECT id, video_id, error, created_at, stage as "stage: VideoStage"
@@ -24,8 +24,8 @@ pub async fn find_video_error(pool: &PgPool, id: &Uuid) -> Result<VideoError, sq
         "#,
         id
     )
-    .fetch_one(pool)
+    .fetch_all(pool)
     .await?;
 
-    Ok(video_error)
+    Ok(video_errors)
 }
