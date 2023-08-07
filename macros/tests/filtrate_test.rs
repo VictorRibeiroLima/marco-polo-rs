@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use std::str::FromStr;
+
 use marco_polo_rs_macros::Filtrate;
 use sqlx::{Encode, Postgres, Type};
 
@@ -27,6 +29,14 @@ where
 impl Type<Postgres> for TestDate {
     fn type_info() -> sqlx::postgres::PgTypeInfo {
         sqlx::postgres::PgTypeInfo::with_name("date")
+    }
+}
+
+impl FromStr for TestDate {
+    type Err = String;
+
+    fn from_str(_s: &str) -> Result<Self, Self::Err> {
+        Ok(TestDate {})
     }
 }
 

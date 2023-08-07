@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use sqlx::{
     postgres::PgArguments,
     query::{Query, QueryAs},
@@ -5,6 +7,32 @@ use sqlx::{
 };
 
 use serde::{Deserialize, Serialize};
+
+mod helper;
+
+pub fn filtration_from_str<'de, D, S>(deserializer: D) -> Result<Option<S>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+    S: std::str::FromStr,
+    <S as std::str::FromStr>::Err: std::fmt::Display,
+{
+    let s = deserializer.deserialize_str(helper::Helper(PhantomData))?;
+
+    Ok(Some(s))
+}
+
+pub fn filtration_from_str_option<'de, D, S>(deserializer: D) -> Result<Option<Option<S>>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+    S: std::str::FromStr,
+    <S as std::str::FromStr>::Err: std::fmt::Display,
+{
+    let v = filtration_from_str(deserializer)?;
+    match v {
+        Some(v) => Ok(Some(Some(v))),
+        None => Ok(Some(None)),
+    }
+}
 
 pub trait FilterableOptions {
     fn apply<O>(

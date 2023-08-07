@@ -7,7 +7,7 @@
     serde ::
 Serialize,
 )]
-pub struct InternalFiltrationVideoFilters {
+pub struct __________InternalFiltrationVideoFilters {
     pub id: Option<Uuid>,
     pub title: Option<String>,
     pub description: Option<String>,

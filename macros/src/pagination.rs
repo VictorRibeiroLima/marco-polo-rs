@@ -34,7 +34,7 @@ pub fn gen_pagination_block(input: TokenStream) -> Result<TokenStream> {
     // Create the derives
     let derives = quote! {
         #[derive(Debug, Clone, Copy, PartialEq, Default, Eq, serde::Deserialize, serde::Serialize)]
-        #[serde(rename_all = "camelCase")]
+        #[serde(rename_all = "snake_case")]
     };
 
     /* Create the enum variants

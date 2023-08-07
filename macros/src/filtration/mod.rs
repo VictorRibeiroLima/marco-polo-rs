@@ -223,13 +223,30 @@ fn create_struct_fields(struct_fields: &Vec<(Ident, Type, String)>) -> Vec<Token
     struct_fields
         .iter()
         .map(|(field_ident, field_type, _)| {
-            let primary_field = quote! {
+            let f_type = check_type(field_type);
+
+            let deserialize_with = match f_type {
+                FieldType::Option => "crate::database::queries::filter::filtration_from_str_option",
+                _ => "crate::database::queries::filter::filtration_from_str",
+            };
+
+            /*
+               String -> Option<String>
+               Option<String> -> Option<Option<String>
+            */
+            let primary_field: TokenStream = quote! {
+                #[serde(
+                    default,                                    // <- important for deserialization
+                    skip_serializing_if = "Option::is_none",    // <- important for serialization
+                    deserialize_with = #deserialize_with       // <- important for deserialization
+                )]
                 pub #field_ident: Option<#field_type>
             };
-            let f_type = check_type(field_type);
+
             match f_type {
                 FieldType::Date => {
-                    let between_fields = create_date_between_fields(field_ident, field_type);
+                    let between_fields =
+                        create_date_between_fields(field_ident, field_type, deserialize_with);
                     quote! {
                         #primary_field,
                         #between_fields
@@ -239,8 +256,11 @@ fn create_struct_fields(struct_fields: &Vec<(Ident, Type, String)>) -> Vec<Token
                     let inner_type = get_option_inner_type(field_type);
                     match inner_type {
                         FieldType::Date => {
-                            let between_fields =
-                                create_date_between_fields(field_ident, field_type);
+                            let between_fields = create_date_between_fields(
+                                field_ident,
+                                field_type,
+                                deserialize_with,
+                            );
                             quote! {
                                 #primary_field,
                                 #between_fields
@@ -258,12 +278,27 @@ fn create_struct_fields(struct_fields: &Vec<(Ident, Type, String)>) -> Vec<Token
         .collect()
 }
 
-fn create_date_between_fields(field_ident: &Ident, field_type: &Type) -> TokenStream {
+fn create_date_between_fields(
+    field_ident: &Ident,
+    field_type: &Type,
+    deserialize_with: &str,
+) -> TokenStream {
     let string_ident = field_ident.to_string();
     let start_ident = Ident::new(&format!("{}_start", string_ident), Span::call_site());
     let end_ident = Ident::new(&format!("{}_end", string_ident), Span::call_site());
     quote! {
+        #[serde(
+            default,                                    // <- important for deserialization
+            skip_serializing_if = "Option::is_none",    // <- important for serialization
+            deserialize_with = #deserialize_with       // <- important for deserialization
+        )]
         pub #start_ident: Option<#field_type>,
+
+        #[serde(
+            default,                                    // <- important for deserialization
+            skip_serializing_if = "Option::is_none",    // <- important for serialization
+            deserialize_with = #deserialize_with        // <- important for deserialization
+        )]
         pub #end_ident: Option<#field_type>
     }
 }
