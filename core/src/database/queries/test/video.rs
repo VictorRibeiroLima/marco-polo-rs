@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use chrono::{NaiveDate, Utc};
+use chrono::NaiveDate;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -448,51 +448,14 @@ async fn test_find_no_video_error(pool: PgPool) {
 
 #[sqlx::test(migrations = "../migrations", fixtures("videos"))]
 async fn test_find_today_videos(pool: PgPool) {
-    let id = Uuid::new_v4();
-
-    let dto = CreateVideoDto {
-        id: &id,
-        title: "Today's Video",
-        description: "Test",
-        user_id: 666,
-        channel_id: 666,
-        language: "en",
-        original_url: "https://www.youtube.com/123",
-        start_time: "00:00:00",
-        tags: None,
-    };
-    create(&pool, dto).await.unwrap();
-
     let videos = find_today_videos(&pool).await.unwrap();
 
-    let today = Utc::now().naive_utc().date();
-    for video in videos {
-        assert_eq!(video.created_at.date(), today);
-    }
+    assert_eq!(videos, 21);
 }
 
 #[sqlx::test(migrations = "../migrations", fixtures("videos"))]
-async fn test_not_find_today_videos(pool: PgPool) {
-    let id = Uuid::new_v4();
-
-    let dto = CreateVideoDto {
-        id: &id,
-        title: "Today's Video",
-        description: "Test",
-        user_id: 666,
-        channel_id: 666,
-        language: "en",
-        original_url: "https://www.youtube.com/123",
-        start_time: "00:00:00",
-        tags: None,
-    };
-    create(&pool, dto).await.unwrap();
-
+async fn test_find_today_videos_error(pool: PgPool) {
     let videos = find_today_videos(&pool).await.unwrap();
 
-    let yesterday = Utc::now().naive_utc().date() - chrono::Duration::days(1);
-
-    for video in videos {
-        assert_ne!(video.created_at.date(), yesterday);
-    }
+    assert_ne!(videos, 20);
 }

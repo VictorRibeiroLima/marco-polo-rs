@@ -93,7 +93,7 @@ async fn create_video<CS: CloudService, YC: youtube_client::traits::YoutubeClien
 
     let video_count = queries::video::find_today_videos(pool).await?;
 
-    if video_count.len() >= 6 {
+    if video_count >= 6 {
         return Err(AppError::bad_request(
             "Video creation limit exceeded for today".to_string(),
         ));
