@@ -50,6 +50,9 @@ impl YoutubeClient {
                     let description = response
                         .error_description()
                         .unwrap_or(&fallback_description);
+
+                    println!("error description: {}", description);
+
                     return Err(description.to_string().into());
                 }
                 _ => {

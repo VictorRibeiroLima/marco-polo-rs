@@ -1,6 +1,6 @@
 use actix_web::{
     get,
-    web::{self, get, post, Json},
+    web::{self, get, post, put, Json},
     HttpResponse, Responder,
 };
 use marco_polo_rs_core::{
@@ -38,6 +38,32 @@ async fn create_youtube_channel<YC: YoutubeClientTrait>(
 
     let app_response = AppResult::new(url);
     return Ok(HttpResponse::Created().json(app_response));
+}
+
+async fn new_youtube_token<YC: YoutubeClientTrait>(
+    pool: web::Data<AppPool>,
+    youtube_client: web::Data<AppYoutubeClient<YC>>,
+    jwt: TokenClaims,
+    id: web::Path<i32>,
+) -> Result<impl Responder, AppError> {
+    let pool = &pool.pool;
+    let client = &youtube_client.client;
+    let id = id.into_inner();
+
+    match jwt.role {
+        UserRole::Admin => queries::channel::find_by_id(&pool, id).await?,
+        UserRole::User => {
+            let user_id = jwt.id;
+            queries::channel::find_by_and_creator(&pool, id, user_id).await?
+        }
+    };
+
+    let (url, csrf_token) = client.generate_url();
+
+    queries::channel::update_token(&pool, csrf_token, id).await?;
+
+    let app_response = AppResult::new(url);
+    return Ok(Json(app_response));
 }
 
 #[get("/{id}")]
@@ -99,7 +125,12 @@ async fn oauth_youtube_callback<YC: YoutubeClientTrait>(
 
     let channel_info_items = match info.items {
         Some(items) => items,
-        None => return Err(AppError::bad_request("It seems that you don't have a Youtube channel. Please, create one and retry.".to_string())),
+        None => {
+            return Err(AppError::bad_request(
+                "It seems that you don't have a Youtube channel. Please, create one and retry."
+                    .to_string(),
+            ))
+        }
     };
 
     let snippet = match channel_info_items.get(0) {
@@ -125,6 +156,10 @@ pub fn init_routes(config: &mut web::ServiceConfig) {
         .route(
             "youtube",
             post().to(create_youtube_channel::<YoutubeClient>),
+        )
+        .route(
+            "youtube/resign/{id}",
+            put().to(new_youtube_token::<YoutubeClient>),
         )
         .route(
             "youtube/oauth/callback",

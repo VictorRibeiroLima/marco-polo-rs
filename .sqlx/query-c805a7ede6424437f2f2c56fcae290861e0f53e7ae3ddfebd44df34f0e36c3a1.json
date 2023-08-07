@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n    UPDATE channels SET \n        csrf_token = $1,\n        refresh_token = null,\n        updated_at = NOW()\n    WHERE id = $2\n    ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c805a7ede6424437f2f2c56fcae290861e0f53e7ae3ddfebd44df34f0e36c3a1"
+}

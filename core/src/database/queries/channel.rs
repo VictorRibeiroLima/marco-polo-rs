@@ -95,6 +95,27 @@ pub async fn create(pool: &PgPool, csrf_token: String, creator_id: i32) -> Resul
     Ok(())
 }
 
+pub async fn update_token(
+    pool: &PgPool,
+    crsf_token: String,
+    channel_id: i32,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"
+    UPDATE channels SET 
+        csrf_token = $1,
+        refresh_token = null,
+        updated_at = NOW()
+    WHERE id = $2
+    "#,
+        crsf_token,
+        channel_id
+    )
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
 pub async fn find_by_csrf_token(pool: &PgPool, csrf_token: String) -> Result<Channel, sqlx::Error> {
     let channel = sqlx::query_as!(
         Channel,
