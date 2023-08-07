@@ -277,7 +277,12 @@ pub async fn find_today_videos(pool: &PgPool) -> Result<i64, sqlx::Error> {
     .fetch_one(pool)
     .await?;
 
-    let count: i64 = count_query.count.unwrap();
+    let count = match count_query.count {
+        Some(count) => count,
+        None => {
+            return Err(sqlx::Error::RowNotFound);
+        }
+    };
 
     Ok(count)
 }
