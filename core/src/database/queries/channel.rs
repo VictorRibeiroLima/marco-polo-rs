@@ -146,6 +146,7 @@ pub async fn update(pool: &PgPool, dto: UpdateChannelDto) -> Result<(), sqlx::Er
     UPDATE channels SET 
         name = $1,
         refresh_token = $2,
+        error = false,
         csrf_token = NULL,
         updated_at = NOW()
     WHERE id = $3
