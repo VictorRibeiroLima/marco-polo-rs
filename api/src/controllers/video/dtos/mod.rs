@@ -19,6 +19,7 @@ pub struct VideoDTO {
     pub stage: VideoStage,
     pub error: bool,
     pub original_duration: Option<String>,
+    pub original_url: String,
     pub start_time: String,
     pub end_time: Option<String>,
     pub tags: Option<Vec<String>>,
@@ -48,6 +49,7 @@ impl From<Video> for VideoDTO {
             original_duration: value.original_duration,
             start_time: value.start_time,
             end_time: value.end_time,
+            original_url: value.original_url,
             tags,
             error: value.error,
         };

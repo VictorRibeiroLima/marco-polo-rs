@@ -72,6 +72,7 @@ impl super::traits::YoutubeClient for YoutubeClient {
             .oauth2_client
             .authorize_url(CsrfToken::new_random)
             .add_extra_param("access_type", "offline")
+            .add_extra_param("approval_prompt", "force")
             .add_scope(Scope::new(
                 "https://www.googleapis.com/auth/youtube".to_string(),
             ))

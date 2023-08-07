@@ -55,6 +55,7 @@ async fn test_find_by_id_get_ok(pool: PgPool) {
         title: "Elon Musk Test".to_string(),
         description: "This is a test video about Elon Musk".to_string(),
         user_id: 456,
+        original_url: "https://video.com/elon-musk".to_string(),
         channel_id: 666,
         url: Some("https://video.com".to_string()),
         language: "English".to_string(),

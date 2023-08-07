@@ -120,6 +120,7 @@ async fn test_find_by_id_get_ok(pool: PgPool) {
     let expected_dto: ChannelDTO = ChannelDTO {
         id: 1,
         name: Some("Test Channel".to_string()),
+        creator_id: 999,
         created_at: date,
         updated_at: date,
     };
