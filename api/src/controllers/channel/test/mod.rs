@@ -5,11 +5,14 @@ use actix_web::{
     dev::ServiceResponse,
     http::header::ContentType,
     test,
-    web::{self, post},
+    web::{self, post, put},
     App,
 };
 use chrono::NaiveDate;
-use marco_polo_rs_core::database::models::user::{User, UserRole};
+use marco_polo_rs_core::database::models::{
+    channel::Channel,
+    user::{User, UserRole},
+};
 use reqwest::StatusCode;
 use sqlx::PgPool;
 
@@ -23,7 +26,7 @@ use crate::{
     AppPool, AppYoutubeClient,
 };
 
-use super::{find_all, find_by_id};
+use super::{find_all, find_by_id, new_youtube_token};
 
 #[sqlx::test(migrations = "../migrations")]
 async fn test_create_channel_unauthorized(pool: PgPool) {
@@ -302,6 +305,111 @@ async fn test_find_all_user(pool: PgPool) {
     assert_eq!(actual_channels_ids, expected_channels_ids);
 }
 
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/admin", "../../../test/fixtures/channels")
+)]
+async fn admin_can_resign_channel(pool: PgPool) {
+    let admin_id = 1000;
+    let channel_id = 1;
+
+    let pool = Arc::new(pool);
+    let youtube_client = YoutubeClientMock::new();
+    let youtube_client = Arc::new(youtube_client);
+
+    let token = get_token!(pool.as_ref(), admin_id);
+
+    let test_app = innit_test_app(pool.clone(), youtube_client).await;
+
+    let uri = format!("/youtube/resign/{}", channel_id);
+
+    let request = test::TestRequest::put()
+        .uri(&uri)
+        .insert_header(("Authorization", token))
+        .insert_header(ContentType::json())
+        .to_request();
+
+    let response = test::call_service(&test_app, request).await;
+
+    assert_eq!(response.status().as_u16(), StatusCode::OK);
+
+    let channel: Channel =
+        sqlx::query_as!(Channel, "SELECT * FROM channels WHERE id = $1", channel_id)
+            .fetch_one(pool.as_ref())
+            .await
+            .unwrap();
+
+    assert!(channel.refresh_token.is_none());
+    assert_eq!(channel.csrf_token.unwrap(), CSRF_TOKEN);
+}
+
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/channels")
+)]
+async fn user_can_resign_on_channel(pool: PgPool) {
+    let user_id = 1;
+    let channel_id = 1;
+
+    let pool = Arc::new(pool);
+    let youtube_client = YoutubeClientMock::new();
+    let youtube_client = Arc::new(youtube_client);
+
+    let token = get_token!(pool.as_ref(), user_id);
+
+    let test_app = innit_test_app(pool.clone(), youtube_client).await;
+
+    let uri = format!("/youtube/resign/{}", channel_id);
+
+    let request = test::TestRequest::put()
+        .uri(&uri)
+        .insert_header(("Authorization", token))
+        .insert_header(ContentType::json())
+        .to_request();
+
+    let response = test::call_service(&test_app, request).await;
+
+    assert_eq!(response.status().as_u16(), StatusCode::OK);
+
+    let channel: Channel =
+        sqlx::query_as!(Channel, "SELECT * FROM channels WHERE id = $1", channel_id)
+            .fetch_one(pool.as_ref())
+            .await
+            .unwrap();
+
+    assert!(channel.refresh_token.is_none());
+    assert_eq!(channel.csrf_token.unwrap(), CSRF_TOKEN);
+}
+
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/channels")
+)]
+async fn user_can_not_resign_on_channel_if_not_owner(pool: PgPool) {
+    let user_id = 2;
+    let channel_id = 1;
+
+    let pool = Arc::new(pool);
+    let youtube_client = YoutubeClientMock::new();
+    let youtube_client = Arc::new(youtube_client);
+
+    let token = get_token!(pool.as_ref(), user_id);
+
+    let test_app = innit_test_app(pool.clone(), youtube_client).await;
+
+    let uri = format!("/youtube/resign/{}", channel_id);
+
+    let request = test::TestRequest::put()
+        .uri(&uri)
+        .insert_header(("Authorization", token))
+        .insert_header(ContentType::json())
+        .to_request();
+
+    let response = test::call_service(&test_app, request).await;
+
+    assert_eq!(response.status().as_u16(), StatusCode::NOT_FOUND);
+}
+
 async fn innit_test_app(
     pool: Arc<PgPool>,
     youtube_client: Arc<YoutubeClientMock>,
@@ -317,6 +425,10 @@ async fn innit_test_app(
         .route(
             "youtube",
             post().to(create_youtube_channel::<YoutubeClientMock>),
+        )
+        .route(
+            "youtube/resign/{id}",
+            put().to(new_youtube_token::<YoutubeClientMock>),
         )
         .service(find_by_id)
         .service(find_all);
