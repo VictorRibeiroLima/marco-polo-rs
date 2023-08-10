@@ -15,6 +15,8 @@ use crate::{
     ERROR_COUNT_THRESHOLD,
 };
 
+use super::Worker;
+
 pub struct HeavyWorker {
     pub id: usize,
     pub cloud_service: CloudServiceInUse,
@@ -23,23 +25,6 @@ pub struct HeavyWorker {
 }
 
 impl HeavyWorker {
-    pub async fn handle(
-        self,
-        message: (Message, PayloadType),
-        inactive_worker_pool: Arc<Mutex<Vec<HeavyWorker>>>,
-    ) {
-        println!("Heavy Worker {} is now active", self.id);
-        let (message, payload_type) = message;
-        self.handle_message(message, payload_type).await;
-        println!("Heavy Worker {} is now inactive", self.id);
-        let mut pool = inactive_worker_pool.lock().await;
-        println!(
-            "Heavy Worker {} is now putting itself back in the pool",
-            self.id
-        );
-        pool.push(self);
-    }
-
     async fn delete_message<QC: QueueClient>(
         &self,
         queue_client: &QC,
@@ -114,5 +99,25 @@ impl HeavyWorker {
                 panic!("Heavy worker should only handle translation uploads")
             }
         };
+    }
+}
+
+#[async_trait::async_trait]
+impl Worker for HeavyWorker {
+    async fn handle(
+        self,
+        message: (Message, PayloadType),
+        inactive_worker_pool: Arc<Mutex<Vec<HeavyWorker>>>,
+    ) {
+        println!("Heavy Worker {} is now active", self.id);
+        let (message, payload_type) = message;
+        self.handle_message(message, payload_type).await;
+        println!("Heavy Worker {} is now inactive", self.id);
+        let mut pool = inactive_worker_pool.lock().await;
+        println!(
+            "Heavy Worker {} is now putting itself back in the pool",
+            self.id
+        );
+        pool.push(self);
     }
 }

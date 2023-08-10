@@ -17,6 +17,8 @@ use crate::{
     VideoDownloaderInUse, YoutubeClientInUse, ERROR_COUNT_THRESHOLD,
 };
 
+use super::Worker;
+
 pub struct LightWorker {
     pub id: usize,
     pub cloud_service: CloudServiceInUse,
@@ -28,24 +30,6 @@ pub struct LightWorker {
 }
 
 impl LightWorker {
-    pub async fn handle(
-        self,
-        message: (Message, PayloadType),
-        inactive_worker_pool: Arc<Mutex<Vec<LightWorker>>>,
-    ) {
-        println!("Light Worker {} is now active", self.id);
-        let (message, payload_type) = message;
-        self.handle_message(message, payload_type).await;
-
-        println!("Light Worker {} is now inactive", self.id);
-        let mut pool = inactive_worker_pool.lock().await;
-        println!(
-            "Light Worker {} is now putting itself back in the pool",
-            self.id
-        );
-        pool.push(self);
-    }
-
     async fn handle_message(&self, message: Message, payload_type: PayloadType) {
         let queue_client = self.cloud_service.queue_client();
         let video_id = payload_type.video_id();
@@ -157,5 +141,26 @@ impl LightWorker {
                 return;
             }
         }
+    }
+}
+
+#[async_trait::async_trait]
+impl Worker for LightWorker {
+    async fn handle(
+        self,
+        message: (Message, PayloadType),
+        inactive_worker_pool: Arc<Mutex<Vec<LightWorker>>>,
+    ) {
+        println!("Light Worker {} is now active", self.id);
+        let (message, payload_type) = message;
+        self.handle_message(message, payload_type).await;
+
+        println!("Light Worker {} is now inactive", self.id);
+        let mut pool = inactive_worker_pool.lock().await;
+        println!(
+            "Light Worker {} is now putting itself back in the pool",
+            self.id
+        );
+        pool.push(self);
     }
 }

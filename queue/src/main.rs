@@ -17,8 +17,13 @@ use marco_polo_rs_core::{
     },
 };
 use sqlx::PgPool;
-use tokio::{runtime::Builder, sync::Mutex};
+use tokio::{
+    runtime::{Builder, Runtime},
+    sync::Mutex,
+};
 use workers::{heavy::HeavyWorker, light::LightWorker};
+
+use crate::workers::Worker;
 
 mod error;
 mod handlers;
@@ -36,41 +41,21 @@ pub type Message = <<CloudServiceInUse as CloudService>::QC as QueueClient>::M;
 const ERROR_COUNT_THRESHOLD: i64 = 3;
 const HEAVY_WORKER_CAPACITY: usize = 1;
 
+struct ServerState {
+    cloud_service: CloudServiceInUse,
+    runtime: Runtime,
+    inactive_light_workers: Arc<Mutex<Vec<LightWorker>>>,
+    inactive_heavy_workers: Arc<Mutex<Vec<HeavyWorker>>>,
+}
+
 #[tokio::main]
 async fn main() {
-    println!("Starting workers...");
-    dotenv::dotenv().ok();
-    env::check_envs();
-    let thread_count = num_cpus::get_physical();
+    let state = start_server_state().await;
 
-    println!("Using {} threads", thread_count);
-
-    if thread_count < HEAVY_WORKER_CAPACITY + 1 {
-        panic!(
-            "Thread count must be at least {}",
-            HEAVY_WORKER_CAPACITY + 1
-        );
-    }
-
-    let pool = create_pool().await;
-    let pool = Arc::new(pool);
-
-    let queue_url = std::env::var("AWS_QUEUE_URL").expect("QUEUE_URL not found");
-    let cloud_service = CloudServiceInUse::new(queue_url).unwrap();
-
-    let (inactive_light_workers, inactive_heavy_workers) =
-        instantiate_worker(thread_count, pool.clone(), cloud_service.clone());
-
-    let inactive_light_workers = Arc::new(Mutex::new(inactive_light_workers));
-    let inactive_heavy_workers = Arc::new(Mutex::new(inactive_heavy_workers));
-
-    let runtime = Builder::new_multi_thread()
-        .worker_threads(thread_count)
-        .enable_all()
-        .build()
-        .unwrap();
-
-    let queue_client = cloud_service.queue_client();
+    let queue_client = state.cloud_service.queue_client();
+    let inactive_light_workers = state.inactive_light_workers;
+    let inactive_heavy_workers = state.inactive_heavy_workers;
+    let runtime = state.runtime;
 
     loop {
         let message_result = match queue_client.receive_message().await {
@@ -96,47 +81,14 @@ async fn main() {
             };
             match payload_type {
                 PayloadType::BatukaSrtTranslationUpload(_) => {
-                    let inactive_heavy_workers_clone = inactive_heavy_workers.clone();
-                    let mut lock = inactive_heavy_workers.lock().await;
-                    let lock_option = lock.pop();
-                    drop(lock);
-                    match lock_option {
-                        Some(worker) => {
-                            println!("Sending message to heavy worker");
-                            runtime.spawn(async move {
-                                worker
-                                    .handle(
-                                        (message, payload_type),
-                                        inactive_heavy_workers_clone.clone(),
-                                    )
-                                    .await
-                            });
-                        }
-                        None => {
-                            println!("No heavy workers available, enqueuing message");
-                            continue;
-                        }
-                    }
+                    let pool = inactive_heavy_workers.clone();
+                    let message = (message, payload_type);
+                    handle_message(&runtime, message, pool).await;
                 }
                 _ => {
-                    let inactive_light_workers_clone = inactive_light_workers.clone();
-                    let mut lock = inactive_light_workers.lock().await;
-                    let worker_pop = lock.pop();
-                    drop(lock);
-                    match worker_pop {
-                        Some(worker) => {
-                            println!("Sending message to light worker");
-                            runtime.spawn(async move {
-                                worker
-                                    .handle((message, payload_type), inactive_light_workers_clone)
-                                    .await
-                            });
-                        }
-                        None => {
-                            println!("No light workers available, enqueuing message");
-                            continue;
-                        }
-                    }
+                    let pool = inactive_light_workers.clone();
+                    let message = (message, payload_type);
+                    handle_message(&runtime, message, pool).await;
                 }
             }
         }
@@ -212,4 +164,63 @@ fn instantiate_worker(
     );
 
     return (inactive_light_workers, inactive_heavy_workers);
+}
+
+async fn handle_message<T: Worker>(
+    runtime: &Runtime,
+    message: (Message, PayloadType),
+    inactive_worker_pool: Arc<Mutex<Vec<T>>>,
+) {
+    let mut lock = inactive_worker_pool.lock().await;
+    let lock_option = lock.pop();
+    drop(lock);
+    match lock_option {
+        Some(worker) => {
+            runtime.spawn(async move { worker.handle(message, inactive_worker_pool).await });
+        }
+        None => {
+            return;
+        }
+    }
+}
+
+async fn start_server_state() -> ServerState {
+    println!("Starting workers...");
+    dotenv::dotenv().ok();
+    env::check_envs();
+    let thread_count = num_cpus::get_physical();
+
+    println!("Using {} threads", thread_count);
+
+    if thread_count < HEAVY_WORKER_CAPACITY + 1 {
+        panic!(
+            "Thread count must be at least {}",
+            HEAVY_WORKER_CAPACITY + 1
+        );
+    }
+
+    let pool = create_pool().await;
+    let pool = Arc::new(pool);
+
+    let queue_url = std::env::var("AWS_QUEUE_URL").expect("QUEUE_URL not found");
+    let cloud_service = CloudServiceInUse::new(queue_url).unwrap();
+
+    let (inactive_light_workers, inactive_heavy_workers) =
+        instantiate_worker(thread_count, pool.clone(), cloud_service.clone());
+
+    let inactive_light_workers = Arc::new(Mutex::new(inactive_light_workers));
+    let inactive_heavy_workers = Arc::new(Mutex::new(inactive_heavy_workers));
+
+    let runtime = Builder::new_multi_thread()
+        .worker_threads(thread_count)
+        .enable_all()
+        .build()
+        .unwrap();
+
+    return ServerState {
+        cloud_service,
+        runtime,
+        inactive_light_workers,
+        inactive_heavy_workers,
+    };
 }
