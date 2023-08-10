@@ -6,7 +6,6 @@ use marco_polo_rs_core::{
         models::payload::PayloadType,
         traits::{CloudService, QueueClient},
     },
-    util::queue::Queue,
     SyncError,
 };
 use tokio::sync::Mutex;
@@ -18,20 +17,35 @@ use crate::{
     VideoDownloaderInUse, YoutubeClientInUse, ERROR_COUNT_THRESHOLD,
 };
 
-use super::Worker;
-
 pub struct LightWorker {
     pub id: usize,
     pub cloud_service: CloudServiceInUse,
     pub transcriber_client: TranscriberClientInUse,
     pub translator_client: TranslatorClientInUse,
     pub pool: Arc<sqlx::PgPool>,
-    pub message_pool: Arc<Mutex<Queue<(Message, PayloadType)>>>,
     pub video_downloader: VideoDownloaderInUse,
     pub youtube_client: YoutubeClientInUse,
 }
 
 impl LightWorker {
+    pub async fn handle(
+        self,
+        message: (Message, PayloadType),
+        inactive_worker_pool: Arc<Mutex<Vec<LightWorker>>>,
+    ) {
+        println!("Light Worker {} is now active", self.id);
+        let (message, payload_type) = message;
+        self.handle_message(message, payload_type).await;
+
+        println!("Light Worker {} is now inactive", self.id);
+        let mut pool = inactive_worker_pool.lock().await;
+        println!(
+            "Light Worker {} is now putting itself back in the pool",
+            self.id
+        );
+        pool.push(self);
+    }
+
     async fn handle_message(&self, message: Message, payload_type: PayloadType) {
         let queue_client = self.cloud_service.queue_client();
         let video_id = payload_type.video_id();
@@ -142,27 +156,6 @@ impl LightWorker {
                 println!("Light Worker {} delete error: {:?}", self.id, e);
                 return;
             }
-        }
-    }
-}
-
-#[async_trait::async_trait]
-impl Worker for LightWorker {
-    async fn handle_queue(&self) {
-        println!("Light Worker {} started", self.id);
-        loop {
-            let mut messages = self.message_pool.lock().await;
-            let dequeue_result = messages.dequeue();
-            drop(messages);
-
-            let (message, payload_type) = match dequeue_result {
-                Some((message, payload_type)) => (message, payload_type),
-                _ => {
-                    continue;
-                }
-            };
-
-            self.handle_message(message, payload_type).await;
         }
     }
 }
