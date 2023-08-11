@@ -6,7 +6,6 @@ use marco_polo_rs_core::{
         models::payload::PayloadType,
         traits::{CloudService, QueueClient},
     },
-    util::queue::Queue,
     SyncError,
 };
 use tokio::sync::Mutex;
@@ -20,7 +19,6 @@ use super::Worker;
 
 pub struct HeavyWorker {
     pub id: usize,
-    pub message_pool: Arc<Mutex<Queue<(Message, PayloadType)>>>,
     pub cloud_service: CloudServiceInUse,
     pub subtitler_client: SubtitlerClientInUse,
     pub pool: Arc<sqlx::PgPool>,
@@ -61,6 +59,10 @@ impl HeavyWorker {
                 match e {
                     HandlerError::Retrievable(_) => {
                         if error_count >= ERROR_COUNT_THRESHOLD {
+                            println!(
+                                "Heavy Worker {} error count threshold reached, deleting message",
+                                self.id
+                            );
                             self.delete_message(queue_client, message).await;
                         }
                         return;
@@ -106,21 +108,20 @@ impl HeavyWorker {
 
 #[async_trait::async_trait]
 impl Worker for HeavyWorker {
-    async fn handle_queue(&self) {
-        println!("Heavy Worker {} started", self.id);
-        loop {
-            let mut messages = self.message_pool.lock().await;
-            let dequeue_result = messages.dequeue();
-            drop(messages);
-
-            let (message, payload_type) = match dequeue_result {
-                Some((message, payload_type)) => (message, payload_type),
-                _ => {
-                    continue;
-                }
-            };
-
-            self.handle_message(message, payload_type).await;
-        }
+    async fn handle(
+        self,
+        message: (Message, PayloadType),
+        inactive_worker_pool: Arc<Mutex<Vec<HeavyWorker>>>,
+    ) {
+        println!("Heavy Worker {} is now active", self.id);
+        let (message, payload_type) = message;
+        self.handle_message(message, payload_type).await;
+        println!("Heavy Worker {} is now inactive", self.id);
+        let mut pool = inactive_worker_pool.lock().await;
+        println!(
+            "Heavy Worker {} is now putting itself back in the pool",
+            self.id
+        );
+        pool.push(self);
     }
 }

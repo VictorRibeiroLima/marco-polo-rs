@@ -6,7 +6,6 @@ use marco_polo_rs_core::{
         models::payload::PayloadType,
         traits::{CloudService, QueueClient},
     },
-    util::queue::Queue,
     SyncError,
 };
 use tokio::sync::Mutex;
@@ -26,7 +25,6 @@ pub struct LightWorker {
     pub transcriber_client: TranscriberClientInUse,
     pub translator_client: TranslatorClientInUse,
     pub pool: Arc<sqlx::PgPool>,
-    pub message_pool: Arc<Mutex<Queue<(Message, PayloadType)>>>,
     pub video_downloader: VideoDownloaderInUse,
     pub youtube_client: YoutubeClientInUse,
 }
@@ -57,6 +55,10 @@ impl LightWorker {
                 match e {
                     HandlerError::Retrievable(_) => {
                         if error_count >= ERROR_COUNT_THRESHOLD {
+                            println!(
+                                "Light Worker {} error count threshold reached, deleting message",
+                                self.id
+                            );
                             self.delete_message(queue_client, message).await;
                         }
                         return;
@@ -148,21 +150,21 @@ impl LightWorker {
 
 #[async_trait::async_trait]
 impl Worker for LightWorker {
-    async fn handle_queue(&self) {
-        println!("Light Worker {} started", self.id);
-        loop {
-            let mut messages = self.message_pool.lock().await;
-            let dequeue_result = messages.dequeue();
-            drop(messages);
+    async fn handle(
+        self,
+        message: (Message, PayloadType),
+        inactive_worker_pool: Arc<Mutex<Vec<LightWorker>>>,
+    ) {
+        println!("Light Worker {} is now active", self.id);
+        let (message, payload_type) = message;
+        self.handle_message(message, payload_type).await;
 
-            let (message, payload_type) = match dequeue_result {
-                Some((message, payload_type)) => (message, payload_type),
-                _ => {
-                    continue;
-                }
-            };
-
-            self.handle_message(message, payload_type).await;
-        }
+        println!("Light Worker {} is now inactive", self.id);
+        let mut pool = inactive_worker_pool.lock().await;
+        println!(
+            "Light Worker {} is now putting itself back in the pool",
+            self.id
+        );
+        pool.push(self);
     }
 }
