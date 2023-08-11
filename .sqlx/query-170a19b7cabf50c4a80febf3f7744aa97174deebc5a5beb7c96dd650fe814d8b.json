@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT  \n            id,\n            name,\n            email,\n            password,\n            role as \"role: UserRole\",\n            created_at as \"created_at: NaiveDateTime\",\n            updated_at as \"updated_at: NaiveDateTime\",\n            deleted_at as \"deleted_at: NaiveDateTime\"\n        \n        FROM users WHERE email = $1\n        ",
+  "query": "\n        SELECT \n            id,\n            name, \n            email,\n            password,\n            role as \"role: UserRole\", \n            created_at as \"created_at: NaiveDateTime\",\n            updated_at as \"updated_at: NaiveDateTime\",\n            deleted_at as \"deleted_at: NaiveDateTime\",\n            forgot_token\n        FROM \n            users \n        WHERE \n            id = $1 AND deleted_at IS NULL\n        ",
   "describe": {
     "columns": [
       {
@@ -52,11 +52,16 @@
         "ordinal": 7,
         "name": "deleted_at: NaiveDateTime",
         "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 8,
+        "name": "forgot_token",
+        "type_info": "Varchar"
       }
     ],
     "parameters": {
       "Left": [
-        "Text"
+        "Int4"
       ]
     },
     "nullable": [
@@ -67,8 +72,9 @@
       false,
       false,
       false,
+      true,
       true
     ]
   },
-  "hash": "b226f239d065491b664d52cdc1e86368380f04a0c063fdc8dc4a1b4cb5add3e2"
+  "hash": "170a19b7cabf50c4a80febf3f7744aa97174deebc5a5beb7c96dd650fe814d8b"
 }

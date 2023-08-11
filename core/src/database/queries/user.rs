@@ -26,7 +26,8 @@ pub async fn find_by_id(pool: &PgPool, id: i32) -> Result<User, sqlx::Error> {
             role as "role: UserRole", 
             created_at as "created_at: NaiveDateTime",
             updated_at as "updated_at: NaiveDateTime",
-            deleted_at as "deleted_at: NaiveDateTime"
+            deleted_at as "deleted_at: NaiveDateTime",
+            forgot_token
         FROM 
             users 
         WHERE 
@@ -71,7 +72,8 @@ pub async fn find_by_email(pool: &PgPool, email: &str) -> Result<Option<User>, s
             role as "role: UserRole",
             created_at as "created_at: NaiveDateTime",
             updated_at as "updated_at: NaiveDateTime",
-            deleted_at as "deleted_at: NaiveDateTime"
+            deleted_at as "deleted_at: NaiveDateTime",
+            forgot_token
         
         FROM users WHERE email = $1
         "#,

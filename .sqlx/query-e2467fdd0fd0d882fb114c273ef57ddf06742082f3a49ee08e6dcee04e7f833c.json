@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT \n            id,\n            name, \n            email,\n            password,\n            role as \"role: UserRole\", \n            created_at as \"created_at: NaiveDateTime\",\n            updated_at as \"updated_at: NaiveDateTime\",\n            deleted_at as \"deleted_at: NaiveDateTime\"\n        FROM \n            users \n        WHERE \n            id = $1 AND deleted_at IS NULL\n        ",
+  "query": "SELECT id, \n                name, \n                email, \n                password, \n                role as \"role: UserRole\",\n                created_at as \"created_at: chrono::NaiveDateTime\",\n                updated_at as \"updated_at: chrono::NaiveDateTime\",\n                deleted_at as \"deleted_at: chrono::NaiveDateTime\",\n                forgot_token\n                FROM users WHERE id = 666",
   "describe": {
     "columns": [
       {
@@ -40,24 +40,27 @@
       },
       {
         "ordinal": 5,
-        "name": "created_at: NaiveDateTime",
+        "name": "created_at: chrono::NaiveDateTime",
         "type_info": "Timestamp"
       },
       {
         "ordinal": 6,
-        "name": "updated_at: NaiveDateTime",
+        "name": "updated_at: chrono::NaiveDateTime",
         "type_info": "Timestamp"
       },
       {
         "ordinal": 7,
-        "name": "deleted_at: NaiveDateTime",
+        "name": "deleted_at: chrono::NaiveDateTime",
         "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 8,
+        "name": "forgot_token",
+        "type_info": "Varchar"
       }
     ],
     "parameters": {
-      "Left": [
-        "Int4"
-      ]
+      "Left": []
     },
     "nullable": [
       false,
@@ -67,8 +70,9 @@
       false,
       false,
       false,
+      true,
       true
     ]
   },
-  "hash": "6bdde6cb7f8e0b79726202291c3cf0fc11b96a6251cf3de54f8e99f767ce45f1"
+  "hash": "e2467fdd0fd0d882fb114c273ef57ddf06742082f3a49ee08e6dcee04e7f833c"
 }
