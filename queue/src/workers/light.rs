@@ -55,6 +55,10 @@ impl LightWorker {
                 match e {
                     HandlerError::Retrievable(_) => {
                         if error_count >= ERROR_COUNT_THRESHOLD {
+                            println!(
+                                "Light Worker {} error count threshold reached, deleting message",
+                                self.id
+                            );
                             self.delete_message(queue_client, message).await;
                         }
                         return;
