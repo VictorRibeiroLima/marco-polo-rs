@@ -15,12 +15,7 @@ use sqlx::PgPool;
 use chrono::NaiveDate;
 
 use crate::{
-    auth::gen_token,
-    mail::engine::handlebars::HandleBarsEngine,
-    models::{
-        error::{AppError, AppErrorResponse},
-        result::AppResult,
-    },
+    auth::gen_token, mail::engine::handlebars::HandleBarsEngine, models::error::AppErrorResponse,
 };
 use crate::{
     controllers::{test::mock::mailer::MailSenderMock, user::dtos::create::CreateUser},
@@ -393,6 +388,147 @@ async fn test_forgot_password_wrong_email(pool: PgPool) {
     assert_eq!(status, StatusCode::NOT_FOUND);
     assert_eq!(body.errors.len(), 1);
     assert_eq!(body.errors[0], "User not found");
+}
+
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/forgotten_users")
+)]
+async fn test_reset_password(pool: PgPool) {
+    std::env::set_var("HASH_KEY", "test");
+    let pool = Arc::new(pool);
+    let token = "hello world";
+    let password = "12345aA!";
+
+    let test_app = innit_test_app(pool.clone()).await;
+
+    let reset_password_dto = ResetPasswordDto {
+        token: token.into(),
+        password: password.into(),
+    };
+
+    let request = test::TestRequest::put()
+        .uri("/reset-password")
+        .insert_header(ContentType::json())
+        .set_json(&reset_password_dto)
+        .to_request();
+
+    let response = test::call_service(&test_app, request).await;
+
+    let status = response.status().as_u16();
+
+    assert_eq!(status, StatusCode::OK);
+
+    let user: User = sqlx::query_as(
+        r#"
+        SELECT * FROM users WHERE id = $1
+        "#,
+    )
+    .bind(6666)
+    .fetch_one(pool.as_ref())
+    .await
+    .unwrap();
+
+    assert!(user.forgot_token.is_none());
+    assert!(bcrypt::verify(password, &user.password).unwrap());
+}
+
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/forgotten_users")
+)]
+async fn test_reset_password_invalid_password(pool: PgPool) {
+    std::env::set_var("HASH_KEY", "test");
+    let pool = Arc::new(pool);
+    let token = "hello world";
+    let password = "1234";
+
+    let test_app = innit_test_app(pool.clone()).await;
+
+    let reset_password_dto = ResetPasswordDto {
+        token: token.into(),
+        password: password.into(),
+    };
+
+    let request = test::TestRequest::put()
+        .uri("/reset-password")
+        .insert_header(ContentType::json())
+        .set_json(&reset_password_dto)
+        .to_request();
+
+    let response = test::call_service(&test_app, request).await;
+
+    let status = response.status().as_u16();
+
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+
+    let errors: AppErrorResponse = test::read_body_json(response).await;
+
+    assert_eq!(errors.errors.len(), 1);
+    assert_eq!(errors.errors[0], "password: Must contain at least eight characters, ".to_owned()+
+    "including one uppercase letter, one lowercase letter, and one number. Dont use spaces., "+
+     "Must Contain At Least One Special Character");
+
+    let user: User = sqlx::query_as(
+        r#"
+        SELECT * FROM users WHERE id = $1
+        "#,
+    )
+    .bind(6666)
+    .fetch_one(pool.as_ref())
+    .await
+    .unwrap();
+
+    assert!(user.forgot_token.is_some());
+    assert!(!bcrypt::verify(password, &user.password).unwrap());
+}
+
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/forgotten_users")
+)]
+async fn test_reset_password_expired_token(pool: PgPool) {
+    std::env::set_var("HASH_KEY", "test");
+    let pool = Arc::new(pool);
+    let token = "hello world 3";
+    let password = "12345aA!";
+
+    let test_app = innit_test_app(pool.clone()).await;
+
+    let reset_password_dto = ResetPasswordDto {
+        token: token.into(),
+        password: password.into(),
+    };
+
+    let request = test::TestRequest::put()
+        .uri("/reset-password")
+        .insert_header(ContentType::json())
+        .set_json(&reset_password_dto)
+        .to_request();
+
+    let response = test::call_service(&test_app, request).await;
+
+    let status = response.status().as_u16();
+
+    assert_eq!(status, StatusCode::NOT_FOUND);
+
+    let errors: AppErrorResponse = test::read_body_json(response).await;
+
+    assert_eq!(errors.errors.len(), 1);
+    assert_eq!(errors.errors[0], "User not found");
+
+    let user: User = sqlx::query_as(
+        r#"
+        SELECT * FROM users WHERE id = $1
+        "#,
+    )
+    .bind(8888)
+    .fetch_one(pool.as_ref())
+    .await
+    .unwrap();
+
+    assert!(user.forgot_token.is_some());
+    assert!(!bcrypt::verify(password, &user.password).unwrap());
 }
 
 async fn innit_test_app(

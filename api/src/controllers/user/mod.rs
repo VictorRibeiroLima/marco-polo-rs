@@ -138,6 +138,9 @@ async fn reset_password(
     body: Json<ResetPasswordDto>,
 ) -> Result<impl Responder, AppError> {
     let pool = &pool.pool;
+    let body = body.into_inner();
+    body.validate()?;
+
     let forgot_token = &body.token;
     let password = &body.password;
 

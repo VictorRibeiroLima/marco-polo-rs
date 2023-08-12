@@ -22,7 +22,7 @@ VALUES (
     'test2@test.com',
     '$2b$12$.jvb858VF4tanKNd11Vp4eDYyhg.KuFgOG8AhgJCvj/cJV47Sqtby',
     'USER',
-    'd1596e0d4280f2bd2d311ce0819f23bde0dc834d8254b92924088de94c38d923',
+    '72a0609962dde107e39653651588536e9ea0269e8214e3d6b547a8dcbe652a49',
     NOW()
   ),
   (
@@ -31,7 +31,7 @@ VALUES (
     'test3@test.com',
     '$2b$12$.jvb858VF4tanKNd11Vp4eDYyhg.KuFgOG8AhgJCvj/cJV47Sqtby',
     'USER',
-    'd1596e0d4280f2bd2d311ce0819f23bde0dc834d8254b92924088de94c38d924',
+    'dfdd6acbdefd97e02076a54a6d2fefa86de49e922181d1a2af69b0fe92f8e199',
     NOW() - INTERVAL '1 DAY'
   ),
   (
@@ -40,6 +40,6 @@ VALUES (
     'test4@test.com',
     '$2b$12$.jvb858VF4tanKNd11Vp4eDYyhg.KuFgOG8AhgJCvj/cJV47Sqtby',
     'USER',
-    'd1596e0d4280f2bd2d311ce0819f23bde0dc834d8254b92924088de94c38d925',
+    '859a0861421399f3ff5263f15ff9b4fde88679080d65bfee08429d0077a32147',
     NOW() + INTERVAL '1 MINUTE'
   );
