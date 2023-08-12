@@ -330,6 +330,7 @@ async fn test_find_all_error(pool: PgPool) {
 
 #[sqlx::test(migrations = "../migrations", fixtures("../../../test/fixtures/user"))]
 async fn test_forgot_password(pool: PgPool) {
+    std::env::set_var("HASH_KEY", "test");
     let pool = Arc::new(pool);
     let email = "teste@gmail.com";
 
@@ -364,6 +365,7 @@ async fn test_forgot_password(pool: PgPool) {
 
 #[sqlx::test(migrations = "../migrations", fixtures("../../../test/fixtures/user"))]
 async fn test_forgot_password_wrong_email(pool: PgPool) {
+    std::env::set_var("HASH_KEY", "test");
     let pool = Arc::new(pool);
     let email = "wrong@gmail.com";
 
