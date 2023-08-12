@@ -1781,6 +1781,7 @@ dependencies = [
  "marco-polo-rs-macros",
  "oauth2",
  "reqwest",
+ "ring",
  "rusoto_core",
  "rusoto_credential",
  "rusoto_s3",

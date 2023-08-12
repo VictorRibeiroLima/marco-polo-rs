@@ -95,7 +95,6 @@ pub async fn update_forgot_token(
     let token: Option<String> = match token {
         Some(token) => {
             let token = token.into();
-            let token = bcrypt::hash(token, bcrypt::DEFAULT_COST).unwrap();
             Some(token)
         }
         None => None,

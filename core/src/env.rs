@@ -36,4 +36,7 @@ pub fn check_envs() {
     std::env::var("SMTP_PASSWORD").expect("SMTP_PASSWORD not found");
     std::env::var("SMTP_HOST").expect("SMTP_FROM not found");
     std::env::var("SMTP_FROM").expect("SMTP_FROM not found");
+
+    // HASH
+    std::env::var("HASH_KEY").expect("HASH_KEY not found");
 }

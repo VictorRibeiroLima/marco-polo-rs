@@ -1,12 +1,15 @@
 use actix_web::{
-    get, post,
+    get, post, put,
     web::{self, post, Json},
     HttpResponse, Responder,
 };
 
-use marco_polo_rs_core::database::{
-    models::user::User,
-    queries::{self, filter::Filter, pagination::Pagination, user::CreateUserDto},
+use marco_polo_rs_core::{
+    database::{
+        models::user::User,
+        queries::{self, filter::Filter, pagination::Pagination, user::CreateUserDto},
+    },
+    util::security,
 };
 
 use validator::Validate;
@@ -107,7 +110,9 @@ where
 
     let token = crate::auth::gen_forgot_token();
 
-    queries::user::update_forgot_token(pool, user.id, Some(&token)).await?;
+    let hashed_token = security::hash::hash(&token);
+
+    queries::user::update_forgot_token(pool, user.id, Some(&hashed_token)).await?;
 
     let params = ForgotPasswordEmailParams {
         url: "http://localhost:8080".into(),
@@ -127,7 +132,7 @@ where
     return Ok(HttpResponse::Ok().finish());
 }
 
-#[post("/reset-password")]
+#[put("/reset-password")]
 async fn reset_password(
     pool: web::Data<AppPool>,
     body: Json<Reset>,
@@ -136,7 +141,9 @@ async fn reset_password(
     let forgot_token = &body.token;
     let password = &body.password;
 
-    let user = queries::user::find_by_forgot_token(pool, forgot_token).await?;
+    let forgot_token = security::hash::hash(forgot_token);
+
+    let user = queries::user::find_by_forgot_token(pool, &forgot_token).await?;
 
     let user = match user {
         Some(user) => user,
