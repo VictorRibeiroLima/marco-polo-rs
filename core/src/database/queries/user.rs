@@ -27,7 +27,8 @@ pub async fn find_by_id(pool: &PgPool, id: i32) -> Result<User, sqlx::Error> {
             created_at as "created_at: NaiveDateTime",
             updated_at as "updated_at: NaiveDateTime",
             deleted_at as "deleted_at: NaiveDateTime",
-            forgot_token
+            forgot_token,
+            forgot_token_expires_at
         FROM 
             users 
         WHERE 
@@ -73,7 +74,8 @@ pub async fn find_by_email(pool: &PgPool, email: &str) -> Result<Option<User>, s
             created_at as "created_at: NaiveDateTime",
             updated_at as "updated_at: NaiveDateTime",
             deleted_at as "deleted_at: NaiveDateTime",
-            forgot_token
+            forgot_token,
+            forgot_token_expires_at
         
         FROM users WHERE email = $1
         "#,
@@ -99,15 +101,66 @@ pub async fn update_forgot_token(
         None => None,
     };
 
+    let expires_at: Option<NaiveDateTime> = match token {
+        Some(_) => Some(chrono::Utc::now().naive_utc() + chrono::Duration::hours(24)),
+        None => None,
+    };
+
     sqlx::query!(
         r#"
-        UPDATE users SET forgot_token = $1 WHERE id = $2
+        UPDATE users SET forgot_token = $1, forgot_token_expires_at = $2, updated_at=NOW() WHERE id = $3
         "#,
         token,
+        expires_at,
         id
     )
     .execute(pool)
     .await?;
 
     return Ok(());
+}
+
+pub async fn update_password(pool: &PgPool, id: i32, password: &str) -> Result<(), sqlx::Error> {
+    let password = bcrypt::hash(password, bcrypt::DEFAULT_COST).unwrap();
+
+    sqlx::query!(
+        r#"
+        UPDATE users SET password = $1, updated_at=NOW()  WHERE id = $2
+        "#,
+        password,
+        id
+    )
+    .execute(pool)
+    .await?;
+
+    return Ok(());
+}
+
+pub async fn find_by_forgot_token(
+    pool: &PgPool,
+    forgot_token: &str,
+) -> Result<Option<User>, sqlx::Error> {
+    let user = sqlx::query_as!(
+        User,
+        r#"
+        SELECT  
+            id,
+            name,
+            email,
+            password,
+            role as "role: UserRole",
+            created_at as "created_at: NaiveDateTime",
+            updated_at as "updated_at: NaiveDateTime",
+            deleted_at as "deleted_at: NaiveDateTime",
+            forgot_token,
+            forgot_token_expires_at
+        
+        FROM users WHERE forgot_token = $1 and forgot_token_expires_at > NOW()
+        "#,
+        forgot_token
+    )
+    .fetch_optional(pool)
+    .await?;
+
+    return Ok(user);
 }

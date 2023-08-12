@@ -48,4 +48,6 @@ pub struct User {
     pub deleted_at: Option<NaiveDateTime>,
     #[filtrate(skip = true)]
     pub forgot_token: Option<String>,
+    #[filtrate(skip = true)]
+    pub forgot_token_expires_at: Option<NaiveDateTime>,
 }
