@@ -27,7 +27,7 @@ impl HandleBarsEngine<'_> {
         println!("Creating HandleBarsEngine...");
         let mut handlebars = Handlebars::new();
         handlebars
-            .register_template_file("forgot-password", "./templates/forgot-password.hbs")
+            .register_template_file("forgot-password", "./api/templates/forgot-password.hbs")
             .unwrap();
 
         return Self { handlebars };

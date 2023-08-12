@@ -63,7 +63,7 @@ impl MailSender for LettreMailer {
         let email = Message::builder()
             .from(self.from.clone())
             .to(to)
-            .subject("Happy new year")
+            .subject(options.subject)
             .header(ContentType::TEXT_HTML)
             .body(options.body)?;
 

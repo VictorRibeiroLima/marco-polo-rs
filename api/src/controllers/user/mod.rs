@@ -1,6 +1,6 @@
 use actix_web::{
     get, post,
-    web::{self, Json},
+    web::{self, post, Json},
     HttpResponse, Responder,
 };
 
@@ -11,10 +11,14 @@ use marco_polo_rs_core::database::{
 
 use validator::Validate;
 
-use self::dtos::login::Login;
+use self::dtos::{
+    forgot::{Forgot, ForgotPasswordEmailParams},
+    login::Login,
+};
 use crate::{
     controllers::user::dtos::{create::CreateUser, find::UserDTO},
-    AppPool,
+    mail::{engine::handlebars::HandleBarsEngine, sender::lettre::LettreMailer},
+    AppMailer, AppPool,
 };
 use crate::{
     middleware::jwt_token::TokenClaims,
@@ -80,6 +84,49 @@ async fn login(
     return Ok(Json(response));
 }
 
+async fn forgot_password<E, S>(
+    pool: web::Data<AppPool>,
+    mailer: web::Data<AppMailer<E, S>>,
+    body: Json<Forgot>,
+) -> Result<impl Responder, AppError>
+where
+    E: crate::mail::engine::MailEngine,
+    S: crate::mail::sender::MailSender,
+{
+    let pool = &pool.pool;
+    let mailer = &mailer.mailer;
+
+    let user = queries::user::find_by_email(pool, &body.email).await?;
+
+    let user = match user {
+        Some(user) => user,
+        None => {
+            return Err(AppError::not_found("User not found".into()));
+        }
+    };
+
+    let token = crate::auth::gen_forgot_token();
+
+    queries::user::update_forgot_token(pool, user.id, Some(&token)).await?;
+
+    let params = ForgotPasswordEmailParams {
+        url: "http://localhost:8080".into(),
+        name: user.name,
+        token,
+    };
+
+    mailer
+        .send(
+            body.email.to_string(),
+            "Forgot Password".into(),
+            "forgot-password",
+            Some(params),
+        )
+        .await?;
+
+    return Ok(HttpResponse::Ok().finish());
+}
+
 #[get("/{id}")]
 async fn find_by_id(
     id: web::Path<i32>,
@@ -114,9 +161,14 @@ async fn find_all(
 
 pub fn init_routes(config: &mut web::ServiceConfig) {
     let scope = web::scope("/user")
+        .route(
+            "/forgot-password",
+            post().to(forgot_password::<HandleBarsEngine, LettreMailer>),
+        )
         .service(create_user)
         .service(login)
         .service(find_by_id)
         .service(find_all);
+
     config.service(scope);
 }

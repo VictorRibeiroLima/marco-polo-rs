@@ -84,3 +84,30 @@ pub async fn find_by_email(pool: &PgPool, email: &str) -> Result<Option<User>, s
 
     return Ok(user);
 }
+
+pub async fn update_forgot_token(
+    pool: &PgPool,
+    id: i32,
+    token: Option<impl Into<String>>,
+) -> Result<(), sqlx::Error> {
+    let token: Option<String> = match token {
+        Some(token) => {
+            let token = token.into();
+            let token = bcrypt::hash(token, bcrypt::DEFAULT_COST).unwrap();
+            Some(token)
+        }
+        None => None,
+    };
+
+    sqlx::query!(
+        r#"
+        UPDATE users SET forgot_token = $1 WHERE id = $2
+        "#,
+        token,
+        id
+    )
+    .execute(pool)
+    .await?;
+
+    return Ok(());
+}

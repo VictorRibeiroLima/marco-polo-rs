@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use self::{engine::MailEngine, sender::MailSender};
 
 pub mod engine;
@@ -6,6 +8,12 @@ pub mod sender;
 #[derive(Debug)]
 pub struct MailError {
     pub message: String,
+}
+
+impl Display for MailError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:#?}", self.message)
+    }
 }
 
 impl From<engine::EngineError> for MailError {
