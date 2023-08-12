@@ -83,6 +83,9 @@ COPY --from=builder /target/release/marco-polo-rs-api /usr/local/bin/marco-polo-
 # Copy .env file
 COPY .env .env
 
+# Copy templates
+COPY ./api/templates ./api/templates
+
 # Copy aws certificate
 COPY sa-east-1-bundle.pem sa-east-1-bundle.pem
 
