@@ -1,5 +1,7 @@
 #[derive(Debug)]
-pub struct EngineError;
+pub struct EngineError {
+    pub message: String,
+}
 
 pub mod handlebars;
 

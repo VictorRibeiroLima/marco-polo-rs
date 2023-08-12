@@ -8,7 +8,7 @@ use lettre::{
 
 use super::MailSender;
 
-impl From<AddressError> for super::MailerError {
+impl From<AddressError> for super::SenderError {
     fn from(error: AddressError) -> Self {
         return Self {
             message: error.to_string(),
@@ -16,7 +16,7 @@ impl From<AddressError> for super::MailerError {
     }
 }
 
-impl From<Error> for super::MailerError {
+impl From<Error> for super::SenderError {
     fn from(error: Error) -> Self {
         return Self {
             message: error.to_string(),
@@ -24,7 +24,7 @@ impl From<Error> for super::MailerError {
     }
 }
 
-impl From<lettre::transport::smtp::Error> for super::MailerError {
+impl From<lettre::transport::smtp::Error> for super::SenderError {
     fn from(error: lettre::transport::smtp::Error) -> Self {
         return Self {
             message: error.to_string(),
@@ -57,7 +57,7 @@ impl LettreMailer {
 
 #[async_trait::async_trait]
 impl MailSender for LettreMailer {
-    async fn send(&self, options: super::SendEmailOptions) -> Result<(), super::MailerError> {
+    async fn send(&self, options: super::SendEmailOptions) -> Result<(), super::SenderError> {
         let to: Mailbox = options.to.parse()?;
 
         let email = Message::builder()

@@ -3,14 +3,18 @@ use handlebars::Handlebars;
 use super::MailEngine;
 
 impl From<handlebars::TemplateError> for super::EngineError {
-    fn from(_error: handlebars::TemplateError) -> Self {
-        return Self;
+    fn from(error: handlebars::TemplateError) -> Self {
+        return Self {
+            message: error.to_string(),
+        };
     }
 }
 
 impl From<handlebars::RenderError> for super::EngineError {
-    fn from(_error: handlebars::RenderError) -> Self {
-        return Self;
+    fn from(error: handlebars::RenderError) -> Self {
+        return Self {
+            message: error.to_string(),
+        };
     }
 }
 

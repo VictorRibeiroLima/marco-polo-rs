@@ -1,7 +1,7 @@
 pub mod lettre;
 
 #[derive(Debug)]
-pub struct MailerError {
+pub struct SenderError {
     pub message: String,
 }
 
@@ -19,5 +19,5 @@ impl SendEmailOptions {
 
 #[async_trait::async_trait]
 pub trait MailSender {
-    async fn send(&self, options: SendEmailOptions) -> Result<(), MailerError>;
+    async fn send(&self, options: SendEmailOptions) -> Result<(), SenderError>;
 }
