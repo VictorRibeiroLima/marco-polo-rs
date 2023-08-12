@@ -42,7 +42,7 @@ struct AppMailer<E: MailEngine, S: MailSender> {
 
 #[get("/")]
 async fn hello() -> impl Responder {
-    let result: AppResult<String> = AppResult::new("I'm alive 7".to_string());
+    let result: AppResult<String> = AppResult::new("hello word".to_string());
     return Json(result);
 }
 
