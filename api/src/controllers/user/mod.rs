@@ -1,20 +1,27 @@
 use actix_web::{
-    get, post,
-    web::{self, Json},
+    get, post, put,
+    web::{self, post, Json},
     HttpResponse, Responder,
 };
 
-use marco_polo_rs_core::database::{
-    models::user::User,
-    queries::{self, filter::Filter, pagination::Pagination, user::CreateUserDto},
+use marco_polo_rs_core::{
+    database::{
+        models::user::User,
+        queries::{self, filter::Filter, pagination::Pagination, user::CreateUserDto},
+    },
+    util::security,
 };
 
 use validator::Validate;
 
-use self::dtos::login::Login;
+use self::dtos::{
+    forgot::{ForgotPasswordDto, ForgotPasswordEmailParams, ResetPasswordDto},
+    login::Login,
+};
 use crate::{
     controllers::user::dtos::{create::CreateUser, find::UserDTO},
-    AppPool,
+    mail::{engine::handlebars::HandleBarsEngine, sender::lettre::LettreMailer},
+    AppMailer, AppPool,
 };
 use crate::{
     middleware::jwt_token::TokenClaims,
@@ -80,6 +87,79 @@ async fn login(
     return Ok(Json(response));
 }
 
+async fn forgot_password<E, S>(
+    pool: web::Data<AppPool>,
+    mailer: web::Data<AppMailer<E, S>>,
+    body: Json<ForgotPasswordDto>,
+) -> Result<impl Responder, AppError>
+where
+    E: crate::mail::engine::MailEngine,
+    S: crate::mail::sender::MailSender,
+{
+    let pool = &pool.pool;
+    let mailer = &mailer.mailer;
+
+    let user = queries::user::find_by_email(pool, &body.email).await?;
+
+    let user = match user {
+        Some(user) => user,
+        None => {
+            return Err(AppError::not_found("User not found".into()));
+        }
+    };
+
+    let token = crate::auth::gen_forgot_token();
+
+    let hashed_token = security::hash::hash(&token);
+
+    queries::user::update_forgot_token(pool, user.id, Some(&hashed_token)).await?;
+
+    let params = ForgotPasswordEmailParams {
+        url: "http://localhost:8080".into(),
+        name: user.name,
+        token,
+    };
+
+    mailer
+        .send(
+            body.email.to_string(),
+            "Forgot Password".into(),
+            "forgot-password",
+            Some(params),
+        )
+        .await?;
+
+    return Ok(HttpResponse::Ok().finish());
+}
+
+#[put("/reset-password")]
+async fn reset_password(
+    pool: web::Data<AppPool>,
+    body: Json<ResetPasswordDto>,
+) -> Result<impl Responder, AppError> {
+    let pool = &pool.pool;
+    let body = body.into_inner();
+    body.validate()?;
+
+    let forgot_token = &body.token;
+    let password = &body.password;
+
+    let forgot_token = security::hash::hash(forgot_token);
+
+    let user = queries::user::find_by_forgot_token(pool, &forgot_token).await?;
+
+    let user = match user {
+        Some(user) => user,
+        None => {
+            return Err(AppError::not_found("User not found".into()));
+        }
+    };
+
+    queries::user::update_password(pool, user.id, password).await?;
+
+    return Ok(HttpResponse::Ok().finish());
+}
+
 #[get("/{id}")]
 async fn find_by_id(
     id: web::Path<i32>,
@@ -114,9 +194,15 @@ async fn find_all(
 
 pub fn init_routes(config: &mut web::ServiceConfig) {
     let scope = web::scope("/user")
+        .route(
+            "/forgot-password",
+            post().to(forgot_password::<HandleBarsEngine, LettreMailer>),
+        )
         .service(create_user)
         .service(login)
         .service(find_by_id)
-        .service(find_all);
+        .service(find_all)
+        .service(reset_password);
+
     config.service(scope);
 }

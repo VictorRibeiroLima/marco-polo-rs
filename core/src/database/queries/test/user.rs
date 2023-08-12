@@ -107,3 +107,85 @@ async fn test_not_find_email(pool: PgPool) {
 
     assert!(find_result.is_none());
 }
+
+#[sqlx::test(migrations = "../migrations", fixtures("user"))]
+async fn test_update_forgot_token_some_token(pool: PgPool) {
+    let token = "123456";
+    let id = 666;
+    let tomorrow = chrono::Utc::now().naive_utc() + chrono::Duration::hours(24);
+
+    update_forgot_token(&pool, id, Some(token)).await.unwrap();
+
+    let user = find_by_id(&pool, id).await.unwrap();
+
+    assert_eq!(user.forgot_token, Some(token.to_string()));
+    assert_eq!(
+        user.forgot_token_expires_at.unwrap().date(),
+        tomorrow.date()
+    );
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("forgotten_users"))]
+async fn test_update_forgot_token_none_token(pool: PgPool) {
+    let id = 6666;
+
+    let token: Option<String> = None;
+
+    update_forgot_token(&pool, id, token).await.unwrap();
+
+    let user = find_by_id(&pool, id).await.unwrap();
+
+    assert_eq!(user.forgot_token, None);
+    assert_eq!(user.forgot_token_expires_at, None);
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("forgotten_users"))]
+async fn test_update_password(pool: PgPool) {
+    let password = "test";
+    let id = 6666;
+
+    update_password(&pool, id, password).await.unwrap();
+
+    let user = find_by_id(&pool, id).await.unwrap();
+
+    assert!(bcrypt::verify(password, &user.password).unwrap());
+
+    assert_eq!(user.forgot_token, None);
+    assert_eq!(user.forgot_token_expires_at, None);
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("forgotten_users"))]
+async fn test_find_by_forgot_token_valid(pool: PgPool) {
+    let token = "d1596e0d4280f2bd2d311ce0819f23bde0dc834d8254b92924088de94c38d922";
+    let user = find_by_forgot_token(&pool, token).await.unwrap();
+
+    let user = user.unwrap();
+
+    assert_eq!(user.id, 6666);
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("forgotten_users"))]
+async fn test_find_by_forgot_token_almost_expired(pool: PgPool) {
+    let token = "d1596e0d4280f2bd2d311ce0819f23bde0dc834d8254b92924088de94c38d925";
+    let user = find_by_forgot_token(&pool, token).await.unwrap();
+
+    let user = user.unwrap();
+
+    assert_eq!(user.id, 9999);
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("forgotten_users"))]
+async fn test_find_by_forgot_token_expired_today(pool: PgPool) {
+    let token = "d1596e0d4280f2bd2d311ce0819f23bde0dc834d8254b92924088de94c38d923";
+    let user = find_by_forgot_token(&pool, token).await.unwrap();
+
+    assert!(user.is_none());
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("forgotten_users"))]
+async fn test_find_by_forgot_token_expired_for_long_time(pool: PgPool) {
+    let token = "d1596e0d4280f2bd2d311ce0819f23bde0dc834d8254b92924088de94c38d924";
+    let user = find_by_forgot_token(&pool, token).await.unwrap();
+
+    assert!(user.is_none());
+}

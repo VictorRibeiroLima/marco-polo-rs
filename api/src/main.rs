@@ -6,6 +6,7 @@ use actix_web::{
     web::{self, Json, JsonConfig, QueryConfig},
     App, HttpServer, Responder,
 };
+use mail::{engine::MailEngine, sender::MailSender, Mailer};
 use marco_polo_rs_core::{
     database::create_pool,
     env,
@@ -18,6 +19,7 @@ use models::{error::AppError, result::AppResult};
 
 mod auth;
 mod controllers;
+mod mail;
 mod middleware;
 mod models;
 mod utils;
@@ -32,6 +34,10 @@ struct AppYoutubeClient<YC: YoutubeClient> {
 
 struct AppCloudService<CS: CloudService> {
     client: Arc<CS>,
+}
+
+struct AppMailer<E: MailEngine, S: MailSender> {
+    mailer: Arc<Mailer<E, S>>,
 }
 
 #[get("/")]
@@ -54,6 +60,8 @@ async fn main() -> std::io::Result<()> {
     let cloud_service = default_cloud_service();
     let cloud_service = Arc::new(cloud_service);
 
+    let app_mailer = Arc::new(mail::Mailer::default());
+
     HttpServer::new(move || {
         App::new()
             .wrap(Cors::permissive())
@@ -71,6 +79,9 @@ async fn main() -> std::io::Result<()> {
             }))
             .app_data(web::Data::new(AppYoutubeClient {
                 client: youtube_client.clone(),
+            }))
+            .app_data(web::Data::new(AppMailer {
+                mailer: app_mailer.clone(),
             }))
             .service(hello)
             .configure(controllers::init_routes)

@@ -8,6 +8,8 @@ use actix_web::{
 
 use serde::{Deserialize, Serialize};
 
+use crate::mail::MailError;
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AppErrorResponse {
     pub errors: Vec<String>,
@@ -153,5 +155,11 @@ impl From<JsonPayloadError> for AppError {
 impl From<QueryPayloadError> for AppError {
     fn from(value: QueryPayloadError) -> Self {
         return Self::new(AppErrorType::BadRequest, value.to_string());
+    }
+}
+
+impl From<MailError> for AppError {
+    fn from(value: MailError) -> Self {
+        return Self::new(AppErrorType::InternalServerError, value.to_string());
     }
 }

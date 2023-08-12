@@ -13,7 +13,7 @@
         "Varchar",
         "Varchar",
         "Varchar",
-        "Varchar"
+        "Text"
       ]
     },
     "nullable": []

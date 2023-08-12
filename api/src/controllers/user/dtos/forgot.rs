@@ -1,13 +1,15 @@
 use super::{validate_password, RE_SPECIAL_CHAR};
-use marco_polo_rs_core::database::models::user::UserRole;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-#[derive(Debug, Serialize, Validate, Deserialize)]
-pub struct CreateUser {
-    pub name: String,
-    #[validate(email(message = "Invalid Email"))]
+#[derive(Deserialize, Serialize)]
+pub struct ForgotPasswordDto {
     pub email: String,
+}
+
+#[derive(Debug, Validate, Deserialize, Serialize)]
+pub struct ResetPasswordDto {
+    pub token: String,
     #[validate(
         custom(
             function = "validate_password",
@@ -19,5 +21,11 @@ pub struct CreateUser {
         )
     )]
     pub password: String,
-    pub role: Option<UserRole>,
+}
+
+#[derive(Serialize)]
+pub struct ForgotPasswordEmailParams {
+    pub url: String,
+    pub name: String,
+    pub token: String,
 }

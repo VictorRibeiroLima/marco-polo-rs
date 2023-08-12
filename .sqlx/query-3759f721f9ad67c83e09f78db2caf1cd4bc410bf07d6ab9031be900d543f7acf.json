@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, \n                name, \n                email, \n                password, \n                role as \"role: UserRole\",\n                created_at as \"created_at: chrono::NaiveDateTime\",\n                updated_at as \"updated_at: chrono::NaiveDateTime\",\n                deleted_at as \"deleted_at: chrono::NaiveDateTime\"\n                FROM users WHERE id = $1",
+  "query": "\n        SELECT  \n            id,\n            name,\n            email,\n            password,\n            role as \"role: UserRole\",\n            created_at as \"created_at: NaiveDateTime\",\n            updated_at as \"updated_at: NaiveDateTime\",\n            deleted_at as \"deleted_at: NaiveDateTime\",\n            forgot_token,\n            forgot_token_expires_at\n        \n        FROM users WHERE forgot_token = $1 and forgot_token_expires_at > NOW()\n        ",
   "describe": {
     "columns": [
       {
@@ -40,23 +40,33 @@
       },
       {
         "ordinal": 5,
-        "name": "created_at: chrono::NaiveDateTime",
+        "name": "created_at: NaiveDateTime",
         "type_info": "Timestamp"
       },
       {
         "ordinal": 6,
-        "name": "updated_at: chrono::NaiveDateTime",
+        "name": "updated_at: NaiveDateTime",
         "type_info": "Timestamp"
       },
       {
         "ordinal": 7,
-        "name": "deleted_at: chrono::NaiveDateTime",
+        "name": "deleted_at: NaiveDateTime",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 8,
+        "name": "forgot_token",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 9,
+        "name": "forgot_token_expires_at",
         "type_info": "Timestamp"
       }
     ],
     "parameters": {
       "Left": [
-        "Int4"
+        "Text"
       ]
     },
     "nullable": [
@@ -67,8 +77,10 @@
       false,
       false,
       false,
+      true,
+      true,
       true
     ]
   },
-  "hash": "4536639bfd85118ac238229f0ca4179668653d20819b53db687cbe2d464d095f"
+  "hash": "3759f721f9ad67c83e09f78db2caf1cd4bc410bf07d6ab9031be900d543f7acf"
 }

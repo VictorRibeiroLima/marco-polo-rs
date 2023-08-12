@@ -1,0 +1,86 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT  \n            id,\n            name,\n            email,\n            password,\n            role as \"role: UserRole\",\n            created_at as \"created_at: NaiveDateTime\",\n            updated_at as \"updated_at: NaiveDateTime\",\n            deleted_at as \"deleted_at: NaiveDateTime\",\n            forgot_token,\n            forgot_token_expires_at\n        \n        FROM users WHERE email = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "email",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "password",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "role: UserRole",
+        "type_info": {
+          "Custom": {
+            "name": "user_role",
+            "kind": {
+              "Enum": [
+                "ADMIN",
+                "USER"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "created_at: NaiveDateTime",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 6,
+        "name": "updated_at: NaiveDateTime",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 7,
+        "name": "deleted_at: NaiveDateTime",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 8,
+        "name": "forgot_token",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 9,
+        "name": "forgot_token_expires_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "f484e3bbdbd035489350af8a1f1bca3fe98507fbb2046eb12614d8554a6f57cd"
+}

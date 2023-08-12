@@ -19,4 +19,5 @@ pub(crate) use time_it;
 pub mod ffmpeg;
 pub mod fs;
 pub mod queue;
+pub mod security;
 pub mod srt;

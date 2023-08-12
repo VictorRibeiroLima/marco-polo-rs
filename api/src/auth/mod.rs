@@ -25,3 +25,7 @@ pub async fn gen_token(user: User) -> Result<String, AppError> {
 
     return Ok(token);
 }
+
+pub fn gen_forgot_token() -> String {
+    return uuid::Uuid::new_v4().to_string();
+}

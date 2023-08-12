@@ -7,7 +7,11 @@
     "deeṕl",
     "dotenv",
     "dtos",
+    "elon",
+    "Elon",
     "jsonwebtoken",
+    "lettre",
+    "Lettre",
     "pkce",
     "proto",
     "reqwest",
@@ -18,12 +22,11 @@
     "subtitler",
     "subtitlings",
     "tlsv",
-    "Uuid",
+    "tokio",
     "uuid",
+    "Uuid",
     "youtube",
-    "Youtube",
-    "Elon",
-    "elon"
+    "Youtube"
   ],
   "rust-analyzer.showUnlinkedFileNotification": false
 }

@@ -11,7 +11,9 @@ macro_rules! get_token {
                 role as "role: UserRole",
                 created_at as "created_at: chrono::NaiveDateTime",
                 updated_at as "updated_at: chrono::NaiveDateTime",
-                deleted_at as "deleted_at: chrono::NaiveDateTime"
+                deleted_at as "deleted_at: chrono::NaiveDateTime",
+                forgot_token,
+                forgot_token_expires_at
                 FROM users WHERE id = 666"#
             )
             .fetch_one($pool)
@@ -35,7 +37,9 @@ macro_rules! get_token {
                 role as "role: UserRole",
                 created_at as "created_at: chrono::NaiveDateTime",
                 updated_at as "updated_at: chrono::NaiveDateTime",
-                deleted_at as "deleted_at: chrono::NaiveDateTime"
+                deleted_at as "deleted_at: chrono::NaiveDateTime",
+                forgot_token,
+                forgot_token_expires_at
                 FROM users WHERE id = $1"#,
                 $id
             )
