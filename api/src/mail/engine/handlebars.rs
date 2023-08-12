@@ -23,11 +23,15 @@ pub struct HandleBarsEngine<'a> {
 }
 
 impl HandleBarsEngine<'_> {
-    pub fn new() -> Self {
+    pub fn new(base_path: &str) -> Self {
         println!("Creating HandleBarsEngine...");
+
         let mut handlebars = Handlebars::new();
         handlebars
-            .register_template_file("forgot-password", "./api/templates/forgot-password.hbs")
+            .register_template_file(
+                "forgot-password",
+                format!("{}/forgot-password.hbs", base_path),
+            )
             .unwrap();
 
         return Self { handlebars };
@@ -69,7 +73,7 @@ mod test {
 
     #[test]
     fn test_forgot_password_rendering() {
-        let engine = super::HandleBarsEngine::new();
+        let engine = super::HandleBarsEngine::new("./templates");
 
         let params = ForgotParams {
             name: "John".into(),

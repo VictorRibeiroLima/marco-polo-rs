@@ -125,7 +125,7 @@ pub async fn update_password(pool: &PgPool, id: i32, password: &str) -> Result<(
 
     sqlx::query!(
         r#"
-        UPDATE users SET password = $1, updated_at=NOW()  WHERE id = $2
+        UPDATE users SET password = $1, updated_at=NOW(), forgot_token = NULL, forgot_token_expires_at = NULL WHERE id = $2
         "#,
         password,
         id

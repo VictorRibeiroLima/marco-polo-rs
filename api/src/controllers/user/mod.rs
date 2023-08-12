@@ -12,7 +12,7 @@ use marco_polo_rs_core::database::{
 use validator::Validate;
 
 use self::dtos::{
-    forgot::{Forgot, ForgotPasswordEmailParams},
+    forgot::{Forgot, ForgotPasswordEmailParams, Reset},
     login::Login,
 };
 use crate::{
@@ -127,6 +127,29 @@ where
     return Ok(HttpResponse::Ok().finish());
 }
 
+#[post("/reset-password")]
+async fn reset_password(
+    pool: web::Data<AppPool>,
+    body: Json<Reset>,
+) -> Result<impl Responder, AppError> {
+    let pool = &pool.pool;
+    let forgot_token = &body.token;
+    let password = &body.password;
+
+    let user = queries::user::find_by_forgot_token(pool, forgot_token).await?;
+
+    let user = match user {
+        Some(user) => user,
+        None => {
+            return Err(AppError::not_found("User not found".into()));
+        }
+    };
+
+    queries::user::update_password(pool, user.id, password).await?;
+
+    return Ok(HttpResponse::Ok().finish());
+}
+
 #[get("/{id}")]
 async fn find_by_id(
     id: web::Path<i32>,
@@ -168,7 +191,8 @@ pub fn init_routes(config: &mut web::ServiceConfig) {
         .service(create_user)
         .service(login)
         .service(find_by_id)
-        .service(find_all);
+        .service(find_all)
+        .service(reset_password);
 
     config.service(scope);
 }

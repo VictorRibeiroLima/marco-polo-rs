@@ -64,7 +64,7 @@ impl Default
     /// Create a new instance of the default mailer.
     /// This will use the Handlebars engine and the Lettre sender.
     fn default() -> Self {
-        let engine = engine::handlebars::HandleBarsEngine::new();
+        let engine = engine::handlebars::HandleBarsEngine::new("./api/templates");
         let sender = sender::lettre::LettreMailer::new();
 
         Self::new(engine, sender)

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, \n                name, \n                email, \n                password, \n                role as \"role: UserRole\",\n                created_at as \"created_at: chrono::NaiveDateTime\",\n                updated_at as \"updated_at: chrono::NaiveDateTime\",\n                deleted_at as \"deleted_at: chrono::NaiveDateTime\",\n                forgot_token\n                FROM users WHERE id = 666",
+  "query": "SELECT id, \n                name, \n                email, \n                password, \n                role as \"role: UserRole\",\n                created_at as \"created_at: chrono::NaiveDateTime\",\n                updated_at as \"updated_at: chrono::NaiveDateTime\",\n                deleted_at as \"deleted_at: chrono::NaiveDateTime\",\n                forgot_token,\n                forgot_token_expires_at\n                FROM users WHERE id = 666",
   "describe": {
     "columns": [
       {
@@ -57,6 +57,11 @@
         "ordinal": 8,
         "name": "forgot_token",
         "type_info": "Varchar"
+      },
+      {
+        "ordinal": 9,
+        "name": "forgot_token_expires_at",
+        "type_info": "Timestamp"
       }
     ],
     "parameters": {
@@ -71,8 +76,9 @@
       false,
       false,
       true,
+      true,
       true
     ]
   },
-  "hash": "e2467fdd0fd0d882fb114c273ef57ddf06742082f3a49ee08e6dcee04e7f833c"
+  "hash": "ab4ef17755ce0ad722044f964fd298830d2d24e75ad4332ede87bf20f13e5332"
 }
