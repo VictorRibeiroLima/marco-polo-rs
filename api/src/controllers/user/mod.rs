@@ -15,7 +15,7 @@ use marco_polo_rs_core::{
 use validator::Validate;
 
 use self::dtos::{
-    forgot::{Forgot, ForgotPasswordEmailParams, Reset},
+    forgot::{ForgotPasswordDto, ForgotPasswordEmailParams, ResetPasswordDto},
     login::Login,
 };
 use crate::{
@@ -90,7 +90,7 @@ async fn login(
 async fn forgot_password<E, S>(
     pool: web::Data<AppPool>,
     mailer: web::Data<AppMailer<E, S>>,
-    body: Json<Forgot>,
+    body: Json<ForgotPasswordDto>,
 ) -> Result<impl Responder, AppError>
 where
     E: crate::mail::engine::MailEngine,
@@ -135,7 +135,7 @@ where
 #[put("/reset-password")]
 async fn reset_password(
     pool: web::Data<AppPool>,
-    body: Json<Reset>,
+    body: Json<ResetPasswordDto>,
 ) -> Result<impl Responder, AppError> {
     let pool = &pool.pool;
     let forgot_token = &body.token;

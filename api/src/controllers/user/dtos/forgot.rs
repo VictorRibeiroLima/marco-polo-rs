@@ -2,13 +2,13 @@ use super::{validate_password, RE_SPECIAL_CHAR};
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-#[derive(Deserialize)]
-pub struct Forgot {
+#[derive(Deserialize, Serialize)]
+pub struct ForgotPasswordDto {
     pub email: String,
 }
 
-#[derive(Debug, Validate, Deserialize)]
-pub struct Reset {
+#[derive(Debug, Validate, Deserialize, Serialize)]
+pub struct ResetPasswordDto {
     pub token: String,
     #[validate(
         custom(
