@@ -2,8 +2,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use uuid::Uuid;
 
-use crate::database::models::video_storage::VideoFormat;
-
 #[derive(Debug, Serialize)]
 pub struct VideoPayload {
     pub video_uri: String,
@@ -30,11 +28,8 @@ impl SrtPayload {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct VideoDownloadPayload {
-    pub video_url: String,
-    pub start_time: Option<String>,
-    pub end_time: Option<String>,
-    pub video_format: VideoFormat,
-    pub video_id: Uuid,
+    pub original_video_id: i32,
+    pub video_ids: Vec<Uuid>,
 }
 
 impl VideoDownloadPayload {
@@ -84,7 +79,7 @@ impl PayloadType {
             PayloadType::BatukaVideoProcessedUpload(payload) => vec![payload.video_id],
             PayloadType::BatukaSrtTranscriptionUpload(payload) => vec![payload.video_id],
             PayloadType::BatukaSrtTranslationUpload(payload) => vec![payload.video_id],
-            PayloadType::BatukaDownloadVideo(payload) => vec![payload.video_id],
+            PayloadType::BatukaDownloadVideo(payload) => payload.video_ids.clone(),
         }
     }
 }

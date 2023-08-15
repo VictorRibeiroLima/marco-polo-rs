@@ -1,11 +1,8 @@
 use lazy_static::lazy_static;
-use marco_polo_rs_core::{
-    database::models::video_storage::VideoFormat,
-    internals::cloud::models::payload::{PayloadType, VideoDownloadPayload},
-};
+use marco_polo_rs_core::database::models::video_storage::VideoFormat;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+
 use validator::{Validate, ValidationError};
 
 lazy_static! {
@@ -26,18 +23,6 @@ pub struct CreateVideo {
     #[validate(custom(function = "validate_time", message = "Invalid Time Format (HH:MM:SS)"))]
     pub end_time: Option<String>,
     pub tags: Option<Vec<String>>,
-}
-
-impl CreateVideo {
-    pub fn into(self, uuid: Uuid) -> PayloadType {
-        PayloadType::BatukaDownloadVideo(VideoDownloadPayload {
-            video_url: self.video_url,
-            start_time: self.start_time,
-            end_time: self.end_time,
-            video_format: self.format.unwrap_or(VideoFormat::Mkv),
-            video_id: uuid,
-        })
-    }
 }
 
 fn validate_time(time: &str) -> Result<(), ValidationError> {

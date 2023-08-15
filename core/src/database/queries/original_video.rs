@@ -15,3 +15,23 @@ pub async fn create(trx: impl PgExecutor<'_>, url: impl Into<String>) -> Result<
 
     Ok(row.id)
 }
+
+pub async fn update_duration(
+    trx: impl PgExecutor<'_>,
+    id: i32,
+    duration: &str,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"
+      UPDATE original_videos
+      SET duration = $1, updated_at = NOW()
+      WHERE id = $2
+    "#,
+        duration,
+        id
+    )
+    .execute(trx)
+    .await?;
+
+    Ok(())
+}

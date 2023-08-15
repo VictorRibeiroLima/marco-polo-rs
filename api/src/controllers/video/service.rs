@@ -1,6 +1,9 @@
 use marco_polo_rs_core::{
     database::queries::{self, video::CreateVideoDto},
-    internals::cloud::traits::QueueClient,
+    internals::cloud::{
+        models::payload::{PayloadType, VideoDownloadPayload},
+        traits::QueueClient,
+    },
 };
 use sqlx::{types::Uuid, PgPool};
 
@@ -23,6 +26,11 @@ pub async fn create_video(
         None => "00:00:00",
     };
 
+    let end_time: Option<&str> = match &body.end_time {
+        Some(end_time) => Some(end_time),
+        None => None,
+    };
+
     let tags: Option<String> = match &body.tags {
         Some(tags) => {
             let tags = tags.join(";");
@@ -40,6 +48,7 @@ pub async fn create_video(
             id: &video_id,
             user_id,
             title: &body.title,
+            end_time,
             description: &body.description,
             channel_id: body.channel_id,
             language: &language,
@@ -50,8 +59,13 @@ pub async fn create_video(
     )
     .await?;
 
+    let payload: VideoDownloadPayload = VideoDownloadPayload {
+        original_video_id,
+        video_ids: vec![video_id],
+    };
+
     queue_client
-        .send_message(body.clone().into(video_id))
+        .send_message(PayloadType::BatukaDownloadVideo(payload))
         .await?;
 
     trx.commit().await?;

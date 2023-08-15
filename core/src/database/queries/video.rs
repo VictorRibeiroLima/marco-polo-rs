@@ -24,6 +24,7 @@ pub struct CreateVideoDto<'a> {
     pub language: &'a str,
     pub tags: Option<&'a str>,
     pub start_time: &'a str,
+    pub end_time: Option<&'a str>,
     pub original_id: i32,
 }
 
@@ -35,8 +36,8 @@ pub struct CreateErrorsDto<'a> {
 pub async fn create(pool: impl PgExecutor<'_>, dto: CreateVideoDto<'_>) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
-        INSERT INTO videos (id, title, description, user_id, channel_id, language, start_time, original_video_id, tags)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+        INSERT INTO videos (id, title, description, user_id, channel_id, language, start_time, original_video_id, tags,end_time)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,$10);
         "#,
         dto.id,
         dto.title,
@@ -47,6 +48,7 @@ pub async fn create(pool: impl PgExecutor<'_>, dto: CreateVideoDto<'_>) -> Resul
         dto.start_time,
         dto.original_id,
         dto.tags,
+        dto.end_time,
     )
     .execute(pool)
     .await?;
@@ -471,4 +473,26 @@ pub async fn find_all_with_original(
         videos.push(video);
     }
     return Ok(videos);
+}
+
+pub async fn bulk_update_end_time(
+    pool: &PgPool,
+    ids: Vec<Uuid>,
+    end_time: &str,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"
+        UPDATE videos
+        SET 
+        end_time = $1,
+        updated_at = NOW()
+        WHERE id = ANY($2)
+        "#,
+        end_time,
+        &ids[..],
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
 }
