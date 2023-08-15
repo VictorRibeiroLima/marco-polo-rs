@@ -125,6 +125,10 @@ impl LightWorker {
                 return download_result;
             }
 
+            PayloadType::BatukaCutVideo(payload) => {
+                panic!("Light worker should not handle video cuts")
+            }
+
             PayloadType::BatukaSrtTranslationUpload(_) => {
                 panic!("Light worker should not handle translation uploads")
             }

@@ -79,28 +79,6 @@ pub async fn change_stage(
     Ok(())
 }
 
-pub async fn update_metadata(
-    pool: &PgPool,
-    video_id: &Uuid,
-    end_time: &str,
-) -> Result<(), sqlx::Error> {
-    sqlx::query!(
-        r#"
-        UPDATE videos
-        SET 
-        end_time = $1,
-        updated_at = NOW()
-        WHERE id = $2
-        "#,
-        end_time,
-        video_id,
-    )
-    .execute(pool)
-    .await?;
-
-    Ok(())
-}
-
 pub async fn change_error_state(
     pool: &PgPool,
     video_id: &Uuid,
@@ -476,7 +454,7 @@ pub async fn find_all_with_original(
 }
 
 pub async fn bulk_update_end_time(
-    pool: &PgPool,
+    pool: impl PgExecutor<'_>,
     ids: Vec<Uuid>,
     end_time: &str,
 ) -> Result<(), sqlx::Error> {

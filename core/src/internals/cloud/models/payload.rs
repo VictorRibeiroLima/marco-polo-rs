@@ -40,11 +40,13 @@ impl VideoDownloadPayload {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct VideoCutPayload {
     pub video_id: Uuid,
     pub start_time: String,
     pub end_time: String,
     pub video_format: VideoFormat,
+    pub file_path: String,
 }
 
 #[derive(Debug)]
@@ -54,6 +56,7 @@ pub enum PayloadType {
     BatukaSrtTranscriptionUpload(SrtPayload),
     BatukaSrtTranslationUpload(SrtPayload),
     BatukaDownloadVideo(VideoDownloadPayload),
+    BatukaCutVideo(VideoCutPayload),
 }
 
 impl PayloadType {
@@ -79,6 +82,10 @@ impl PayloadType {
                 let json = json!({"type": "BatukaDownloadVideo", "payload": payload});
                 return json.to_string();
             }
+            PayloadType::BatukaCutVideo(payload) => {
+                let json = json!({"type": "BatukaCutVideo", "payload": payload});
+                return json.to_string();
+            }
         }
     }
 
@@ -89,6 +96,7 @@ impl PayloadType {
             PayloadType::BatukaSrtTranscriptionUpload(payload) => vec![payload.video_id],
             PayloadType::BatukaSrtTranslationUpload(payload) => vec![payload.video_id],
             PayloadType::BatukaDownloadVideo(payload) => payload.video_ids.clone(),
+            PayloadType::BatukaCutVideo(payload) => vec![payload.video_id],
         }
     }
 }

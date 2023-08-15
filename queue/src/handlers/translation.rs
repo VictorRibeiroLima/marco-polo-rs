@@ -18,6 +18,7 @@ use marco_polo_rs_core::{
     },
     util::fs,
 };
+use sqlx::PgPool;
 
 use crate::error::HandlerError;
 
@@ -96,8 +97,10 @@ where
 
         let size = fs::check_file_size(&sub_path)? as i64;
 
+        let pool: &PgPool = &self.pool;
+
         queries::storage::create(
-            &self.pool,
+            pool,
             CreateStorageDto {
                 format: VideoFormat::Mkv,
                 storage_id: self.cloud_service.bucket_client().id(),
