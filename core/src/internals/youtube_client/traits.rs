@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use google_youtube3::api::Video;
 
-use crate::{database::models::video::VideoWithStorageAndChannel, SyncError};
+use crate::{database::models::video::with::VideoWithStorageAndChannel, SyncError};
 
 use super::channel_info::ChannelInfo;
 

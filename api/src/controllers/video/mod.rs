@@ -10,10 +10,7 @@ use marco_polo_rs_core::{
         queries::{self, filter::Filter, pagination::Pagination},
     },
     internals::{
-        cloud::{
-            aws::AwsCloudService,
-            traits::{CloudService, QueueClient},
-        },
+        cloud::{aws::AwsCloudService, traits::CloudService},
         youtube_client::{self, client::YoutubeClient},
     },
 };
@@ -82,13 +79,10 @@ async fn create_video<CS: CloudService, YC: youtube_client::traits::YoutubeClien
     let video_id = uuid::Uuid::new_v4();
 
     let queue_client = cloud_service.client.queue_client();
-    queue_client
-        .send_message(body.clone().into(video_id))
-        .await?;
 
-    service::create_video(pool, &body, jwt.id, video_id).await?;
+    service::create_video(pool, &body, queue_client, jwt.id, video_id).await?;
 
-    let video = queries::video::find_by_id(pool, &video_id).await?;
+    let video = queries::video::find_with_original(pool, &video_id).await?;
     let dto: VideoDTO = video.into();
 
     return Ok(HttpResponse::Created().json(dto));
@@ -103,7 +97,7 @@ async fn find_by_id(
     let id = id.into_inner();
     let pool = &pool.pool;
 
-    let video = queries::video::find_by_id(pool, &id).await?;
+    let video = queries::video::find_with_original(pool, &id).await?;
     let dto: VideoDTO = video.into();
 
     return Ok(Json(dto));
@@ -113,18 +107,37 @@ async fn find_by_id(
 async fn find_all(
     pool: web::Data<AppPool>,
     pagination: web::Query<Pagination<Video>>,
-    filter: web::Query<Filter<Video>>,
+    video_filter: web::Query<Filter<Video>>,
     jwt: TokenClaims,
 ) -> Result<impl Responder, AppError> {
     let pagination = pagination.into_inner();
-    let filter = filter.into_inner();
+    let mut video_filter = video_filter.into_inner();
+
+    //TODO: refactor
+    let original_video_filter = Default::default();
+
     let pool = &pool.pool;
 
     let channels = match jwt.role {
-        UserRole::Admin => queries::video::find_all(pool, pagination, filter).await,
+        UserRole::Admin => {
+            queries::video::find_all_with_original(
+                pool,
+                pagination,
+                video_filter,
+                original_video_filter,
+            )
+            .await
+        }
         UserRole::User => {
             let user_id = jwt.id;
-            queries::video::find_all_by_owner(pool, user_id, pagination, filter).await
+            video_filter.options.user_id = Some(user_id);
+            queries::video::find_all_with_original(
+                pool,
+                pagination,
+                video_filter,
+                original_video_filter,
+            )
+            .await
         }
     }?;
 

@@ -1,4 +1,4 @@
-use crate::database::models::video::VideoWithStorageAndChannel;
+use crate::database::models::video::with::VideoWithStorageAndChannel;
 use crate::util::fs::create_temp_dir;
 use async_trait::async_trait;
 use google_youtube3::api::{Video, VideoSnippet, VideoStatus};

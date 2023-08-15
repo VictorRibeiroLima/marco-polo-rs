@@ -3,7 +3,7 @@ use std::{path::PathBuf, sync::Arc};
 use marco_polo_rs_core::{
     database::{
         models::{
-            video::VideoStage,
+            video::stage::VideoStage,
             video_storage::{StorageVideoStage, VideoFormat},
         },
         queries::{self, storage::CreateStorageDto},

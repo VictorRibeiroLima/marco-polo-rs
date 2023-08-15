@@ -78,13 +78,13 @@ impl PayloadType {
         }
     }
 
-    pub fn video_id(&self) -> Uuid {
+    pub fn video_ids(&self) -> Vec<Uuid> {
         match self {
-            PayloadType::BatukaVideoRawUpload(payload) => payload.video_id,
-            PayloadType::BatukaVideoProcessedUpload(payload) => payload.video_id,
-            PayloadType::BatukaSrtTranscriptionUpload(payload) => payload.video_id,
-            PayloadType::BatukaSrtTranslationUpload(payload) => payload.video_id,
-            PayloadType::BatukaDownloadVideo(payload) => payload.video_id,
+            PayloadType::BatukaVideoRawUpload(payload) => vec![payload.video_id],
+            PayloadType::BatukaVideoProcessedUpload(payload) => vec![payload.video_id],
+            PayloadType::BatukaSrtTranscriptionUpload(payload) => vec![payload.video_id],
+            PayloadType::BatukaSrtTranslationUpload(payload) => vec![payload.video_id],
+            PayloadType::BatukaDownloadVideo(payload) => vec![payload.video_id],
         }
     }
 }

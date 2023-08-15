@@ -3,7 +3,7 @@ use marco_polo_rs_macros::{Filtrate, Paginate};
 
 use uuid::Uuid;
 
-use super::video::VideoStage;
+use super::video::stage::VideoStage;
 
 #[derive(Debug, Clone, PartialEq, sqlx::FromRow, Paginate, Filtrate)]
 pub struct VideoError {

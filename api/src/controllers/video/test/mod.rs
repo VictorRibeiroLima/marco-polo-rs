@@ -11,7 +11,7 @@ use actix_web::{
 };
 use marco_polo_rs_core::database::models::{
     user::{User, UserRole},
-    video::{Video, VideoStage},
+    video::{stage::VideoStage, Video},
 };
 use reqwest::StatusCode;
 use sqlx::PgPool;

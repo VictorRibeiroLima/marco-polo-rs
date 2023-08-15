@@ -6,6 +6,7 @@ VALUES (
     '$2b$12$.jvb858VF4tanKNd11Vp4eDYyhg.KuFgOG8AhgJCvj/cJV47Sqtby',
     'USER'
   );
+--99020711Aa@
 INSERT INTO channels (id, name, creator_id)
 VALUES (666, 'TestChannel', 666);
 --original video
@@ -15,14 +16,14 @@ VALUES (
     'https://www.youtube.com/watch?v=1234567890',
     '00:10:00'
   );
+-- with url 
 INSERT INTO VIDEOS (
     id,
     title,
-    description,
     url,
+    description,
     user_id,
     channel_id,
-    error,
     original_video_id,
     start_time,
     end_time,
@@ -31,19 +32,12 @@ INSERT INTO VIDEOS (
 VALUES (
     '806b5a48-f221-11ed-a05b-0242ac120096',
     'Space Tourism Test',
-    'This is a test video about space tourism',
     'https://www.youtube.com/watch?v=1234567890',
+    'This is a test video about space tourism',
     666,
     666,
-    true,
     666,
     '00:00:00',
     '00:10:00',
     'spacetourism'
-  );
-INSERT INTO VIDEOS_ERRORS (video_id, error, stage)
-VALUES (
-    '806b5a48-f221-11ed-a05b-0242ac120096',
-    'Error message',
-    'DOWNLOADING'
   );

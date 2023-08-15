@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use marco_polo_rs_core::{
     database::{
-        models::video::VideoStage,
+        models::video::stage::VideoStage,
         queries::{self, translation::CreateTranslationDto},
     },
     internals::{

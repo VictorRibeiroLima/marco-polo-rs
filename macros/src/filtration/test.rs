@@ -5,34 +5,158 @@
     Default,
     serde :: Deserialize,
     serde ::
-Serialize,
+    Serialize,
 )]
-pub struct __________InternalFiltrationVideoFilters {
+pub struct InternalFiltrationVideoFilters {
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::database::queries::filter::filtration_from_str"
+    )]
     pub id: Option<Uuid>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::database::queries::filter::filtration_from_str"
+    )]
     pub title: Option<String>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::database::queries::filter::filtration_from_str"
+    )]
     pub description: Option<String>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::database::queries::filter::filtration_from_str"
+    )]
     pub user_id: Option<i32>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::database::queries::filter::filtration_from_str"
+    )]
     pub channel_id: Option<i32>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::database::queries::filter::filtration_from_str_option"
+    )]
     pub url: Option<Option<String>>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::database::queries::filter::filtration_from_str"
+    )]
     pub language: Option<String>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::database::queries::filter::filtration_from_str"
+    )]
     pub stage: Option<VideoStage>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::database::queries::filter::filtration_from_str"
+    )]
     pub error: Option<bool>,
-    pub original_url: Option<String>,
-    pub original_duration: Option<Option<String>>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::database::queries::filter::filtration_from_str"
+    )]
+    pub original_video_id: Option<i32>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::database::queries::filter::filtration_from_str"
+    )]
     pub start_time: Option<String>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::database::queries::filter::filtration_from_str_option"
+    )]
     pub end_time: Option<Option<String>>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::database::queries::filter::filtration_from_str_option"
+    )]
     pub tags: Option<Option<String>>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::database::queries::filter::filtration_from_str"
+    )]
     pub created_at: Option<NaiveDateTime>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::database::queries::filter::filtration_from_str"
+    )]
     pub created_at_start: Option<NaiveDateTime>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::database::queries::filter::filtration_from_str"
+    )]
     pub created_at_end: Option<NaiveDateTime>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::database::queries::filter::filtration_from_str"
+    )]
     pub updated_at: Option<NaiveDateTime>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::database::queries::filter::filtration_from_str"
+    )]
     pub updated_at_start: Option<NaiveDateTime>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::database::queries::filter::filtration_from_str"
+    )]
     pub updated_at_end: Option<NaiveDateTime>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::database::queries::filter::filtration_from_str_option"
+    )]
     pub deleted_at: Option<Option<NaiveDateTime>>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::database::queries::filter::filtration_from_str_option"
+    )]
     pub deleted_at_start: Option<Option<NaiveDateTime>>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::database::queries::filter::filtration_from_str_option"
+    )]
     pub deleted_at_end: Option<Option<NaiveDateTime>>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::database::queries::filter::filtration_from_str_option"
+    )]
     pub uploaded_at: Option<Option<NaiveDateTime>>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::database::queries::filter::filtration_from_str_option"
+    )]
     pub uploaded_at_start: Option<Option<NaiveDateTime>>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::database::queries::filter::filtration_from_str_option"
+    )]
     pub uploaded_at_end: Option<Option<NaiveDateTime>>,
 }
 impl crate::database::queries::filter::FilterableOptions for InternalFiltrationVideoFilters {
@@ -65,11 +189,8 @@ impl crate::database::queries::filter::FilterableOptions for InternalFiltrationV
         if self.error.is_some() {
             fields.push("error");
         }
-        if self.original_url.is_some() {
-            fields.push("original_url");
-        }
-        if self.original_duration.is_some() {
-            fields.push("original_duration");
+        if self.original_video_id.is_some() {
+            fields.push("original_video_id");
         }
         if self.start_time.is_some() {
             fields.push("start_time");
@@ -128,14 +249,8 @@ impl crate::database::queries::filter::FilterableOptions for InternalFiltrationV
         if self.error.is_some() {
             query = query.bind(self.error.unwrap());
         }
-        if self.original_url.is_some() {
-            query = query.bind(self.original_url.unwrap());
-        }
-        if self.original_duration.is_some() {
-            let value = self.original_duration.unwrap();
-            if value.is_some() {
-                query = query.bind(value.unwrap());
-            }
+        if self.original_video_id.is_some() {
+            query = query.bind(self.original_video_id.unwrap());
         }
         if self.start_time.is_some() {
             query = query.bind(self.start_time.unwrap());
@@ -181,35 +296,64 @@ impl crate::database::queries::filter::FilterableOptions for InternalFiltrationV
             query = query.bind(self.updated_at_end.unwrap());
         }
         if self.deleted_at.is_some() {
-            let value = self.deleted_at.unwrap();
-            query = query.bind(value);
+            let value = self.deleted_at.as_ref().unwrap();
+            if value.is_some() {
+                query = query.bind(value.unwrap());
+            }
         }
         if self.deleted_at_start.is_some() && self.deleted_at_end.is_some() {
-            let start = self.deleted_at_start.unwrap();
-            let end = self.deleted_at_end.unwrap();
-            query = query.bind(start);
-            query = query.bind(end);
+            let start = self.deleted_at_start.as_ref().unwrap();
+            let end = self.deleted_at_end.as_ref().unwrap();
+            if start.is_some() && end.is_some() {
+                query = query.bind(start.unwrap());
+                query = query.bind(end.unwrap());
+            } else if start.is_some() {
+                query = query.bind(start.unwrap());
+            } else if end.is_some() {
+                query = query.bind(end.unwrap());
+            }
         } else if self.deleted_at_start.is_some() {
-            query = query.bind(self.deleted_at_start.unwrap());
+            let start = self.deleted_at_start.as_ref().unwrap();
+            if start.is_some() {
+                query = query.bind(start.unwrap());
+            }
         } else if self.deleted_at_end.is_some() {
-            query = query.bind(self.deleted_at_end.unwrap());
+            let end = self.deleted_at_end.as_ref().unwrap();
+            if end.is_some() {
+                query = query.bind(end.unwrap());
+            }
         }
         if self.uploaded_at.is_some() {
-            let value = self.uploaded_at.unwrap();
-            query = query.bind(value);
+            let value = self.uploaded_at.as_ref().unwrap();
+            if value.is_some() {
+                query = query.bind(value.unwrap());
+            }
         }
         if self.uploaded_at_start.is_some() && self.uploaded_at_end.is_some() {
-            let start = self.uploaded_at_start.unwrap();
-            let end = self.uploaded_at_end.unwrap();
-            query = query.bind(start);
-            query = query.bind(end);
+            let start = self.uploaded_at_start.as_ref().unwrap();
+            let end = self.uploaded_at_end.as_ref().unwrap();
+            if start.is_some() && end.is_some() {
+                query = query.bind(start.unwrap());
+                query = query.bind(end.unwrap());
+            } else if start.is_some() {
+                query = query.bind(start.unwrap());
+            } else if end.is_some() {
+                query = query.bind(end.unwrap());
+            }
         } else if self.uploaded_at_start.is_some() {
-            query = query.bind(self.uploaded_at_start.unwrap());
+            let start = self.uploaded_at_start.as_ref().unwrap();
+            if start.is_some() {
+                query = query.bind(start.unwrap());
+            }
         } else if self.uploaded_at_end.is_some() {
-            query = query.bind(self.uploaded_at_end.unwrap());
+            let end = self.uploaded_at_end.as_ref().unwrap();
+            if end.is_some() {
+                query = query.bind(end.unwrap());
+            }
         }
         return query;
     }
+
     fn apply_raw(
         self,
         mut query: sqlx::query::Query<'_, sqlx::Postgres, sqlx::postgres::PgArguments>,
@@ -244,14 +388,8 @@ impl crate::database::queries::filter::FilterableOptions for InternalFiltrationV
         if self.error.is_some() {
             query = query.bind(self.error.unwrap());
         }
-        if self.original_url.is_some() {
-            query = query.bind(self.original_url.unwrap());
-        }
-        if self.original_duration.is_some() {
-            let value = self.original_duration.unwrap();
-            if value.is_some() {
-                query = query.bind(value.unwrap());
-            }
+        if self.original_video_id.is_some() {
+            query = query.bind(self.original_video_id.unwrap());
         }
         if self.start_time.is_some() {
             query = query.bind(self.start_time.unwrap());
@@ -297,35 +435,64 @@ impl crate::database::queries::filter::FilterableOptions for InternalFiltrationV
             query = query.bind(self.updated_at_end.unwrap());
         }
         if self.deleted_at.is_some() {
-            let value = self.deleted_at.unwrap();
-            query = query.bind(value);
+            let value = self.deleted_at.as_ref().unwrap();
+            if value.is_some() {
+                query = query.bind(value.unwrap());
+            }
         }
         if self.deleted_at_start.is_some() && self.deleted_at_end.is_some() {
-            let start = self.deleted_at_start.unwrap();
-            let end = self.deleted_at_end.unwrap();
-            query = query.bind(start);
-            query = query.bind(end);
+            let start = self.deleted_at_start.as_ref().unwrap();
+            let end = self.deleted_at_end.as_ref().unwrap();
+            if start.is_some() && end.is_some() {
+                query = query.bind(start.unwrap());
+                query = query.bind(end.unwrap());
+            } else if start.is_some() {
+                query = query.bind(start.unwrap());
+            } else if end.is_some() {
+                query = query.bind(end.unwrap());
+            }
         } else if self.deleted_at_start.is_some() {
-            query = query.bind(self.deleted_at_start.unwrap());
+            let start = self.deleted_at_start.as_ref().unwrap();
+            if start.is_some() {
+                query = query.bind(start.unwrap());
+            }
         } else if self.deleted_at_end.is_some() {
-            query = query.bind(self.deleted_at_end.unwrap());
+            let end = self.deleted_at_end.as_ref().unwrap();
+            if end.is_some() {
+                query = query.bind(end.unwrap());
+            }
         }
         if self.uploaded_at.is_some() {
-            let value = self.uploaded_at.unwrap();
-            query = query.bind(value);
+            let value = self.uploaded_at.as_ref().unwrap();
+            if value.is_some() {
+                query = query.bind(value.unwrap());
+            }
         }
         if self.uploaded_at_start.is_some() && self.uploaded_at_end.is_some() {
-            let start = self.uploaded_at_start.unwrap();
-            let end = self.uploaded_at_end.unwrap();
-            query = query.bind(start);
-            query = query.bind(end);
+            let start = self.uploaded_at_start.as_ref().unwrap();
+            let end = self.uploaded_at_end.as_ref().unwrap();
+            if start.is_some() && end.is_some() {
+                query = query.bind(start.unwrap());
+                query = query.bind(end.unwrap());
+            } else if start.is_some() {
+                query = query.bind(start.unwrap());
+            } else if end.is_some() {
+                query = query.bind(end.unwrap());
+            }
         } else if self.uploaded_at_start.is_some() {
-            query = query.bind(self.uploaded_at_start.unwrap());
+            let start = self.uploaded_at_start.as_ref().unwrap();
+            if start.is_some() {
+                query = query.bind(start.unwrap());
+            }
         } else if self.uploaded_at_end.is_some() {
-            query = query.bind(self.uploaded_at_end.unwrap());
+            let end = self.uploaded_at_end.as_ref().unwrap();
+            if end.is_some() {
+                query = query.bind(end.unwrap());
+            }
         }
         return query;
     }
+
     fn gen_where_statements(&self, param_count: Option<usize>) -> (String, usize) {
         let mut sql = String::new();
         let mut param_count: usize = match param_count {
@@ -427,39 +594,14 @@ impl crate::database::queries::filter::FilterableOptions for InternalFiltrationV
             }
             and = true;
         }
-        if self.original_url.is_some() {
+        if self.original_video_id.is_some() {
             param_count = param_count + 1;
             if !and {
-                sql.push_str(&format!("{} LIKE ${}", "original_url", param_count));
+                sql.push_str(&format!("{} = ${}", "original_video_id", param_count));
             } else {
-                sql.push_str(&format!(" AND {} LIKE ${}", "original_url", param_count));
+                sql.push_str(&format!(" AND {} = ${}", "original_video_id", param_count));
             }
             and = true;
-        }
-        if self.original_duration.is_some() {
-            let value = self.original_duration.as_ref().unwrap();
-            match value {
-                Some(_) => {
-                    param_count = param_count + 1;
-                    if !and {
-                        sql.push_str(&format!("{} LIKE ${}", "original_duration", param_count));
-                    } else {
-                        sql.push_str(&format!(
-                            " AND {} LIKE ${}",
-                            "original_duration", param_count
-                        ));
-                    }
-                    and = true;
-                }
-                None => {
-                    if !and {
-                        sql.push_str(&format!("{} IS NULL", "original_duration"));
-                    } else {
-                        sql.push_str(&format!(" AND {} IS NULL", "original_duration"));
-                    }
-                    and = true;
-                }
-            }
         }
         if self.start_time.is_some() {
             param_count = param_count + 1;
@@ -593,14 +735,14 @@ impl crate::database::queries::filter::FilterableOptions for InternalFiltrationV
                 }
                 and = true;
                 sql.push_str(&format!("{} = ${}", "deleted_at", param_count));
-            }
-        } else {
-            if !and {
-                sql.push_str(&format!("{} IS NULL", "deleted_at"));
             } else {
-                sql.push_str(&format!(" AND {} IS NULL", "deleted_at"));
+                if !and {
+                    sql.push_str(&format!("{} IS NULL", "deleted_at"));
+                } else {
+                    sql.push_str(&format!(" AND {} IS NULL", "deleted_at"));
+                }
+                and = true;
             }
-            and = true;
         }
         if self.deleted_at_start.is_some() && self.deleted_at_end.is_some() {
             let start = self.deleted_at_start.as_ref().unwrap();
@@ -641,6 +783,13 @@ impl crate::database::queries::filter::FilterableOptions for InternalFiltrationV
                 }
                 and = true;
                 sql.push_str(&format!("{} >= ${}", "deleted_at", param_count));
+            } else {
+                if !and {
+                    sql.push_str(&format!("{} IS NULL", "deleted_at"));
+                } else {
+                    sql.push_str(&format!(" AND {} IS NULL", "deleted_at"));
+                }
+                and = true;
             }
         } else if self.deleted_at_end.is_some() {
             let end = self.deleted_at_end.as_ref().unwrap();
@@ -651,6 +800,13 @@ impl crate::database::queries::filter::FilterableOptions for InternalFiltrationV
                 }
                 and = true;
                 sql.push_str(&format!("{} <= ${}", "deleted_at", param_count));
+            } else {
+                if !and {
+                    sql.push_str(&format!("{} IS NULL", "deleted_at"));
+                } else {
+                    sql.push_str(&format!(" AND {} IS NULL", "deleted_at"));
+                }
+                and = true;
             }
         }
         if self.uploaded_at.is_some() {
@@ -662,14 +818,14 @@ impl crate::database::queries::filter::FilterableOptions for InternalFiltrationV
                 }
                 and = true;
                 sql.push_str(&format!("{} = ${}", "uploaded_at", param_count));
-            }
-        } else {
-            if !and {
-                sql.push_str(&format!("{} IS NULL", "uploaded_at"));
             } else {
-                sql.push_str(&format!(" AND {} IS NULL", "uploaded_at"));
+                if !and {
+                    sql.push_str(&format!("{} IS NULL", "uploaded_at"));
+                } else {
+                    sql.push_str(&format!(" AND {} IS NULL", "uploaded_at"));
+                }
+                and = true;
             }
-            and = true;
         }
         if self.uploaded_at_start.is_some() && self.uploaded_at_end.is_some() {
             let start = self.uploaded_at_start.as_ref().unwrap();
@@ -710,6 +866,13 @@ impl crate::database::queries::filter::FilterableOptions for InternalFiltrationV
                 }
                 and = true;
                 sql.push_str(&format!("{} >= ${}", "uploaded_at", param_count));
+            } else {
+                if !and {
+                    sql.push_str(&format!("{} IS NULL", "uploaded_at"));
+                } else {
+                    sql.push_str(&format!(" AND {} IS NULL", "uploaded_at"));
+                }
+                and = true;
             }
         } else if self.uploaded_at_end.is_some() {
             let end = self.uploaded_at_end.as_ref().unwrap();
@@ -720,6 +883,13 @@ impl crate::database::queries::filter::FilterableOptions for InternalFiltrationV
                 }
                 and = true;
                 sql.push_str(&format!("{} <= ${}", "uploaded_at", param_count));
+            } else {
+                if !and {
+                    sql.push_str(&format!("{} IS NULL", "uploaded_at"));
+                } else {
+                    sql.push_str(&format!(" AND {} IS NULL", "uploaded_at"));
+                }
+                and = true;
             }
         }
         return (sql, param_count);

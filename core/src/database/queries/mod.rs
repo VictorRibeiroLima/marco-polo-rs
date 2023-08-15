@@ -1,6 +1,7 @@
 pub mod channel;
 pub mod filter;
 mod macros;
+pub mod original_video;
 pub mod pagination;
 pub mod storage;
 pub mod subtitling;

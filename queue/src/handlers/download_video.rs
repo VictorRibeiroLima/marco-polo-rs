@@ -94,7 +94,8 @@ pub async fn handle<CS: CloudService>(
 
     queries::storage::create(pool, storage_dto).await?;
 
-    queries::video::update_metadata(pool, &video_id, &original_video_duration, end_time).await?;
+    //DESCOMENTAR
+    //queries::video::update_metadata(pool, &video_id, &original_video_duration, end_time).await?;
 
     Ok(())
 }

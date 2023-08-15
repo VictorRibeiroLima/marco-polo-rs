@@ -1,6 +1,6 @@
 use marco_polo_rs_core::{
     database::{
-        models::{video::VideoStage, video_storage::StorageVideoStage},
+        models::{video::stage::VideoStage, video_storage::StorageVideoStage},
         queries::{self},
     },
     internals::{cloud::models::payload::VideoPayload, youtube_client::traits::YoutubeClient},

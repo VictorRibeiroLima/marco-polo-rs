@@ -1,6 +1,6 @@
 use google_youtube3::api::Video;
 use marco_polo_rs_core::{
-    database::models::video::VideoWithStorageAndChannel,
+    database::models::video::with::VideoWithStorageAndChannel,
     internals::youtube_client::{channel_info::ChannelInfo, traits::YoutubeClient},
     SyncError,
 };

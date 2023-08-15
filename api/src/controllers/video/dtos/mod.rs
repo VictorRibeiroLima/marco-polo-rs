@@ -1,7 +1,7 @@
 pub mod create;
 use chrono::NaiveDateTime;
 use marco_polo_rs_core::database::models::{
-    video::{Video, VideoStage},
+    video::{stage::VideoStage, with::VideoWithOriginal},
     video_error::VideoError,
 };
 use serde::{Deserialize, Serialize};
@@ -28,30 +28,34 @@ pub struct VideoDTO {
     pub uploaded_at: Option<NaiveDateTime>,
 }
 
-impl From<Video> for VideoDTO {
-    fn from(value: Video) -> Self {
-        let tags = match value.tags {
+impl From<VideoWithOriginal> for VideoDTO {
+    fn from(value: VideoWithOriginal) -> Self {
+        let original = value.original;
+        let video = value.video;
+
+        let tags = match video.tags {
             Some(tags) => Some(tags.split(";").map(|s| s.to_string()).collect()),
             None => None,
         };
+
         return Self {
-            id: value.id,
-            title: value.title,
-            description: value.description,
-            user_id: value.user_id,
-            channel_id: value.channel_id,
-            url: value.url,
-            language: value.language,
-            created_at: value.created_at,
-            updated_at: value.updated_at,
-            uploaded_at: value.uploaded_at,
-            stage: value.stage,
-            original_duration: value.original_duration,
-            start_time: value.start_time,
-            end_time: value.end_time,
-            original_url: value.original_url,
+            id: video.id,
+            title: video.title,
+            description: video.description,
+            user_id: video.user_id,
+            channel_id: video.channel_id,
+            url: video.url,
+            language: video.language,
+            created_at: video.created_at,
+            updated_at: video.updated_at,
+            uploaded_at: video.uploaded_at,
+            stage: video.stage,
+            original_duration: original.duration,
+            start_time: video.start_time,
+            end_time: video.end_time,
+            original_url: original.url,
             tags,
-            error: value.error,
+            error: video.error,
         };
     }
 }
