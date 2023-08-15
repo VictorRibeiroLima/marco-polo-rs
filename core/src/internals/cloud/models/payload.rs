@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use uuid::Uuid;
 
+use crate::database::models::video_storage::VideoFormat;
+
 #[derive(Debug, Serialize)]
 pub struct VideoPayload {
     pub video_uri: String,
@@ -36,6 +38,13 @@ impl VideoDownloadPayload {
     pub fn to_json(&self) -> String {
         serde_json::to_string(&self).unwrap()
     }
+}
+
+pub struct VideoCutPayload {
+    pub video_id: Uuid,
+    pub start_time: String,
+    pub end_time: String,
+    pub video_format: VideoFormat,
 }
 
 #[derive(Debug)]
