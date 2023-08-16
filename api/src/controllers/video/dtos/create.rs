@@ -28,6 +28,7 @@ pub struct Create {
     pub video_url: String,
     pub language: Option<String>,
     pub format: Option<VideoFormat>,
+    #[validate]
     #[validate(length(min = 1, max = 24))]
     pub cuts: Vec<Cut>,
 }
@@ -37,9 +38,15 @@ pub struct Cut {
     pub title: String,
     pub description: String,
     pub channel_id: i32,
-    #[validate(custom(function = "validate_time", message = "Invalid Time Format (HH:MM:SS)"))]
+    #[validate(custom(
+        function = "validate_time",
+        message = "Invalid Time Format (HH:MM:SS)\n"
+    ))]
     pub start_time: Option<String>,
-    #[validate(custom(function = "validate_time", message = "Invalid Time Format (HH:MM:SS)"))]
+    #[validate(custom(
+        function = "validate_time",
+        message = "Invalid Time Format (HH:MM:SS)\n"
+    ))]
     pub end_time: Option<String>,
     pub tags: Option<Vec<String>>,
 }

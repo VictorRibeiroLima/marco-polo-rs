@@ -58,12 +58,18 @@ async fn create_video<CS: CloudService, YC: YoutubeClientTrait>(
 async fn find_by_id(
     id: web::Path<Uuid>,
     pool: web::Data<AppPool>,
-    _jwt: TokenClaims,
+    jwt: TokenClaims,
 ) -> Result<impl Responder, AppError> {
     let id = id.into_inner();
     let pool = &pool.pool;
 
-    let video = queries::video::with_original::find_with_original(pool, &id).await?;
+    let video = match jwt.role {
+        UserRole::Admin => queries::video::with_original::find_with_original(pool, &id).await?,
+        UserRole::User => {
+            let user_id = jwt.id;
+            queries::video::with_original::find_by_user_id_with_original(pool, &id, user_id).await?
+        }
+    };
     let dto: VideoDTO = video.into();
 
     return Ok(Json(dto));

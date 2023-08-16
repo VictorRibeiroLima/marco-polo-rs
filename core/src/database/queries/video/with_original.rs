@@ -41,9 +41,28 @@ pub async fn find_with_original(
     pool: &PgPool,
     id: &Uuid,
 ) -> Result<VideoWithOriginal, sqlx::Error> {
-    let query = format!("{} WHERE v.id = $1", BASE_QUERY);
+    let query = format!("{} WHERE v.id = $1 AND v.deleted_at IS NULL", BASE_QUERY);
 
     let video = sqlx::query_as(&query).bind(id).fetch_one(pool).await?;
+
+    return Ok(video);
+}
+
+pub async fn find_by_user_id_with_original(
+    pool: &PgPool,
+    id: &Uuid,
+    user_id: i32,
+) -> Result<VideoWithOriginal, sqlx::Error> {
+    let query = format!(
+        "{} WHERE v.id = $1 AND user_id = $2 AND v.deleted_at IS NULL",
+        BASE_QUERY
+    );
+
+    let video = sqlx::query_as(&query)
+        .bind(id)
+        .bind(user_id)
+        .fetch_one(pool)
+        .await?;
 
     return Ok(video);
 }

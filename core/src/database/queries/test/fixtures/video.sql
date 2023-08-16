@@ -1,14 +1,14 @@
 INSERT INTO USERS (id, name, email, password, role)
 VALUES (
-    666,
+    6666,
     'TestUser',
-    'teste@gmail.com',
+    'teste6666@gmail.com',
     '$2b$12$.jvb858VF4tanKNd11Vp4eDYyhg.KuFgOG8AhgJCvj/cJV47Sqtby',
     'USER'
   );
 --99020711Aa@
 INSERT INTO channels (id, name, creator_id)
-VALUES (666, 'TestChannel', 666);
+VALUES (666, 'TestChannel', 6666);
 --original video
 INSERT INTO ORIGINAL_VIDEOS(id, url, duration)
 VALUES (
@@ -34,7 +34,7 @@ VALUES (
     'Space Tourism Test',
     'https://www.youtube.com/watch?v=1234567890',
     'This is a test video about space tourism',
-    666,
+    6666,
     666,
     666,
     '00:00:00',

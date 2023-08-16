@@ -29,7 +29,10 @@ use crate::{
     AppCloudService, AppYoutubeClient,
 };
 
-use crate::controllers::video::dtos::{create::Create, VideoDTO};
+use crate::controllers::video::dtos::{
+    create::{Create, Cut},
+    VideoDTO,
+};
 
 use crate::utils::test::get_token;
 use crate::AppPool;
@@ -38,12 +41,12 @@ use super::{create_video, find_all, find_by_id, find_video_errors};
 
 #[sqlx::test(
     migrations = "../migrations",
-    fixtures("../../../test/fixtures/user", "../../../test/fixtures/videos")
+    fixtures("../../../test/fixtures/admin", "../../../test/fixtures/videos")
 )]
 async fn test_find_by_id_get_ok(pool: PgPool) {
     let pool = Arc::new(pool);
 
-    let token = get_token!(pool.as_ref());
+    let token = get_token!(pool.as_ref(), 1000);
 
     let date = NaiveDate::from_ymd_opt(2022, 1, 1)
         .unwrap()
@@ -55,7 +58,7 @@ async fn test_find_by_id_get_ok(pool: PgPool) {
         title: "Elon Musk Test".to_string(),
         description: "This is a test video about Elon Musk".to_string(),
         user_id: 456,
-        original_url: "https://video.com/elon-musk".to_string(),
+        original_url: "https://www.youtube.com/watch?v=1234567890".to_string(),
         channel_id: 666,
         url: Some("https://video.com".to_string()),
         language: "English".to_string(),
@@ -66,7 +69,7 @@ async fn test_find_by_id_get_ok(pool: PgPool) {
         stage: VideoStage::Downloading,
         error: false,
         end_time: Some("00:05:00".to_string()),
-        original_duration: Some("00:05:00".to_string()),
+        original_duration: Some("00:10:00".to_string()),
         start_time: "00:00:00".to_string(),
     };
 
@@ -318,11 +321,16 @@ async fn test_create_video_ok(pool: PgPool) {
     let pool = Arc::new(pool);
     let app = innit_test_app(pool.clone()).await;
 
-    let dto = CreateVideo {
+    let cut = Cut {
         channel_id: 1,
         description: "This is a test video about Elon Musk".to_string(),
         title: "Elon Musk Test".to_string(),
+        ..Default::default()
+    };
+
+    let dto = Create {
         video_url: "https://www.youtube.com/watch?v=1".to_string(),
+        cuts: vec![cut],
         ..Default::default()
     };
 
@@ -342,9 +350,9 @@ async fn test_create_video_ok(pool: PgPool) {
         .await
         .unwrap();
 
-    assert_eq!(video.title, dto.title);
-    assert_eq!(video.description, dto.description);
-    assert_eq!(video.channel_id, dto.channel_id);
+    assert_eq!(video.title, dto.cuts[0].title);
+    assert_eq!(video.description, dto.cuts[0].description);
+    assert_eq!(video.channel_id, dto.cuts[0].channel_id);
 }
 
 #[sqlx::test(
@@ -356,13 +364,18 @@ async fn test_create_video_ok_admin(pool: PgPool) {
     let pool = Arc::new(pool);
     let app = innit_test_app(pool.clone()).await;
 
-    let dto = CreateVideo {
+    let cut = Cut {
         channel_id: 1,
         description: "This is a test video about Elon Musk".to_string(),
         title: "Elon Musk Test".to_string(),
-        video_url: "https://www.youtube.com/watch?v=1".to_string(),
         start_time: Some("00:00:00".to_string()),
         end_time: Some("00:10:00".to_string()),
+        ..Default::default()
+    };
+
+    let dto = Create {
+        video_url: "https://www.youtube.com/watch?v=1".to_string(),
+        cuts: vec![cut],
         ..Default::default()
     };
 
@@ -382,9 +395,14 @@ async fn test_create_video_ok_admin(pool: PgPool) {
         .await
         .unwrap();
 
-    assert_eq!(video.title, dto.title);
-    assert_eq!(video.description, dto.description);
-    assert_eq!(video.channel_id, dto.channel_id);
+    assert_eq!(video.title, dto.cuts[0].title);
+    assert_eq!(video.description, dto.cuts[0].description);
+    assert_eq!(video.channel_id, dto.cuts[0].channel_id);
+    assert_eq!(
+        video.start_time,
+        dto.cuts[0].start_time.as_ref().unwrap().to_string()
+    );
+    assert_eq!(video.end_time, dto.cuts[0].end_time);
 }
 
 #[sqlx::test(
@@ -396,11 +414,16 @@ async fn test_create_video_not_found_when_channel_does_not_belong(pool: PgPool) 
     let pool = Arc::new(pool);
     let app = innit_test_app(pool.clone()).await;
 
-    let dto = CreateVideo {
+    let cut = Cut {
         channel_id: 2,
         description: "This is a test video about Elon Musk".to_string(),
         title: "Elon Musk Test".to_string(),
+        ..Default::default()
+    };
+
+    let dto = Create {
         video_url: "https://www.youtube.com/watch?v=1".to_string(),
+        cuts: vec![cut],
         ..Default::default()
     };
 
@@ -425,11 +448,16 @@ async fn test_create_video_channel_has_error(pool: PgPool) {
     let pool = Arc::new(pool);
     let app = innit_test_app(pool.clone()).await;
 
-    let dto = CreateVideo {
+    let cut = Cut {
         channel_id: 46,
         description: "This is a test video about Elon Musk".to_string(),
         title: "Elon Musk Test".to_string(),
+        ..Default::default()
+    };
+
+    let dto = Create {
         video_url: "https://www.youtube.com/watch?v=1".to_string(),
+        cuts: vec![cut],
         ..Default::default()
     };
 
@@ -461,11 +489,16 @@ async fn test_create_video_channel_does_not_has_refresh_token(pool: PgPool) {
     let pool = Arc::new(pool);
     let app = innit_test_app(pool.clone()).await;
 
-    let dto = CreateVideo {
+    let cut = Cut {
         channel_id: 52,
         description: "This is a test video about Elon Musk".to_string(),
         title: "Elon Musk Test".to_string(),
+        ..Default::default()
+    };
+
+    let dto = Create {
         video_url: "https://www.youtube.com/watch?v=1".to_string(),
+        cuts: vec![cut],
         ..Default::default()
     };
 
@@ -513,11 +546,16 @@ async fn test_create_video_channel_error_when_getting_info(pool: PgPool) {
 
     let test_app = test::init_service(app).await;
 
-    let dto = CreateVideo {
+    let cut = Cut {
         channel_id: 1,
         description: "This is a test video about Elon Musk".to_string(),
         title: "Elon Musk Test".to_string(),
+        ..Default::default()
+    };
+
+    let dto = Create {
         video_url: "https://www.youtube.com/watch?v=1".to_string(),
+        cuts: vec![cut],
         ..Default::default()
     };
 
@@ -548,11 +586,16 @@ async fn test_returning_id(pool: PgPool) {
     let pool = Arc::new(pool);
     let app = innit_test_app(pool.clone()).await;
 
-    let dto = CreateVideo {
+    let cut = Cut {
         channel_id: 1,
         description: "This is a test video about Elon Musk".to_string(),
         title: "Elon Musk Test".to_string(),
+        ..Default::default()
+    };
+
+    let dto = Create {
         video_url: "https://www.youtube.com/watch?v=1".to_string(),
+        cuts: vec![cut],
         ..Default::default()
     };
 
@@ -567,14 +610,16 @@ async fn test_returning_id(pool: PgPool) {
 
     assert_eq!(response.status().as_u16(), StatusCode::CREATED);
 
-    let actual_dto: VideoDTO = test::read_body_json(response).await;
+    let actual_dto: Vec<VideoDTO> = test::read_body_json(response).await;
+
+    assert_eq!(actual_dto.len(), 1);
 
     let video: Video = sqlx::query_as("SELECT * FROM videos WHERE channel_id = 1")
         .fetch_one(pool.as_ref())
         .await
         .unwrap();
 
-    assert_eq!(actual_dto.id, video.id);
+    assert_eq!(actual_dto[0].id, video.id);
 }
 
 #[sqlx::test(
@@ -586,13 +631,18 @@ async fn test_create_video_bad_request_start_time_end_time(pool: PgPool) {
     let pool = Arc::new(pool);
     let app = innit_test_app(pool.clone()).await;
 
-    let dto = CreateVideo {
+    let cut = Cut {
         channel_id: 1,
         description: "This is a test video about Elon Musk".to_string(),
         title: "Elon Musk Test".to_string(),
-        video_url: "https://www.youtube.com/watch?v=1".to_string(),
         start_time: Some("test:00".to_string()),
         end_time: Some("test:00".to_string()),
+        ..Default::default()
+    };
+
+    let dto = Create {
+        video_url: "https://www.youtube.com/watch?v=1".to_string(),
+        cuts: vec![cut],
         ..Default::default()
     };
 

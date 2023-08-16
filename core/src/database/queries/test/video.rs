@@ -16,7 +16,9 @@ use crate::database::{
         video::{
             create, create_errors, create_many, find_all, find_by_id, find_by_id_with_storage,
             find_by_transcription_id,
-            with_original::{find_all_with_original, find_with_original},
+            with_original::{
+                find_all_with_original, find_by_user_id_with_original, find_with_original,
+            },
             CreateErrorsDto, CreateVideoDto,
         },
     },
@@ -484,4 +486,27 @@ async fn test_create_many(pool: PgPool) {
 
     assert!(count.count.is_some());
     assert_eq!(count.count.unwrap(), 10);
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("video"))]
+async fn test_find_by_user_id_with_original(pool: PgPool) {
+    let user_id = 6666;
+    let video_id = Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
+
+    let result = find_by_user_id_with_original(&pool, &video_id, user_id)
+        .await
+        .unwrap();
+
+    assert_eq!(result.video.id, video_id);
+    assert_eq!(result.video.user_id, user_id)
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("video", "user"))]
+async fn test_find_by_user_id_with_original_not_found_other_user(pool: PgPool) {
+    let user_id = 666;
+    let video_id = Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
+
+    let result = find_by_user_id_with_original(&pool, &video_id, user_id).await;
+
+    assert!(result.is_err());
 }
