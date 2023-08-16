@@ -12,6 +12,7 @@ use marco_polo_rs_core::{
         yt_downloader::traits::YoutubeDownloader,
     },
     util::ffmpeg,
+    MAX_NUMBER_OF_CUTS,
 };
 
 use crate::error::HandlerError;
@@ -29,7 +30,7 @@ pub async fn handle<CS: CloudService>(
     let original_video_filter: Filter<OriginalVideo> = Default::default();
 
     let mut pagination = pagination::Pagination::default();
-    pagination.limit = Some(24); //TODO: Make this a const on core
+    pagination.limit = Some(MAX_NUMBER_OF_CUTS.try_into().unwrap()); //unwrap is safe because MAX_NUMBER_OF_CUTS is a small number
 
     let videos = queries::video::with_original::find_all_with_original(
         pool,

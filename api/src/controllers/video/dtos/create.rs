@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 
 use validator::{Validate, ValidationError};
 
+use marco_polo_rs_core::MAX_NUMBER_OF_CUTS;
+
 lazy_static! {
     static ref YOUTUBE_URL: Regex = Regex::new(r#"^((?:https?:)?//)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(/(?:[\w\-]+\?v=|embed/|v/)?)([\w\-]+)(\S+)?$"#).unwrap();
 }
@@ -29,7 +31,7 @@ pub struct Create {
     pub language: Option<String>,
     pub format: Option<VideoFormat>,
     #[validate]
-    #[validate(length(min = 1, max = 24))]
+    #[validate(length(min = 1, max = "MAX_NUMBER_OF_CUTS"))]
     pub cuts: Vec<Cut>,
 }
 
