@@ -436,3 +436,117 @@ async fn test_create_multiple_cuts(pool: PgPool) {
 
     assert_eq!(original_video.videos.len(), 3);
 }
+
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/channels")
+)]
+async fn test_create_multiple_cuts_not_user_channel_in_between(pool: PgPool) {
+    let jwt = get_token!(&pool, 1);
+    let pool = Arc::new(pool);
+    let app = innit_test_app(pool.clone()).await;
+
+    let cut1 = Cut {
+        channel_id: 1,
+        description: "This is a test video about Elon Musk".to_string(),
+        title: "Elon Musk Test".to_string(),
+        end_time: Some("00:03:00".to_string()),
+        ..Default::default()
+    };
+
+    let cut2 = Cut {
+        channel_id: 3,
+        description: "This is a test video about Elon Musk 2".to_string(),
+        title: "Elon Musk Test 2".to_string(),
+        start_time: Some("00:03:00".to_string()),
+        end_time: Some("00:06:00".to_string()),
+        ..Default::default()
+    };
+
+    let cut3 = Cut {
+        channel_id: 6,
+        description: "This is a test video about Elon Musk 3".to_string(),
+        title: "Elon Musk Test 3".to_string(),
+        start_time: Some("00:06:00".to_string()),
+        ..Default::default()
+    };
+
+    let dto = Create {
+        video_url: "https://www.youtube.com/watch?v=1".to_string(),
+        cuts: vec![cut1, cut2, cut3],
+        ..Default::default()
+    };
+
+    let request = test::TestRequest::post()
+        .uri("/")
+        .insert_header(("Authorization", jwt))
+        .insert_header(ContentType::json())
+        .set_json(&dto)
+        .to_request();
+
+    let response = test::call_service(&app, request).await;
+
+    assert_eq!(response.status().as_u16(), StatusCode::NOT_FOUND);
+
+    let error: AppErrorResponse = test::read_body_json(response).await;
+
+    assert_eq!(
+        error.errors[0],
+        "no rows returned by a query that expected to return at least one row".to_string()
+    );
+}
+
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("../../../test/fixtures/channels")
+)]
+async fn test_create_multiple_cuts_wrong_time_values(pool: PgPool) {
+    let jwt = get_token!(&pool, 1);
+    let pool = Arc::new(pool);
+    let app = innit_test_app(pool.clone()).await;
+
+    let cut1 = Cut {
+        channel_id: 1,
+        description: "This is a test video about Elon Musk".to_string(),
+        title: "Elon Musk Test".to_string(),
+        end_time: Some("00:03:00".to_string()),
+        ..Default::default()
+    };
+
+    let cut2 = Cut {
+        channel_id: 4,
+        description: "This is a test video about Elon Musk 2".to_string(),
+        title: "Elon Musk Test 2".to_string(),
+        start_time: Some("00:pinto".to_string()),
+        end_time: Some("00:06:00".to_string()),
+        ..Default::default()
+    };
+
+    let cut3 = Cut {
+        channel_id: 7,
+        description: "This is a test video about Elon Musk 3".to_string(),
+        title: "Elon Musk Test 3".to_string(),
+        start_time: Some("00:06".to_string()),
+        ..Default::default()
+    };
+
+    let dto = Create {
+        video_url: "https://www.youtube.com/watch?v=1".to_string(),
+        cuts: vec![cut1, cut2, cut3],
+        ..Default::default()
+    };
+
+    let request = test::TestRequest::post()
+        .uri("/")
+        .insert_header(("Authorization", jwt))
+        .insert_header(ContentType::json())
+        .set_json(&dto)
+        .to_request();
+
+    let response = test::call_service(&app, request).await;
+
+    assert_eq!(response.status().as_u16(), StatusCode::BAD_REQUEST);
+
+    let error: AppErrorResponse = test::read_body_json(response).await;
+    assert_eq!(error.errors.len(), 2);
+}
