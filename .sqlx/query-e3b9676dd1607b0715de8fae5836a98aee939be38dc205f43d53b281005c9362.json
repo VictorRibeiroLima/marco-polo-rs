@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        UPDATE videos\n        SET \n        error = true,\n        updated_at = NOW()\n        WHERE id = $1\n        RETURNING stage as \"stage: VideoStage\"\n    ",
+  "query": "\n        UPDATE videos\n        SET \n        error = true,\n        updated_at = NOW()\n        WHERE id = ANY($1)\n        RETURNING stage as \"stage: VideoStage\"\n    ",
   "describe": {
     "columns": [
       {
@@ -25,12 +25,12 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid"
+        "UuidArray"
       ]
     },
     "nullable": [
       false
     ]
   },
-  "hash": "65b7f6b5893adeb021338836370cbc9b280208ba368817448c9d10971ecd416f"
+  "hash": "e3b9676dd1607b0715de8fae5836a98aee939be38dc205f43d53b281005c9362"
 }

@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO videos (id, title, description, user_id, channel_id, language, start_time, original_video_id, tags,end_time)\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,$10);\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Varchar",
+        "Text",
+        "Int4",
+        "Int4",
+        "Varchar",
+        "Varchar",
+        "Int4",
+        "Text",
+        "Varchar"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "afe8a53354a292ca8c1c257000c69ebfc225555bcbafb1a2869e82013d210973"
+}
