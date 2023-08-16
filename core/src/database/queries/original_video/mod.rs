@@ -1,6 +1,12 @@
 use sqlx::PgExecutor;
 
+use crate::database::models::original_video::OriginalVideo;
+
+use super::macros::find_all;
+
 pub mod with_video;
+
+find_all!(OriginalVideo, "original_videos");
 
 pub async fn create(trx: impl PgExecutor<'_>, url: impl Into<String>) -> Result<i32, sqlx::Error> {
     let url = url.into();

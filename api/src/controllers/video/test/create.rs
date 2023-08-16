@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use actix_http::StatusCode;
-use marco_polo_rs_core::database::models::video::Video;
+use marco_polo_rs_core::database::{models::video::Video, queries};
 use sqlx::PgPool;
 
 use actix_web::{
@@ -429,4 +429,10 @@ async fn test_create_multiple_cuts(pool: PgPool) {
     let response = test::call_service(&app, request).await;
 
     assert_eq!(response.status().as_u16(), StatusCode::CREATED);
+
+    let original_video = queries::original_video::with_video::find_with_videos(&pool, 1)
+        .await
+        .unwrap();
+
+    assert_eq!(original_video.videos.len(), 3);
 }
