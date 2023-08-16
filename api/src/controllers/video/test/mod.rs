@@ -29,7 +29,7 @@ use crate::{
     AppCloudService, AppYoutubeClient,
 };
 
-use crate::controllers::video::dtos::{create::CreateVideo, VideoDTO};
+use crate::controllers::video::dtos::{create::Create, VideoDTO};
 
 use crate::utils::test::get_token;
 use crate::AppPool;

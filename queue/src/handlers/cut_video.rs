@@ -28,8 +28,23 @@ pub async fn handle<CS: CloudService>(
     let format_extension = format.to_string();
     let video_uri = format!("videos/raw/{}.{}", video_id, format_extension);
 
-    let end_time = payload.end_time;
-    let start_time = payload.start_time;
+    let video = match queries::video::find_by_id(pool, &video_id).await {
+        Ok(video) => video,
+        Err(e) => {
+            eprintln!("Failed to find video: {}", e);
+            return Err(HandlerError::Final(e.into()));
+        }
+    };
+
+    let end_time = match video.end_time {
+        Some(end_time) => end_time,
+        None => {
+            eprintln!("Video {} has no end time", video.id);
+            return Err(HandlerError::Final("Video has no end time".into()));
+        }
+    };
+
+    let start_time = video.start_time;
 
     let raw_path = PathBuf::from(&payload.file_path);
 

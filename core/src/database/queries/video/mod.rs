@@ -1,13 +1,12 @@
 use chrono::NaiveDateTime;
 
-use sqlx::{postgres::PgRow, FromRow, PgExecutor, PgPool, QueryBuilder};
+use sqlx::{PgExecutor, PgPool, QueryBuilder};
 use uuid::Uuid;
 
 use crate::database::models::{
-    original_video::OriginalVideo,
     video::{
         stage::VideoStage,
-        with::{VideoWithOriginal, VideoWithStorage, VideoWithStorageAndChannel},
+        with::{VideoWithStorage, VideoWithStorageAndChannel},
         Video,
     },
     video_storage::StorageVideoStage,
@@ -15,14 +14,16 @@ use crate::database::models::{
 
 use super::{filter::Filter, macros::find_all, pagination::Pagination, storage};
 
+pub mod with_original;
+
 pub struct CreateVideoDto<'a> {
-    pub id: &'a Uuid,
+    pub id: Uuid,
     pub title: &'a str,
     pub description: &'a str,
     pub user_id: i32,
     pub channel_id: i32,
     pub language: &'a str,
-    pub tags: Option<&'a str>,
+    pub tags: Option<String>,
     pub start_time: &'a str,
     pub end_time: Option<&'a str>,
     pub original_id: i32,
@@ -52,6 +53,34 @@ pub async fn create(pool: impl PgExecutor<'_>, dto: CreateVideoDto<'_>) -> Resul
     )
     .execute(pool)
     .await?;
+
+    Ok(())
+}
+
+pub async fn create_many(
+    pool: impl PgExecutor<'_>,
+    dtos: Vec<CreateVideoDto<'_>>,
+) -> Result<(), sqlx::Error> {
+    let mut query_builder = QueryBuilder::new(
+        "INSERT INTO videos (id, title, description, user_id, channel_id, language, start_time, original_video_id, tags,end_time) ",
+    );
+
+    query_builder.push_values(&dtos, |mut builder, dto| {
+        builder
+            .push_bind(dto.id)
+            .push_bind(dto.title)
+            .push_bind(dto.description)
+            .push_bind(dto.user_id)
+            .push_bind(dto.channel_id)
+            .push_bind(dto.language)
+            .push_bind(dto.start_time)
+            .push_bind(dto.original_id)
+            .push_bind(&dto.tags)
+            .push_bind(dto.end_time);
+    });
+
+    let insert_query = query_builder.build();
+    insert_query.execute(pool).await?;
 
     Ok(())
 }
@@ -319,138 +348,6 @@ pub async fn find_by_id_with_storage_and_channel(
         channel,
     };
     return Ok(video_with_channel);
-}
-
-pub async fn find_with_original(
-    pool: &PgPool,
-    id: &Uuid,
-) -> Result<VideoWithOriginal, sqlx::Error> {
-    let video = sqlx::query_as(
-        r#"
-        SELECT 
-            v.id, 
-            v.title,
-            v.description,
-            v.url,
-            v.language,
-            v.user_id,
-            v.channel_id,
-            v.error,
-            v.original_video_id,
-            v.start_time,
-            v.end_time,
-            v.tags,
-            v.stage,
-            v.created_at,
-            v.updated_at,
-            v.deleted_at,
-            v.uploaded_at,
-            ov.url as "ov.url",
-            ov.id as "ov.id",
-            ov.duration as "ov.duration",
-            ov.created_at as "ov.created_at",
-            ov.updated_at as "ov.updated_at"
-        FROM 
-            videos v
-        INNER JOIN 
-            original_videos ov ON v.original_video_id = ov.id
-        WHERE 
-            v.id = $1 AND deleted_at IS NULL
-    "#,
-    )
-    .bind(id)
-    .fetch_one(pool)
-    .await?;
-
-    return Ok(video);
-}
-
-pub async fn find_all_with_original(
-    pool: &PgPool,
-    pagination: Pagination<Video>,
-    video_filter: Filter<Video>,
-    original_video_filter: Filter<OriginalVideo>,
-) -> Result<Vec<VideoWithOriginal>, sqlx::Error> {
-    let (offset, limit, order, order_by) = pagination.to_tuple();
-
-    let (video_where, video_param_count) = video_filter.gen_where_statements_with_alias("v", None);
-
-    let (original_video_where, _) =
-        original_video_filter.gen_where_statements_with_alias("ov", Some(video_param_count));
-
-    let query_where: String;
-    if video_where != "" && original_video_where != "" {
-        query_where = format!("{} AND {}", video_where, original_video_where);
-    } else if video_where != "" {
-        query_where = video_where;
-    } else if original_video_where != "" {
-        query_where = original_video_where;
-    } else {
-        query_where = "".to_string();
-    }
-
-    let mut sql = format!(
-        r#"
-        SELECT
-            v.id, 
-            v.title,
-            v.description,
-            v.url,
-            v.language,
-            v.user_id,
-            v.channel_id,
-            v.error,
-            v.original_video_id,
-            v.start_time,
-            v.end_time,
-            v.tags,
-            v.stage,
-            v.created_at,
-            v.updated_at,
-            v.deleted_at,
-            v.uploaded_at,
-            ov.url as "ov.url",
-            ov.id as "ov.id",
-            ov.duration as "ov.duration",
-            ov.created_at as "ov.created_at",
-            ov.updated_at as "ov.updated_at"
-            FROM
-                videos v
-            INNER JOIN
-                original_videos ov ON v.original_video_id = ov.id           
-        "#,
-    );
-
-    if query_where != "" {
-        sql = format!("{} WHERE {}", sql, query_where);
-    }
-
-    sql = format!(
-        r#"{} ORDER BY 
-            v.{} {}
-        LIMIT
-            {}
-        OFFSET 
-            {}"#,
-        sql,
-        order_by.name(),
-        order.name(),
-        limit,
-        offset
-    );
-
-    let mut videos: Vec<VideoWithOriginal> = vec![];
-
-    let mut query = sqlx::query(&sql);
-    query = video_filter.apply_raw(query);
-    query = original_video_filter.apply_raw(query);
-
-    let rows: Vec<PgRow> = query.fetch_all(pool).await?;
-    for row in rows {
-        let video: VideoWithOriginal = VideoWithOriginal::from_row(&row)?;
-        videos.push(video);
-    }
-    return Ok(videos);
 }
 
 pub async fn bulk_update_end_time(

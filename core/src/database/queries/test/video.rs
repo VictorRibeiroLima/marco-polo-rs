@@ -14,9 +14,10 @@ use crate::database::{
         filter::Filter,
         pagination::Pagination,
         video::{
-            create, create_errors, find_all, find_all_with_original, find_by_id,
-            find_by_id_with_storage, find_by_transcription_id, find_with_original, CreateErrorsDto,
-            CreateVideoDto,
+            create, create_errors, create_many, find_all, find_by_id, find_by_id_with_storage,
+            find_by_transcription_id,
+            with_original::{find_all_with_original, find_with_original},
+            CreateErrorsDto, CreateVideoDto,
         },
     },
 };
@@ -205,7 +206,7 @@ async fn test_create_video(pool: PgPool) {
     let id = uuid::Uuid::new_v4();
 
     let dto = CreateVideoDto {
-        id: &id,
+        id,
         title: "Test",
         description: "Test",
         user_id: 666,
@@ -236,7 +237,7 @@ async fn test_create_video_with_tags(pool: PgPool) {
     let id = uuid::Uuid::new_v4();
 
     let dto = CreateVideoDto {
-        id: &id,
+        id: id,
         title: "Test",
         description: "Test",
         user_id: 666,
@@ -245,7 +246,7 @@ async fn test_create_video_with_tags(pool: PgPool) {
         language: "en",
         original_id: 666,
         start_time: "00:00:00",
-        tags: Some("test;test"),
+        tags: Some("test;test".into()),
     };
 
     create(&pool, dto).await.unwrap();
@@ -264,7 +265,7 @@ async fn test_create_fail_if_foreign_key(pool: PgPool) {
     let id = uuid::Uuid::new_v4();
 
     let dto = CreateVideoDto {
-        id: &id,
+        id,
         title: "Test",
         description: "Test",
         user_id: 666,
@@ -447,4 +448,40 @@ async fn test_find_all_with_original_no_filter(pool: PgPool) {
     let list_len = list.len();
 
     assert_eq!(list_len, 1)
+}
+
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("user", "channel", "original_video")
+)]
+async fn test_create_many(pool: PgPool) {
+    let mut dtos = vec![];
+    for _ in 0..10 {
+        let id = uuid::Uuid::new_v4();
+
+        let dto = CreateVideoDto {
+            id,
+            title: "Test",
+            description: "Test",
+            user_id: 666,
+            channel_id: 666,
+            language: "en",
+            end_time: None,
+            original_id: 666,
+            start_time: "00:00:00",
+            tags: None,
+        };
+
+        dtos.push(dto);
+    }
+
+    create_many(&pool, dtos).await.unwrap();
+
+    let count = sqlx::query!("SELECT COUNT(*) FROM videos where original_video_id = 666")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+
+    assert!(count.count.is_some());
+    assert_eq!(count.count.unwrap(), 10);
 }

@@ -12,7 +12,7 @@ use tokio::sync::Mutex;
 
 use crate::{
     error::HandlerError,
-    handlers::{download_video, processed_upload, raw_upload, transcription},
+    handlers::{cut_video, download_video, processed_upload, raw_upload, transcription},
     CloudServiceInUse, Message, TranscriberClientInUse, TranslatorClientInUse,
     VideoDownloaderInUse, YoutubeClientInUse, ERROR_COUNT_THRESHOLD,
 };
@@ -126,7 +126,10 @@ impl LightWorker {
             }
 
             PayloadType::BatukaCutVideo(payload) => {
-                panic!("Light worker should not handle video cuts")
+                let cut_result: Result<(), HandlerError> =
+                    cut_video::handle(payload, &self.cloud_service, &self.pool, message).await;
+
+                return cut_result;
             }
 
             PayloadType::BatukaSrtTranslationUpload(_) => {

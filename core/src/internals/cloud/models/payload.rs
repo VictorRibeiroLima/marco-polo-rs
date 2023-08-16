@@ -43,8 +43,6 @@ impl VideoDownloadPayload {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct VideoCutPayload {
     pub video_id: Uuid,
-    pub start_time: String,
-    pub end_time: String,
     pub video_format: VideoFormat,
     pub file_path: String,
 }

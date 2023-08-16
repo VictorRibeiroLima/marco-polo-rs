@@ -31,7 +31,7 @@ pub async fn handle<CS: CloudService>(
     let mut pagination = pagination::Pagination::default();
     pagination.limit = Some(24); //TODO: Make this a const on core
 
-    let videos = queries::video::find_all_with_original(
+    let videos = queries::video::with_original::find_all_with_original(
         pool,
         pagination,
         video_filter,
@@ -80,8 +80,6 @@ pub async fn handle<CS: CloudService>(
 
         let payload: VideoCutPayload = VideoCutPayload {
             video_id: video.id,
-            start_time: video.start_time,
-            end_time: video.end_time.unwrap(),
             video_format: VideoFormat::Mkv,
             file_path: output_file.clone(),
         };
