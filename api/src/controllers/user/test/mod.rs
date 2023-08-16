@@ -15,13 +15,11 @@ use sqlx::PgPool;
 use chrono::NaiveDate;
 
 use crate::{
-    auth::gen_token, mail::engine::handlebars::HandleBarsEngine, models::error::AppErrorResponse,
-};
-use crate::{
     controllers::{test::mock::mailer::MailSenderMock, user::dtos::create::CreateUser},
     mail::Mailer,
     AppMailer,
 };
+use crate::{mail::engine::handlebars::HandleBarsEngine, models::error::AppErrorResponse};
 
 use crate::controllers::user::dtos::{
     find::UserDTO,
