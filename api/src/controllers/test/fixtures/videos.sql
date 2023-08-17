@@ -1,37 +1,31 @@
-INSERT INTO
-  USERS (id, name, email, password)
-VALUES
-  (
+INSERT INTO USERS (id, name, email, password)
+VALUES (
     456,
     'TestUser',
     'test@gmail.com',
     '$2b$12$.jvb858VF4tanKNd11Vp4eDYyhg.KuFgOG8AhgJCvj/cJV47Sqtby'
   );
-
 --99020711Aa@
-INSERT INTO
-  USERS (id, name, email, password)
-VALUES
-  (
+INSERT INTO USERS (id, name, email, password)
+VALUES (
     789,
     'AdminUser',
     'admin@example.com',
     '$2b$12$JrqfLc8Mm0UhrKJqjIuYHuTlWlTNVW9bPb3W1PZJfV0XNQcHCrLI6'
   );
-
 --99020711Aa@
-INSERT INTO
-  CHANNELS (id, name, creator_id)
-VALUES
-  (666, 'TestChannel', 456);
-
-INSERT INTO
-  CHANNELS (id, name, creator_id)
-VALUES
-  (678, 'TestChannel', 789);
-
-INSERT INTO
-  videos (
+INSERT INTO CHANNELS (id, name, creator_id)
+VALUES (666, 'TestChannel', 456);
+INSERT INTO CHANNELS (id, name, creator_id)
+VALUES (678, 'TestChannel', 789);
+--original video
+INSERT INTO ORIGINAL_VIDEOS(id, url, duration)
+VALUES (
+    999,
+    'https://www.youtube.com/watch?v=1234567890',
+    '00:10:00'
+  );
+INSERT INTO videos (
     id,
     title,
     description,
@@ -42,14 +36,12 @@ INSERT INTO
     created_at,
     updated_at,
     uploaded_at,
-    original_url,
-    original_duration,
+    original_video_id,
     start_time,
     end_time,
     tags
   )
-VALUES
-  (
+VALUES (
     '2c20e6d2-7bce-47b7-b02d-7f45fb106df5',
     'Travel Vlog',
     'Join me on my adventures around the world',
@@ -60,8 +52,7 @@ VALUES
     NOW(),
     NOW(),
     NOW(),
-    'https://video.com/travel',
-    '00:05:00',
+    999,
     '00:00:00',
     '00:05:00',
     'travel;adventure'
@@ -77,8 +68,7 @@ VALUES
     '2022-01-01',
     '2022-01-01',
     '2022-01-01',
-    'https://video.com/elon-musk',
-    '00:05:00',
+    999,
     '00:00:00',
     '00:05:00',
     'elon-musk;test'
@@ -94,8 +84,7 @@ VALUES
     '2022-01-02',
     '2022-01-02',
     '2022-01-02',
-    'https://video.com/cats',
-    '00:05:00',
+    999,
     '00:00:00',
     '00:05:00',
     'cats;funny'
@@ -111,8 +100,7 @@ VALUES
     '2022-01-03',
     '2022-01-03',
     '2022-01-03',
-    'https://video.com/cooking',
-    '00:05:00',
+    999,
     '00:00:00',
     '00:05:00',
     'cooking;food'
@@ -128,8 +116,7 @@ VALUES
     '2022-01-04',
     '2022-01-04',
     '2022-01-04',
-    'https://video.com/gardening',
-    '00:05:00',
+    999,
     '00:00:00',
     '00:05:00',
     'gardening;tips'
@@ -145,8 +132,7 @@ VALUES
     '2022-01-05',
     '2022-01-05',
     '2022-01-05',
-    'https://video.com/fitness',
-    '00:05:00',
+    999,
     '00:00:00',
     '00:05:00',
     'fitness;workout'
@@ -162,8 +148,7 @@ VALUES
     '2022-01-06',
     '2022-01-06',
     '2022-01-06',
-    'https://video.com/travel',
-    '00:05:00',
+    999,
     '00:00:00',
     '00:05:00',
     'travel;adventure'
@@ -179,8 +164,7 @@ VALUES
     '2022-01-07',
     '2022-01-07',
     '2022-01-07',
-    'https://video.com/science',
-    '00:05:00',
+    999,
     '00:00:00',
     '00:05:00',
     'science;experiments'
@@ -196,8 +180,7 @@ VALUES
     '2022-01-08',
     '2022-01-08',
     '2022-01-08',
-    'https://video.com/pranks',
-    '00:05:00',
+    999,
     '00:00:00',
     '00:05:00',
     'pranks;funny'
@@ -213,8 +196,7 @@ VALUES
     '2022-01-09',
     '2022-01-09',
     '2022-01-09',
-    'https://video.com/music',
-    '00:05:00',
+    999,
     '00:00:00',
     '00:05:00',
     'music;performance'
@@ -230,8 +212,7 @@ VALUES
     '2022-01-10',
     '2022-01-10',
     '2022-01-10',
-    'https://video.com/art',
-    '00:05:00',
+    999,
     '00:00:00',
     '00:05:00',
     'art;tutorial'
@@ -247,8 +228,7 @@ VALUES
     '2022-01-11',
     '2022-01-11',
     '2022-01-11',
-    'https://video.com/gaming',
-    '00:05:00',
+    999,
     '00:00:00',
     '00:05:00',
     'gaming;highlights'
@@ -264,8 +244,7 @@ VALUES
     '2022-01-12',
     '2022-01-12',
     '2022-01-12',
-    'https://video.com/nature',
-    '00:05:00',
+    999,
     '00:00:00',
     '00:05:00',
     'nature;documentary'
@@ -281,8 +260,7 @@ VALUES
     '2022-01-13',
     '2022-01-13',
     '2022-01-13',
-    'https://video.com/tech',
-    '00:05:00',
+    999,
     '00:00:00',
     '00:05:00',
     'tech;reviews'

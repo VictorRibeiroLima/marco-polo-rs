@@ -9,15 +9,11 @@ use actix_web::{
     App,
 };
 use chrono::NaiveDate;
-use marco_polo_rs_core::database::models::{
-    channel::Channel,
-    user::{User, UserRole},
-};
+use marco_polo_rs_core::database::models::{channel::Channel, user::UserRole};
 use reqwest::StatusCode;
 use sqlx::PgPool;
 
 use crate::{
-    auth::gen_token,
     controllers::{
         channel::{create_youtube_channel, dto::ChannelDTO},
         test::mock::youtube_client::{YoutubeClientMock, CSRF_TOKEN},

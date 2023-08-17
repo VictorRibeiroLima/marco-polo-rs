@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use marco_polo_rs_core::{
     database::{
-        models::video::VideoStage,
+        models::video::stage::VideoStage,
         queries::{self, translation::CreateTranslationDto},
     },
     internals::{
@@ -58,8 +58,9 @@ where
         let translator_id = self.translator_client.id();
         let bucket_id = bucket_client.id();
 
-        queries::video::change_stage(&self.pool, &payload.video_id, VideoStage::Translating)
-            .await?;
+        let pool = self.pool.as_ref();
+
+        queries::video::change_stage(pool, &payload.video_id, VideoStage::Translating).await?;
 
         let transcription =
             queries::transcription::find_by_video_id(&self.pool, &payload.video_id).await?;

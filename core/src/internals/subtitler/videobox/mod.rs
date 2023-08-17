@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use serde_json::json;
 
 use crate::{
-    database::models::video::VideoWithStorage,
+    database::models::video::with::VideoWithStorage,
     internals::{cloud::aws::s3::S3Client, ServiceProvider},
 };
 

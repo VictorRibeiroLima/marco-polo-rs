@@ -1,5 +1,5 @@
 use crate::{
-    database::models::video::VideoWithStorage,
+    database::models::video::with::VideoWithStorage,
     internals::{cloud::traits::BucketClient, ServiceProvider},
 };
 use async_trait::async_trait;

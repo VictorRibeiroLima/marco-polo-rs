@@ -1,4 +1,4 @@
-use crate::database::models::video::VideoWithStorageAndChannel;
+use crate::database::models::video::with::VideoWithStorageAndChannel;
 use crate::util::fs::create_temp_dir;
 use async_trait::async_trait;
 use google_youtube3::api::{Video, VideoSnippet, VideoStatus};
@@ -183,6 +183,7 @@ impl super::traits::YoutubeClient for YoutubeClient {
             .upload_resumable(reader, "application/octet-stream".parse().unwrap())
             .await?;
 
+        //TODO:bug file does not get removed if upload fails
         if !response.status().is_success() {
             return Err(format!(
                 "request to {} error with status: {}",

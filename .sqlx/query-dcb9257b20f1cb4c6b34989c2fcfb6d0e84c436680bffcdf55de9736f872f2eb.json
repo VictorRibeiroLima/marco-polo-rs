@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      UPDATE original_videos\n      SET duration = $1, updated_at = NOW()\n      WHERE id = $2\n    ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "dcb9257b20f1cb4c6b34989c2fcfb6d0e84c436680bffcdf55de9736f872f2eb"
+}

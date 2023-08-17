@@ -1,4 +1,4 @@
-use crate::database::models::video::VideoStage;
+use crate::database::models::video::stage::VideoStage;
 use sqlx::PgPool;
 use uuid::Uuid;
 

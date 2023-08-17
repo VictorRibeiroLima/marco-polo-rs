@@ -1,7 +1,7 @@
 use sqlx::PgPool;
 
 use marco_polo_rs_core::{
-    database::queries::{self, transcription::UpdateVideoTranscriptionDto, video::CreateErrorDto},
+    database::queries::{self, transcription::UpdateVideoTranscriptionDto, video::CreateErrorsDto},
     internals::cloud::traits::BucketClient,
 };
 use uuid::Uuid;
@@ -40,7 +40,7 @@ where
     let body = resp.text().await?;
 
     if !status.is_success() {
-        transcription_error(pool, &video.id, &format!("AssemblyAI error: {}", body)).await?;
+        transcription_error(pool, video.id, &format!("AssemblyAI error: {}", body)).await?;
         return Ok(());
     }
 
@@ -63,8 +63,11 @@ where
     return Ok(());
 }
 
-async fn transcription_error(pool: &PgPool, video_id: &Uuid, error: &str) -> Result<(), AppError> {
-    let dto: CreateErrorDto = CreateErrorDto { video_id, error };
-    queries::video::create_error(&pool, dto).await?;
+async fn transcription_error(pool: &PgPool, video_id: Uuid, error: &str) -> Result<(), AppError> {
+    let dto: CreateErrorsDto = CreateErrorsDto {
+        video_ids: vec![video_id],
+        error,
+    };
+    queries::video::create_errors(&pool, dto).await?;
     Ok(())
 }

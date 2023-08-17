@@ -1,37 +1,44 @@
 use chrono::NaiveDateTime;
 
-use sqlx::PgPool;
+use sqlx::{PgExecutor, PgPool, QueryBuilder};
 use uuid::Uuid;
 
 use crate::database::models::{
-    video::{Video, VideoStage, VideoWithStorage, VideoWithStorageAndChannel},
+    video::{
+        stage::VideoStage,
+        with::{VideoWithStorage, VideoWithStorageAndChannel},
+        Video,
+    },
     video_storage::StorageVideoStage,
 };
 
 use super::{filter::Filter, macros::find_all, pagination::Pagination, storage};
 
+pub mod with_original;
+
 pub struct CreateVideoDto<'a> {
-    pub id: &'a Uuid,
+    pub id: Uuid,
     pub title: &'a str,
     pub description: &'a str,
     pub user_id: i32,
     pub channel_id: i32,
     pub language: &'a str,
-    pub tags: Option<&'a str>,
+    pub tags: Option<String>,
     pub start_time: &'a str,
-    pub original_url: &'a str,
+    pub end_time: Option<&'a str>,
+    pub original_id: i32,
 }
 
-pub struct CreateErrorDto<'a> {
-    pub video_id: &'a Uuid,
+pub struct CreateErrorsDto<'a> {
+    pub video_ids: Vec<Uuid>,
     pub error: &'a str,
 }
 
-pub async fn create(pool: &PgPool, dto: CreateVideoDto<'_>) -> Result<(), sqlx::Error> {
+pub async fn create(pool: impl PgExecutor<'_>, dto: CreateVideoDto<'_>) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
-        INSERT INTO videos (id, title, description, user_id, channel_id, language, start_time, original_url, tags)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+        INSERT INTO videos (id, title, description, user_id, channel_id, language, start_time, original_video_id, tags,end_time)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,$10);
         "#,
         dto.id,
         dto.title,
@@ -40,8 +47,9 @@ pub async fn create(pool: &PgPool, dto: CreateVideoDto<'_>) -> Result<(), sqlx::
         dto.channel_id,
         dto.language,
         dto.start_time,
-        dto.original_url,
+        dto.original_id,
         dto.tags,
+        dto.end_time,
     )
     .execute(pool)
     .await?;
@@ -49,8 +57,36 @@ pub async fn create(pool: &PgPool, dto: CreateVideoDto<'_>) -> Result<(), sqlx::
     Ok(())
 }
 
+pub async fn create_many(
+    pool: impl PgExecutor<'_>,
+    dtos: Vec<CreateVideoDto<'_>>,
+) -> Result<(), sqlx::Error> {
+    let mut query_builder = QueryBuilder::new(
+        "INSERT INTO videos (id, title, description, user_id, channel_id, language, start_time, original_video_id, tags,end_time) ",
+    );
+
+    query_builder.push_values(&dtos, |mut builder, dto| {
+        builder
+            .push_bind(dto.id)
+            .push_bind(dto.title)
+            .push_bind(dto.description)
+            .push_bind(dto.user_id)
+            .push_bind(dto.channel_id)
+            .push_bind(dto.language)
+            .push_bind(dto.start_time)
+            .push_bind(dto.original_id)
+            .push_bind(&dto.tags)
+            .push_bind(dto.end_time);
+    });
+
+    let insert_query = query_builder.build();
+    insert_query.execute(pool).await?;
+
+    Ok(())
+}
+
 pub async fn change_stage(
-    pool: &PgPool,
+    pool: impl PgExecutor<'_>,
     video_id: &Uuid,
     stage: VideoStage,
 ) -> Result<(), sqlx::Error> {
@@ -64,31 +100,6 @@ pub async fn change_stage(
         WHERE id = $2
         "#,
         stage as VideoStage,
-        video_id,
-    )
-    .execute(pool)
-    .await?;
-
-    Ok(())
-}
-
-pub async fn update_metadata(
-    pool: &PgPool,
-    video_id: &Uuid,
-    original_duration: &str,
-    end_time: &str,
-) -> Result<(), sqlx::Error> {
-    sqlx::query!(
-        r#"
-        UPDATE videos
-        SET 
-        original_duration = $1,
-        end_time = $2,
-        updated_at = NOW()
-        WHERE id = $3
-        "#,
-        original_duration,
-        end_time,
         video_id,
     )
     .execute(pool)
@@ -119,43 +130,50 @@ pub async fn change_error_state(
     Ok(())
 }
 
-pub async fn create_error(pool: &PgPool, dto: CreateErrorDto<'_>) -> Result<i64, sqlx::Error> {
+//This method is assuming that every video has the same stage. maybe we should change this later
+pub async fn create_errors(pool: &PgPool, dto: CreateErrorsDto<'_>) -> Result<i64, sqlx::Error> {
     let mut trx = pool.begin().await?;
+    let video_ids = dto.video_ids;
+    let video_id = video_ids.first().ok_or(sqlx::Error::RowNotFound)?;
 
+    println!("{:?}", video_ids);
+
+    //Postgres hack see:https://github.com/launchbadge/sqlx/blob/main/FAQ.md
     let result = sqlx::query!(
         r#"
         UPDATE videos
         SET 
         error = true,
         updated_at = NOW()
-        WHERE id = $1
+        WHERE id = ANY($1)
         RETURNING stage as "stage: VideoStage"
     "#,
-        dto.video_id
+        &video_ids[..],
     )
     .fetch_one(&mut *trx)
     .await?;
 
-    let stage: VideoStage = result.stage;
+    let stage = result.stage;
 
-    sqlx::query!(
-        r#"
-        INSERT INTO videos_errors (video_id, error, stage)
-        VALUES ($1, $2, $3);
-        "#,
-        dto.video_id,
-        dto.error,
-        &stage as &VideoStage,
-    )
-    .execute(&mut *trx)
-    .await?;
+    let mut query_builder =
+        QueryBuilder::new("INSERT INTO videos_errors (video_id, error, stage) ");
+
+    query_builder.push_values(&video_ids, |mut builder, id| {
+        builder
+            .push_bind(id)
+            .push_bind(dto.error)
+            .push_bind(&stage as &VideoStage);
+    });
+
+    let insert_query = query_builder.build();
+    insert_query.execute(&mut *trx).await?;
 
     let count_result = sqlx::query!(
         r#"
         SELECT COUNT(*) as "count!: i64"
         FROM videos_errors
         WHERE video_id = $1 and stage = $2"#,
-        dto.video_id,
+        video_id,
         stage as VideoStage,
     )
     .fetch_optional(&mut *trx)
@@ -202,8 +220,7 @@ pub async fn find_by_transcription_id(
             v.user_id,
             v.channel_id,
             v.error,
-            v.original_url,
-            v.original_duration,
+            v.original_video_id,
             v.start_time,
             v.end_time,
             v.tags,
@@ -240,8 +257,7 @@ pub async fn find_by_id(pool: &PgPool, id: &Uuid) -> Result<Video, sqlx::Error> 
             v.user_id,
             v.channel_id,
             v.error,
-            v.original_url,
-            v.original_duration,
+            v.original_video_id,
             v.start_time,
             v.end_time,
             v.tags,
@@ -332,4 +348,26 @@ pub async fn find_by_id_with_storage_and_channel(
         channel,
     };
     return Ok(video_with_channel);
+}
+
+pub async fn bulk_update_end_time(
+    pool: impl PgExecutor<'_>,
+    ids: Vec<Uuid>,
+    end_time: &str,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"
+        UPDATE videos
+        SET 
+        end_time = $1,
+        updated_at = NOW()
+        WHERE id = ANY($2)
+        "#,
+        end_time,
+        &ids[..],
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(())
 }

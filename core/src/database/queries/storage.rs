@@ -1,5 +1,5 @@
 use chrono::NaiveDateTime;
-use sqlx::PgPool;
+use sqlx::{PgExecutor, PgPool};
 use uuid::Uuid;
 
 use crate::database::models::video_storage::{StorageVideoStage, VideoFormat, VideosStorage};
@@ -13,7 +13,10 @@ pub struct CreateStorageDto<'a> {
     pub size: i64,
 }
 
-pub async fn create(pool: &PgPool, dto: CreateStorageDto<'_>) -> Result<(), sqlx::Error> {
+pub async fn create(
+    pool: impl PgExecutor<'_>,
+    dto: CreateStorageDto<'_>,
+) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
         INSERT INTO videos_storages (video_id, storage_id, video_path, format, stage,size)

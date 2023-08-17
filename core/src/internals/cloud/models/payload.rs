@@ -30,17 +30,21 @@ impl SrtPayload {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct VideoDownloadPayload {
-    pub video_url: String,
-    pub start_time: Option<String>,
-    pub end_time: Option<String>,
-    pub video_format: VideoFormat,
-    pub video_id: Uuid,
+    pub original_video_id: i32,
+    pub video_ids: Vec<Uuid>,
 }
 
 impl VideoDownloadPayload {
     pub fn to_json(&self) -> String {
         serde_json::to_string(&self).unwrap()
     }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct VideoCutPayload {
+    pub video_id: Uuid,
+    pub video_format: VideoFormat,
+    pub file_path: String,
 }
 
 #[derive(Debug)]
@@ -50,6 +54,7 @@ pub enum PayloadType {
     BatukaSrtTranscriptionUpload(SrtPayload),
     BatukaSrtTranslationUpload(SrtPayload),
     BatukaDownloadVideo(VideoDownloadPayload),
+    BatukaCutVideo(VideoCutPayload),
 }
 
 impl PayloadType {
@@ -75,16 +80,21 @@ impl PayloadType {
                 let json = json!({"type": "BatukaDownloadVideo", "payload": payload});
                 return json.to_string();
             }
+            PayloadType::BatukaCutVideo(payload) => {
+                let json = json!({"type": "BatukaCutVideo", "payload": payload});
+                return json.to_string();
+            }
         }
     }
 
-    pub fn video_id(&self) -> Uuid {
+    pub fn video_ids(&self) -> Vec<Uuid> {
         match self {
-            PayloadType::BatukaVideoRawUpload(payload) => payload.video_id,
-            PayloadType::BatukaVideoProcessedUpload(payload) => payload.video_id,
-            PayloadType::BatukaSrtTranscriptionUpload(payload) => payload.video_id,
-            PayloadType::BatukaSrtTranslationUpload(payload) => payload.video_id,
-            PayloadType::BatukaDownloadVideo(payload) => payload.video_id,
+            PayloadType::BatukaVideoRawUpload(payload) => vec![payload.video_id],
+            PayloadType::BatukaVideoProcessedUpload(payload) => vec![payload.video_id],
+            PayloadType::BatukaSrtTranscriptionUpload(payload) => vec![payload.video_id],
+            PayloadType::BatukaSrtTranslationUpload(payload) => vec![payload.video_id],
+            PayloadType::BatukaDownloadVideo(payload) => payload.video_ids.clone(),
+            PayloadType::BatukaCutVideo(payload) => vec![payload.video_id],
         }
     }
 }

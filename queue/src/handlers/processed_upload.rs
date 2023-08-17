@@ -1,6 +1,6 @@
 use marco_polo_rs_core::{
     database::{
-        models::{video::VideoStage, video_storage::StorageVideoStage},
+        models::{video::stage::VideoStage, video_storage::StorageVideoStage},
         queries::{self},
     },
     internals::{cloud::models::payload::VideoPayload, youtube_client::traits::YoutubeClient},
@@ -21,7 +21,7 @@ pub async fn handle(
     )
     .await?;
 
-    queries::video::change_stage(&pool, &payload.video_id, VideoStage::Uploading).await?;
+    queries::video::change_stage(pool, &payload.video_id, VideoStage::Uploading).await?;
 
     let youtube_video = youtube_client
         .upload_video(&video_with_storage_and_channel)

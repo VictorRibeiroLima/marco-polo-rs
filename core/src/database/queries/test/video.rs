@@ -6,14 +6,20 @@ use uuid::Uuid;
 
 use crate::database::{
     models::{
+        original_video::OriginalVideo,
         video::{Video, VideoOrderFields},
         video_storage::StorageVideoStage,
     },
     queries::{
         filter::Filter,
+        pagination::Pagination,
         video::{
-            create, create_error, find_all, find_by_id, find_by_id_with_storage,
-            find_by_transcription_id, CreateErrorDto, CreateVideoDto,
+            create, create_errors, create_many, find_all, find_by_id, find_by_id_with_storage,
+            find_by_transcription_id,
+            with_original::{
+                find_all_with_original, find_by_user_id_with_original, find_with_original,
+            },
+            CreateErrorsDto, CreateVideoDto,
         },
     },
 };
@@ -50,7 +56,7 @@ async fn filtration_test_id_deleted_at(pool: sqlx::PgPool) {
         .and_hms_opt(0, 0, 0)
         .unwrap();
 
-    filter.options.id = Some(uuid::Uuid::from_str("806b5cdc-f221-11ed-a05b-0242ac120076").unwrap());
+    filter.options.id = Some(uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120002").unwrap());
     filter.options.deleted_at = Some(Some(date));
 
     let mut query = String::from("SELECT * FROM videos WHERE ");
@@ -72,7 +78,7 @@ async fn filtration_test_id_deleted_at(pool: sqlx::PgPool) {
 async fn filtration_test_id_deleted_at_none(pool: sqlx::PgPool) {
     let mut filter: Filter<Video> = Filter::default();
 
-    filter.options.id = Some(uuid::Uuid::from_str("806b5cfc-f221-11ed-a05b-0242ac120075").unwrap());
+    filter.options.id = Some(uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120001").unwrap());
     filter.options.deleted_at = Some(None);
 
     let mut query = String::from("SELECT * FROM videos WHERE ");
@@ -194,18 +200,22 @@ async fn test_offset(pool: sqlx::PgPool) {
     assert_eq!(member.id, expected_member.id)
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("user", "channel"))]
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("user", "channel", "original_video")
+)]
 async fn test_create_video(pool: PgPool) {
     let id = uuid::Uuid::new_v4();
 
     let dto = CreateVideoDto {
-        id: &id,
+        id,
         title: "Test",
         description: "Test",
         user_id: 666,
         channel_id: 666,
         language: "en",
-        original_url: "https://www.youtube.com/watch?v=1234567890",
+        end_time: None,
+        original_id: 666,
         start_time: "00:00:00",
         tags: None,
     };
@@ -221,20 +231,24 @@ async fn test_create_video(pool: PgPool) {
     assert_eq!(count.count.unwrap(), 1);
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("user", "channel"))]
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("user", "channel", "original_video")
+)]
 async fn test_create_video_with_tags(pool: PgPool) {
     let id = uuid::Uuid::new_v4();
 
     let dto = CreateVideoDto {
-        id: &id,
+        id: id,
         title: "Test",
         description: "Test",
         user_id: 666,
+        end_time: None,
         channel_id: 666,
         language: "en",
-        original_url: "https://www.youtube.com/watch?v=1234567890",
+        original_id: 666,
         start_time: "00:00:00",
-        tags: Some("test;test"),
+        tags: Some("test;test".into()),
     };
 
     create(&pool, dto).await.unwrap();
@@ -253,13 +267,14 @@ async fn test_create_fail_if_foreign_key(pool: PgPool) {
     let id = uuid::Uuid::new_v4();
 
     let dto = CreateVideoDto {
-        id: &id,
+        id,
         title: "Test",
         description: "Test",
         user_id: 666,
+        end_time: None,
         channel_id: 666,
         language: "en",
-        original_url: "https://www.youtube.com/watch?v=1234567890",
+        original_id: 666,
         start_time: "00:00:00",
         tags: None,
     };
@@ -268,6 +283,7 @@ async fn test_create_fail_if_foreign_key(pool: PgPool) {
 
     assert!(result.is_err());
 }
+
 #[sqlx::test(migrations = "../migrations", fixtures("videos"))]
 async fn test_find_by_video_id(pool: PgPool) {
     let id = uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
@@ -347,12 +363,12 @@ async fn test_create_error_mark_video_error(pool: PgPool) {
     let video_id = uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
     let error = "Test Error";
 
-    let dto = CreateErrorDto {
-        video_id: &video_id,
+    let dto = CreateErrorsDto {
+        video_ids: vec![video_id],
         error: &error,
     };
 
-    create_error(&pool, dto).await.unwrap();
+    create_errors(&pool, dto).await.unwrap();
 
     let video = find_by_id(&pool, &video_id).await.unwrap();
 
@@ -364,12 +380,12 @@ async fn test_create_error_0_previous_errors(pool: PgPool) {
     let video_id = uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
     let error = "Test Error";
 
-    let dto = CreateErrorDto {
-        video_id: &video_id,
+    let dto = CreateErrorsDto {
+        video_ids: vec![video_id],
         error: &error,
     };
 
-    let result = create_error(&pool, dto).await.unwrap();
+    let result = create_errors(&pool, dto).await.unwrap();
 
     assert_eq!(result, 1);
 }
@@ -379,12 +395,12 @@ async fn test_create_error_1_previous_errors(pool: PgPool) {
     let video_id = uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
     let error = "Test Error";
 
-    let dto = CreateErrorDto {
-        video_id: &video_id,
+    let dto = CreateErrorsDto {
+        video_ids: vec![video_id],
         error: &error,
     };
 
-    let result = create_error(&pool, dto).await.unwrap();
+    let result = create_errors(&pool, dto).await.unwrap();
 
     assert_eq!(result, 2);
 }
@@ -406,12 +422,91 @@ async fn test_create_error_1_previous_errors_from_another_stage(pool: PgPool) {
     .await
     .unwrap();
 
-    let dto = CreateErrorDto {
-        video_id: &video_id,
+    let dto = CreateErrorsDto {
+        video_ids: vec![video_id],
         error: &error,
     };
 
-    let result = create_error(&pool, dto).await.unwrap();
-
+    let result = create_errors(&pool, dto).await.unwrap();
     assert_eq!(result, 1);
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("video"))]
+async fn test_find_with_original(pool: PgPool) {
+    let id = Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
+    let video = find_with_original(&pool, &id).await.unwrap();
+
+    assert_eq!(video.video.id, id);
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("video"))]
+async fn test_find_all_with_original_no_filter(pool: PgPool) {
+    let pagination: Pagination<Video> = Default::default();
+    let video_filter: Filter<Video> = Default::default();
+    let original_filter: Filter<OriginalVideo> = Default::default();
+
+    let result = find_all_with_original(&pool, pagination, video_filter, original_filter).await;
+    let list = result.unwrap();
+    let list_len = list.len();
+
+    assert_eq!(list_len, 1)
+}
+
+#[sqlx::test(
+    migrations = "../migrations",
+    fixtures("user", "channel", "original_video")
+)]
+async fn test_create_many(pool: PgPool) {
+    let mut dtos = vec![];
+    for _ in 0..10 {
+        let id = uuid::Uuid::new_v4();
+
+        let dto = CreateVideoDto {
+            id,
+            title: "Test",
+            description: "Test",
+            user_id: 666,
+            channel_id: 666,
+            language: "en",
+            end_time: None,
+            original_id: 666,
+            start_time: "00:00:00",
+            tags: None,
+        };
+
+        dtos.push(dto);
+    }
+
+    create_many(&pool, dtos).await.unwrap();
+
+    let count = sqlx::query!("SELECT COUNT(*) FROM videos where original_video_id = 666")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+
+    assert!(count.count.is_some());
+    assert_eq!(count.count.unwrap(), 10);
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("video"))]
+async fn test_find_by_user_id_with_original(pool: PgPool) {
+    let user_id = 6666;
+    let video_id = Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
+
+    let result = find_by_user_id_with_original(&pool, &video_id, user_id)
+        .await
+        .unwrap();
+
+    assert_eq!(result.video.id, video_id);
+    assert_eq!(result.video.user_id, user_id)
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("video", "user"))]
+async fn test_find_by_user_id_with_original_not_found_other_user(pool: PgPool) {
+    let user_id = 666;
+    let video_id = Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
+
+    let result = find_by_user_id_with_original(&pool, &video_id, user_id).await;
+
+    assert!(result.is_err());
 }

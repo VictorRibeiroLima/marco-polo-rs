@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use marco_polo_rs_core::{
-    database::queries::{self, video::CreateErrorDto},
+    database::queries::{self, video::CreateErrorsDto},
     internals::cloud::{
         models::payload::PayloadType,
         traits::{CloudService, QueueClient},
@@ -12,7 +12,7 @@ use tokio::sync::Mutex;
 
 use crate::{
     error::HandlerError,
-    handlers::{download_video, processed_upload, raw_upload, transcription},
+    handlers::{cut_video, download_video, processed_upload, raw_upload, transcription},
     CloudServiceInUse, Message, TranscriberClientInUse, TranslatorClientInUse,
     VideoDownloaderInUse, YoutubeClientInUse, ERROR_COUNT_THRESHOLD,
 };
@@ -32,7 +32,7 @@ pub struct LightWorker {
 impl LightWorker {
     async fn handle_message(&self, message: Message, payload_type: PayloadType) {
         let queue_client = self.cloud_service.queue_client();
-        let video_id = payload_type.video_id();
+        let video_id = payload_type.video_ids();
 
         let result: Result<(), HandlerError> = self.handle_payload(payload_type, &message).await;
 
@@ -40,11 +40,11 @@ impl LightWorker {
             Ok(_) => {}
             Err(e) => {
                 println!("Light Worker {} error: {:?}", self.id, e);
-                let dto = CreateErrorDto {
-                    video_id: &video_id,
+                let dto = CreateErrorsDto {
+                    video_ids: video_id,
                     error: &e.to_string(),
                 };
-                let error_count = match queries::video::create_error(&self.pool, dto).await {
+                let error_count = match queries::video::create_errors(&self.pool, dto).await {
                     Ok(count) => count,
                     Err(e) => {
                         println!("Light Worker {} error: {:?}", self.id, e);
@@ -123,6 +123,14 @@ impl LightWorker {
                 .await;
 
                 return download_result;
+            }
+
+            PayloadType::BatukaCutVideo(payload) => {
+                println!("Light Worker {} handling video cut...", self.id);
+                let cut_result: Result<(), HandlerError> =
+                    cut_video::handle(payload, &self.cloud_service, &self.pool, message).await;
+
+                return cut_result;
             }
 
             PayloadType::BatukaSrtTranslationUpload(_) => {

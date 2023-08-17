@@ -8,6 +8,13 @@ VALUES (
     '2022-01-01',
     999
   );
+--original video
+INSERT INTO ORIGINAL_VIDEOS(id, url, duration)
+VALUES (
+    999,
+    'https://www.youtube.com/watch?v=1234567890',
+    '00:10:00'
+  );
 INSERT INTO videos (
     id,
     title,
@@ -17,8 +24,7 @@ INSERT INTO videos (
     url,
     deleted_at,
     language,
-    original_url,
-    original_duration,
+    original_video_id,
     start_time,
     end_time,
     tags,
@@ -33,8 +39,7 @@ VALUES (
     'https://video.com/travel',
     NOW(),
     'English',
-    'https://video.com/travel',
-    '00:05:00',
+    999,
     '00:00:00',
     '00:05:00',
     'travel;adventure',

@@ -3,7 +3,7 @@ macro_rules! get_token {
         {
             std::env::set_var("API_JSON_WEB_TOKEN_SECRET", "test_secret");
             let user = sqlx::query_as!(
-                User,
+                marco_polo_rs_core::database::models::user::User,
                 r#"SELECT id, 
                 name, 
                 email, 
@@ -20,7 +20,7 @@ macro_rules! get_token {
             .await
             .unwrap();
 
-            let token = gen_token(user).await.unwrap();
+            let token = crate::auth::gen_token(user).await.unwrap();
             token
         }
     };
@@ -29,12 +29,12 @@ macro_rules! get_token {
         {
             std::env::set_var("API_JSON_WEB_TOKEN_SECRET", "test_secret");
             let user = sqlx::query_as!(
-                User,
+                marco_polo_rs_core::database::models::user::User,
                 r#"SELECT id, 
                 name, 
                 email, 
                 password, 
-                role as "role: UserRole",
+                role as "role: marco_polo_rs_core::database::models::user::UserRole",
                 created_at as "created_at: chrono::NaiveDateTime",
                 updated_at as "updated_at: chrono::NaiveDateTime",
                 deleted_at as "deleted_at: chrono::NaiveDateTime",
@@ -47,7 +47,7 @@ macro_rules! get_token {
             .await
             .unwrap();
 
-            let token = gen_token(user).await.unwrap();
+            let token = crate::auth::gen_token(user).await.unwrap();
             token
         }
     };

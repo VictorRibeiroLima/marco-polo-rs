@@ -1,6 +1,6 @@
 use crate::{
     internals::cloud::{
-        models::payload::{PayloadType, VideoDownloadPayload},
+        models::payload::{PayloadType, VideoCutPayload, VideoDownloadPayload},
         traits::{QueueClient, QueueMessage},
     },
     SyncError,
@@ -81,6 +81,11 @@ impl QueueMessage for Message {
                 let payload: VideoDownloadPayload = serde_json::from_str(&payload)?;
                 return Ok(PayloadType::BatukaDownloadVideo(payload));
             }
+            "BatukaCutVideo" => {
+                let payload: VideoCutPayload = serde_json::from_str(&payload)?;
+                return Ok(PayloadType::BatukaCutVideo(payload));
+            }
+
             _ => Err("Invalid type field".into()),
         }
     }
@@ -103,17 +108,15 @@ impl QueueClient for SQSClient {
     }
 
     async fn send_message(&self, payload: PayloadType) -> Result<(), SyncError> {
-        let json_payload = payload.to_json();
-        println!("Sending message: {}", json_payload);
-
         let sqs_message_request = SendMessageRequest {
             message_body: payload.to_json(),
             queue_url: self.queue_url.clone(),
+            delay_seconds: Some(2), // delay to give db trx time to commit
             ..Default::default()
         };
 
-        let result = self.client.send_message(sqs_message_request).await?;
-        println!("Message sent. Message ID: {:?}", result.message_id);
+        self.client.send_message(sqs_message_request).await?;
+
         return Ok(());
     }
 

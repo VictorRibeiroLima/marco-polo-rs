@@ -1,4 +1,5 @@
 pub mod channel;
+pub mod original_video;
 pub mod service_provider;
 pub mod user;
 pub mod video;

@@ -91,6 +91,7 @@ impl ResponseError for AppError {
         let errors = self
             .message
             .split("\n")
+            .filter(|s| !s.is_empty())
             .map(String::from)
             .collect::<Vec<String>>();
         HttpResponse::build(self.status_code()).json(AppErrorResponse { errors })
@@ -122,6 +123,7 @@ impl From<sqlx::Error> for AppError {
                 return Self::new(AppErrorType::NotFound, value.to_string());
             }
             _ => {
+                println!("{:?}", value);
                 return Self::new(AppErrorType::InternalServerError, value.to_string());
             }
         }
