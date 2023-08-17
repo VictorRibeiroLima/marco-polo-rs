@@ -15,8 +15,10 @@
                 "TRANSCRIBING",
                 "TRANSLATING",
                 "SUBTITLING",
+                "UPLOADING",
                 "DONE",
-                "UPLOADING"
+                "CUTTING",
+                "RAW_UPLOADING"
               ]
             }
           }

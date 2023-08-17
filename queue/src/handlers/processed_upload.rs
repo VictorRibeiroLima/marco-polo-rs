@@ -21,7 +21,7 @@ pub async fn handle(
     )
     .await?;
 
-    queries::video::change_stage(&pool, &payload.video_id, VideoStage::Uploading).await?;
+    queries::video::change_stage(pool, &payload.video_id, VideoStage::Uploading).await?;
 
     let youtube_video = youtube_client
         .upload_video(&video_with_storage_and_channel)
