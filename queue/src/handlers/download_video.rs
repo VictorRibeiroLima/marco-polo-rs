@@ -1,9 +1,6 @@
 use futures::future::try_join_all;
 use marco_polo_rs_core::{
-    database::{
-        models::{original_video::OriginalVideo, video::Video, video_storage::VideoFormat},
-        queries::{self, filter::Filter, pagination},
-    },
+    database::{models::video_storage::VideoFormat, queries},
     internals::{
         cloud::{
             models::payload::{PayloadType, VideoCutPayload, VideoDownloadPayload},
@@ -12,7 +9,6 @@ use marco_polo_rs_core::{
         yt_downloader::traits::YoutubeDownloader,
     },
     util::ffmpeg,
-    MAX_NUMBER_OF_CUTS,
 };
 
 use crate::error::HandlerError;
@@ -24,28 +20,13 @@ pub async fn handle<CS: CloudService>(
     pool: &sqlx::PgPool,
     message: &<<CS as CloudService>::QC as QueueClient>::M,
 ) -> Result<(), HandlerError> {
-    let mut video_filter: Filter<Video> = Default::default();
-    video_filter.options.original_video_id = Some(payload.original_video_id);
+    let id = payload.original_video_id;
 
-    let original_video_filter: Filter<OriginalVideo> = Default::default();
+    let original_with_video =
+        queries::original_video::with_video::find_with_videos(pool, id).await?;
 
-    let mut pagination = pagination::Pagination::default();
-    pagination.limit = Some(MAX_NUMBER_OF_CUTS.try_into().unwrap()); //unwrap is safe because MAX_NUMBER_OF_CUTS is a small number
-
-    let videos = queries::video::with_original::find_all_with_original(
-        pool,
-        pagination,
-        video_filter,
-        original_video_filter,
-    )
-    .await?;
-
-    let original_video = &videos
-        .first()
-        .ok_or_else(|| HandlerError::Final("No videos found".into()))?
-        .original;
-
-    let original_video_id = original_video.id;
+    let original_video = original_with_video.original_video;
+    let videos = original_with_video.videos;
 
     let estimated_time = video_downloader.estimate_time(&original_video.url).await?;
 
@@ -69,8 +50,7 @@ pub async fn handle<CS: CloudService>(
     let mut without_end_time_ids = vec![];
     let mut messages = vec![];
 
-    for video in videos {
-        let mut video = video.video;
+    for mut video in videos {
         match video.end_time {
             Some(_) => continue,
             None => {
@@ -94,7 +74,7 @@ pub async fn handle<CS: CloudService>(
     queries::video::bulk_update_end_time(pool, without_end_time_ids, &original_video_duration)
         .await?;
 
-    queries::original_video::update_duration(pool, original_video_id, &original_video_duration)
+    queries::original_video::update_duration(pool, original_video.id, &original_video_duration)
         .await?;
 
     try_join_all(messages).await?;
