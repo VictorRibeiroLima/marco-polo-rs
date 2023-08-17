@@ -55,6 +55,7 @@ where
     pub async fn handle(&self, payload: SrtPayload) -> Result<(), HandlerError> {
         let bucket_client = self.cloud_service.bucket_client();
         let queue_client = self.cloud_service.queue_client();
+        let pool: &PgPool = &self.pool;
 
         let video = queries::video::find_by_id_with_storage(
             &self.pool,
@@ -69,7 +70,7 @@ where
             .change_message_visibility(&self.message, estimation as usize)
             .await?;
 
-        queries::video::change_stage(&self.pool, &payload.video_id, VideoStage::Subtitling).await?;
+        queries::video::change_stage(pool, &payload.video_id, VideoStage::Subtitling).await?;
 
         let subtitle_path = self
             .subtitler_client
@@ -96,8 +97,6 @@ where
         let sub_path = PathBuf::from(&subtitle_path);
 
         let size = fs::check_file_size(&sub_path)? as i64;
-
-        let pool: &PgPool = &self.pool;
 
         queries::storage::create(
             pool,

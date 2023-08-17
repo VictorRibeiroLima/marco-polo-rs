@@ -86,7 +86,7 @@ pub async fn create_many(
 }
 
 pub async fn change_stage(
-    pool: &PgPool,
+    pool: impl PgExecutor<'_>,
     video_id: &Uuid,
     stage: VideoStage,
 ) -> Result<(), sqlx::Error> {

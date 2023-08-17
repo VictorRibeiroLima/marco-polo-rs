@@ -126,6 +126,7 @@ impl LightWorker {
             }
 
             PayloadType::BatukaCutVideo(payload) => {
+                println!("Light Worker {} handling video cut...", self.id);
                 let cut_result: Result<(), HandlerError> =
                     cut_video::handle(payload, &self.cloud_service, &self.pool, message).await;
 

@@ -1,4 +1,4 @@
-use sqlx::PgExecutor;
+use sqlx::{PgExecutor, PgPool};
 
 use crate::database::models::original_video::OriginalVideo;
 
@@ -42,4 +42,52 @@ pub async fn update_duration(
     .await?;
 
     Ok(())
+}
+
+//TODO: tests
+pub async fn count_finished_cuts(pool: &PgPool, id: i32) -> Result<i64, sqlx::Error> {
+    let row = sqlx::query!(
+        r#"
+        SELECT 
+            COUNT(*) as count
+        FROM  
+            original_videos ov
+        INNER JOIN 
+            videos v 
+        ON 
+            v.original_video_id = ov.id
+        WHERE 
+            ov.id = $1 
+            AND 
+            (v.stage != 'DOWNLOADING' OR v.stage != 'CUTTING' OR v.error = true)
+    "#,
+        id
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok(row.count.unwrap_or(0))
+}
+
+//TODO: tests
+pub async fn count_videos(pool: &PgPool, id: i32) -> Result<i64, sqlx::Error> {
+    let row = sqlx::query!(
+        r#"
+        SELECT 
+            COUNT(*) as count
+        FROM  
+            original_videos ov
+        INNER JOIN 
+            videos v 
+        ON 
+            v.original_video_id = ov.id
+        WHERE 
+            ov.id = $1 
+    "#,
+        id
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok(row.count.unwrap_or(0))
 }

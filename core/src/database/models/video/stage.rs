@@ -6,6 +6,7 @@ use std::{fmt::Display, str::FromStr};
 pub enum VideoStage {
     Downloading,
     Cutting,
+    RawUploading,
     Transcribing,
     Translating,
     Subtitling,
@@ -18,6 +19,7 @@ impl Display for VideoStage {
         match self {
             VideoStage::Downloading => write!(f, "Downloading"),
             VideoStage::Cutting => write!(f, "Cutting"),
+            VideoStage::RawUploading => write!(f, "RawUploading"),
             VideoStage::Transcribing => write!(f, "Transcribing"),
             VideoStage::Translating => write!(f, "Translating"),
             VideoStage::Subtitling => write!(f, "Subtitling"),
@@ -34,6 +36,7 @@ impl FromStr for VideoStage {
         match s {
             "Downloading" => Ok(VideoStage::Downloading),
             "Cutting" => Ok(VideoStage::Cutting),
+            "RawUploading" => Ok(VideoStage::RawUploading),
             "Transcribing" => Ok(VideoStage::Transcribing),
             "Translating" => Ok(VideoStage::Translating),
             "Subtitling" => Ok(VideoStage::Subtitling),
