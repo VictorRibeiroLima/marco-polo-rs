@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use marco_polo_rs_core::{
     database::{
-        models::video_storage::StorageVideoStage,
+        models::{video::stage::VideoStage, video_storage::StorageVideoStage},
         queries::{self, storage::CreateStorageDto},
     },
     internals::{
@@ -36,6 +36,8 @@ pub async fn handle<CS: CloudService>(
             return Err(HandlerError::Final(e.into()));
         }
     };
+
+    queries::video::change_stage(pool, &video_id, VideoStage::Cutting).await?;
 
     let end_time = match video.end_time {
         Some(end_time) => end_time,

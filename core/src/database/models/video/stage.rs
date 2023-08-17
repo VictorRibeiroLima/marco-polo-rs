@@ -5,6 +5,7 @@ use std::{fmt::Display, str::FromStr};
 #[sqlx(type_name = "videos_video_stages", rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum VideoStage {
     Downloading,
+    Cutting,
     Transcribing,
     Translating,
     Subtitling,
@@ -16,6 +17,7 @@ impl Display for VideoStage {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             VideoStage::Downloading => write!(f, "Downloading"),
+            VideoStage::Cutting => write!(f, "Cutting"),
             VideoStage::Transcribing => write!(f, "Transcribing"),
             VideoStage::Translating => write!(f, "Translating"),
             VideoStage::Subtitling => write!(f, "Subtitling"),
@@ -31,6 +33,7 @@ impl FromStr for VideoStage {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "Downloading" => Ok(VideoStage::Downloading),
+            "Cutting" => Ok(VideoStage::Cutting),
             "Transcribing" => Ok(VideoStage::Transcribing),
             "Translating" => Ok(VideoStage::Translating),
             "Subtitling" => Ok(VideoStage::Subtitling),
