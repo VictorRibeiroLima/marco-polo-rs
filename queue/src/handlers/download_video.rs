@@ -52,7 +52,7 @@ pub async fn handle<CS: CloudService>(
 
     for mut video in videos {
         match video.end_time {
-            Some(_) => continue,
+            Some(_) => {}
             None => {
                 video.end_time = Some(original_video_duration.to_string());
                 without_end_time_ids.push(video.id);

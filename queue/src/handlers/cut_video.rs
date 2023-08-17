@@ -26,6 +26,7 @@ pub async fn handle<CS: CloudService>(
     let video_id = payload.video_id;
     let format = payload.video_format.clone();
     let format_extension = format.to_string();
+    let file_path = payload.file_path;
     let video_uri = format!("videos/raw/{}.{}", video_id, format_extension);
 
     let video = match queries::video::find_by_id(pool, &video_id).await {
@@ -46,7 +47,7 @@ pub async fn handle<CS: CloudService>(
 
     let start_time = video.start_time;
 
-    let raw_path = PathBuf::from(&payload.file_path);
+    let raw_path = PathBuf::from(&file_path);
 
     cloud_service
         .queue_client()
@@ -72,14 +73,7 @@ pub async fn handle<CS: CloudService>(
         }
     };
 
-    cloud_service
-        .bucket_client()
-        .upload_file_from_path(&video_uri, &cut_output)
-        .await?;
-
-    //TODO: More complex than that
-    //std::fs::remove_file(output_file)?;
-    std::fs::remove_file(cut_output)?;
+    let mut trx = pool.begin().await?;
 
     let storage_dto = CreateStorageDto {
         video_id: &video_id,
@@ -90,7 +84,18 @@ pub async fn handle<CS: CloudService>(
         size: cut_size as i64, //if some day a negative value appears on the database, this is the reason
     };
 
-    queries::storage::create(pool, storage_dto).await?;
+    queries::storage::create(&mut *trx, storage_dto).await?;
+
+    cloud_service
+        .bucket_client()
+        .upload_file_from_path(&video_uri, &cut_output)
+        .await?;
+
+    trx.commit().await?;
+
+    //TODO: More complex than that
+    //std::fs::remove_file(output_file)?;
+    std::fs::remove_file(cut_output)?;
 
     return Ok(());
 }
