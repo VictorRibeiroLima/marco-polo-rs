@@ -44,6 +44,8 @@ pub async fn handle<CS: CloudService>(
     let end_time = match video.end_time {
         Some(end_time) => end_time,
         None => {
+            queries::video::change_error_state(pool, &video.id, true).await?; //Need to change this so for the delete_original_file function
+            delete_original_file(pool, original_id, &original_file_path).await?;
             eprintln!("Video {} has no end time", video.id);
             return Err(HandlerError::Final("Video has no end time".into()));
         }

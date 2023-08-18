@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT \n            COUNT(*) as count\n        FROM  \n            original_videos ov\n        INNER JOIN \n            videos v \n        ON \n            v.original_video_id = ov.id\n        WHERE \n            ov.id = $1 \n            AND \n            (v.stage != 'DOWNLOADING' AND v.stage != 'CUTTING' OR v.error = true)\n    ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "17cfef85654234e80c2d291172c9b6226295a210d60fb94d1b5f7fb7c7b643b2"
+}

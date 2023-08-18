@@ -59,7 +59,7 @@ pub async fn count_finished_cuts(pool: &PgPool, id: i32) -> Result<i64, sqlx::Er
         WHERE 
             ov.id = $1 
             AND 
-            (v.stage != 'DOWNLOADING' OR v.stage != 'CUTTING' OR v.error = true)
+            (v.stage != 'DOWNLOADING' AND v.stage != 'CUTTING' OR v.error = true)
     "#,
         id
     )
