@@ -3,6 +3,9 @@ use marco_polo_rs_macros::{Filtrate, Paginate};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
+pub mod auth;
+pub mod platform;
+
 #[derive(Debug, Serialize, Deserialize, FromRow, Filtrate, Paginate)]
 pub struct Channel {
     pub id: i32,
