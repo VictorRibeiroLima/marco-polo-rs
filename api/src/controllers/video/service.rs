@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use futures::future::join_all;
 use marco_polo_rs_core::{
     database::{
-        models::user::UserRole,
+        models::{channel::auth::AuthType, user::UserRole},
         queries::{self, video::CreateVideoDto},
     },
     internals::{
@@ -82,7 +82,17 @@ async fn check_channel_heath(
         ));
     };
 
-    let refresh_token = match channel.refresh_token {
+    //TODO: make generic
+    let auth_type = match channel.auth.0 {
+        AuthType::Oauth2(auth) => auth,
+        _ => {
+            return Err(AppError::bad_request(
+                "Youtube channel not linked".to_string(),
+            ))
+        }
+    };
+
+    let refresh_token = match auth_type.refresh_token {
         Some(refresh_token) => refresh_token,
         None => {
             return Err(AppError::bad_request(

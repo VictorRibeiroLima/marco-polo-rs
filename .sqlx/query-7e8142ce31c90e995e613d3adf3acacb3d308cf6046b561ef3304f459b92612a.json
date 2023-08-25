@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT COUNT(*) FROM channels WHERE csrf_token = $1\n        ",
+  "query": "\n            SELECT COUNT(*) FROM channels WHERE auth -> 'data' ->> 'csrf_token' = $1\n        ",
   "describe": {
     "columns": [
       {
@@ -18,5 +18,5 @@
       null
     ]
   },
-  "hash": "92084c04d89928521716f5dc3dd519fb8ba3d1fb4af752e3f7383b19c03e5987"
+  "hash": "7e8142ce31c90e995e613d3adf3acacb3d308cf6046b561ef3304f459b92612a"
 }

@@ -25,7 +25,7 @@ async fn test_create(pool: PgPool) {
     assert!(result.is_ok());
     let record = sqlx::query!(
         r#"
-            SELECT COUNT(*) FROM channels WHERE csrf_token = $1
+            SELECT COUNT(*) FROM channels WHERE auth -> 'data' ->> 'csrf_token' = $1
         "#,
         CSRF_TOKEN
     )

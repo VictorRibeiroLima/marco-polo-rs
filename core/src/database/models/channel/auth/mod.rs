@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 pub mod data;
 
-#[derive(Debug, Serialize, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum AuthType {
     Oauth2(Oath2Data),
     Invalid,
@@ -18,14 +18,21 @@ impl<'de> Deserialize<'de> for AuthType {
     {
         let mut value: Value = Deserialize::deserialize(deserializer)?;
 
-        let data = value
-            .get_mut("data")
-            .ok_or(serde::de::Error::missing_field("data"))?
-            .take();
+        let data = match value.get_mut("data") {
+            Some(data) => data.take(),
+            None => {
+                eprintln!("Missing data field");
+                return Ok(AuthType::Invalid);
+            }
+        };
 
-        let type_ = value
-            .get("type")
-            .ok_or(serde::de::Error::missing_field("type"))?;
+        let type_ = match value.get("type") {
+            Some(type_) => type_,
+            None => {
+                eprintln!("Missing type field");
+                return Ok(AuthType::Invalid);
+            }
+        };
 
         match type_.as_str() {
             Some("OAUTH2") => {
@@ -41,6 +48,30 @@ impl<'de> Deserialize<'de> for AuthType {
             _ => {
                 eprintln!("Invalid auth type {:?}", type_);
                 Ok(AuthType::Invalid)
+            }
+        }
+    }
+}
+
+impl Serialize for AuthType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match &self {
+            AuthType::Oauth2(data) => {
+                let mut value = serde_json::value::Map::new();
+                let data = serde_json::to_value(data).unwrap();
+                let type_ = serde_json::to_value("OAUTH2").unwrap();
+
+                value.insert("type".to_string(), type_);
+                value.insert("data".to_string(), data);
+
+                value.serialize(serializer)
+            }
+            AuthType::Invalid => {
+                let value = serde_json::to_value("INVALID").unwrap();
+                value.serialize(serializer)
             }
         }
     }

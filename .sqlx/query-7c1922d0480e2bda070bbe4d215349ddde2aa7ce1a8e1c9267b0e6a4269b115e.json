@@ -1,0 +1,100 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT \n            id,\n            name,\n            creator_id,\n            error,\n            platform as \"platform: Platform\",\n            auth as \"auth: sqlx::types::Json<AuthType>\",\n            created_at as \"created_at: chrono::NaiveDateTime\",\n            updated_at as \"updated_at: chrono::NaiveDateTime\",\n            deleted_at as \"deleted_at: chrono::NaiveDateTime\"\n        FROM channels WHERE auth -> 'data' ->> 'csrf_token' = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "creator_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "error",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 4,
+        "name": "platform: Platform",
+        "type_info": {
+          "Custom": {
+            "name": "video_platforms",
+            "kind": {
+              "Enum": [
+                "YOUTUBE",
+                "FACEBOOK",
+                "INSTAGRAM",
+                "TIKTOK",
+                "TWITCH",
+                "VIMEO",
+                "DAILYMOTION",
+                "LINKEDIN",
+                "TWITTER",
+                "PINTEREST",
+                "SNAPCHAT",
+                "TIK_TOK",
+                "TUMBLR",
+                "REDDIT",
+                "WHATSAPP",
+                "TELEGRAM",
+                "VK",
+                "OK",
+                "WEIBO",
+                "WECHAT",
+                "LINE",
+                "KAKAOTALK"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "auth: sqlx::types::Json<AuthType>",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 6,
+        "name": "created_at: chrono::NaiveDateTime",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 7,
+        "name": "updated_at: chrono::NaiveDateTime",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 8,
+        "name": "deleted_at: chrono::NaiveDateTime",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "7c1922d0480e2bda070bbe4d215349ddde2aa7ce1a8e1c9267b0e6a4269b115e"
+}

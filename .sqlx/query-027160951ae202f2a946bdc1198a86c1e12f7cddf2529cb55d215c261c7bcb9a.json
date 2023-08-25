@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n    UPDATE channels SET \n        auth = $1,\n        updated_at = NOW()\n    WHERE id = $2\n    ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Jsonb",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "027160951ae202f2a946bdc1198a86c1e12f7cddf2529cb55d215c261c7bcb9a"
+}

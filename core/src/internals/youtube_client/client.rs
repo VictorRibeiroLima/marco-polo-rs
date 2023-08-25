@@ -1,3 +1,4 @@
+use crate::database::models::channel::auth::AuthType;
 use crate::database::models::video::with::VideoWithStorageAndChannel;
 use crate::util::fs::create_temp_dir;
 use async_trait::async_trait;
@@ -131,7 +132,16 @@ impl super::traits::YoutubeClient for YoutubeClient {
         let channel = &video.channel;
         let video = &video.video;
 
-        let refresh_token = match &channel.refresh_token {
+        //TODO: Make generic
+
+        let auth = match &channel.auth.0 {
+            AuthType::Oauth2(auth) => auth,
+            _ => {
+                return Err("invalid auth type".into());
+            }
+        };
+
+        let refresh_token = match &auth.refresh_token {
             Some(refresh_token) => refresh_token.to_string(),
             None => {
                 return Err("no refresh token".into());

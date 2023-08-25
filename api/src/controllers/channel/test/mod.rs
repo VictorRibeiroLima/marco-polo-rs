@@ -9,7 +9,10 @@ use actix_web::{
     App,
 };
 use chrono::NaiveDate;
-use marco_polo_rs_core::database::models::{channel::Channel, user::UserRole};
+use marco_polo_rs_core::database::models::{
+    channel::{auth::AuthType, platform::Platform, Channel},
+    user::UserRole,
+};
 use reqwest::StatusCode;
 use sqlx::PgPool;
 
@@ -62,7 +65,7 @@ async fn test_create_channel_authorized(pool: PgPool) {
 
     let record = sqlx::query!(
         r#"
-        SELECT COUNT(*) FROM channels WHERE csrf_token = $1
+        SELECT COUNT(*) FROM channels WHERE auth -> 'data' ->> 'csrf_token' = $1
         "#,
         CSRF_TOKEN
     )
@@ -329,14 +332,32 @@ async fn admin_can_resign_channel(pool: PgPool) {
 
     assert_eq!(response.status().as_u16(), StatusCode::OK);
 
-    let channel: Channel =
-        sqlx::query_as!(Channel, "SELECT * FROM channels WHERE id = $1", channel_id)
-            .fetch_one(pool.as_ref())
-            .await
-            .unwrap();
+    let channel: Channel = sqlx::query_as!(
+        Channel,
+        r#"SELECT  
+                id,
+                name,
+                creator_id,
+                error,
+                platform as "platform: Platform",
+                auth as "auth: sqlx::types::Json<AuthType>",
+                created_at as "created_at: chrono::NaiveDateTime",
+                updated_at as "updated_at: chrono::NaiveDateTime",
+                deleted_at as "deleted_at: chrono::NaiveDateTime" 
+            FROM channels WHERE id = $1"#,
+        channel_id
+    )
+    .fetch_one(pool.as_ref())
+    .await
+    .unwrap();
 
-    assert!(channel.refresh_token.is_none());
-    assert_eq!(channel.csrf_token.unwrap(), CSRF_TOKEN);
+    let auth = match channel.auth.0 {
+        AuthType::Oauth2(auth) => auth,
+        _ => panic!("Auth type is not oauth2"),
+    };
+
+    assert!(auth.refresh_token.is_none());
+    assert_eq!(auth.csrf_token.unwrap(), CSRF_TOKEN);
 }
 
 #[sqlx::test(
@@ -367,14 +388,32 @@ async fn user_can_resign_on_channel(pool: PgPool) {
 
     assert_eq!(response.status().as_u16(), StatusCode::OK);
 
-    let channel: Channel =
-        sqlx::query_as!(Channel, "SELECT * FROM channels WHERE id = $1", channel_id)
-            .fetch_one(pool.as_ref())
-            .await
-            .unwrap();
+    let channel: Channel = sqlx::query_as!(
+        Channel,
+        r#"SELECT  
+                id,
+                name,
+                creator_id,
+                error,
+                platform as "platform: Platform",
+                auth as "auth: sqlx::types::Json<AuthType>",
+                created_at as "created_at: chrono::NaiveDateTime",
+                updated_at as "updated_at: chrono::NaiveDateTime",
+                deleted_at as "deleted_at: chrono::NaiveDateTime" 
+            FROM channels WHERE id = $1"#,
+        channel_id
+    )
+    .fetch_one(pool.as_ref())
+    .await
+    .unwrap();
 
-    assert!(channel.refresh_token.is_none());
-    assert_eq!(channel.csrf_token.unwrap(), CSRF_TOKEN);
+    let auth = match channel.auth.0 {
+        AuthType::Oauth2(auth) => auth,
+        _ => panic!("Auth type is not oauth2"),
+    };
+
+    assert!(auth.refresh_token.is_none());
+    assert_eq!(auth.csrf_token.unwrap(), CSRF_TOKEN);
 }
 
 #[sqlx::test(

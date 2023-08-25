@@ -1,6 +1,8 @@
 use sqlx::PgPool;
 
-use crate::database::models::channel::Channel;
+use crate::database::models::channel::auth::data::Oath2Data;
+use crate::database::models::channel::auth::AuthType;
+use crate::database::models::channel::{platform::Platform, Channel};
 
 use super::{macros::find_all, pagination::Pagination};
 
@@ -19,10 +21,10 @@ pub async fn find_by_id(pool: &PgPool, id: i32) -> Result<Channel, sqlx::Error> 
         SELECT 
             id,
             name,
-            csrf_token,
             creator_id,
             error,
-            refresh_token,
+            platform as "platform: Platform",
+            auth as "auth: sqlx::types::Json<AuthType>",
             created_at as "created_at: chrono::NaiveDateTime",
             updated_at as "updated_at: chrono::NaiveDateTime",
             deleted_at as "deleted_at: chrono::NaiveDateTime"
@@ -47,10 +49,10 @@ pub async fn find_by_and_creator(
         SELECT 
             id,
             name,
-            csrf_token,
             creator_id,
             error,
-            refresh_token,
+            platform as "platform: Platform",
+            auth as "auth: sqlx::types::Json<AuthType>",
             created_at as "created_at: chrono::NaiveDateTime",
             updated_at as "updated_at: chrono::NaiveDateTime",
             deleted_at as "deleted_at: chrono::NaiveDateTime"
@@ -82,12 +84,21 @@ pub async fn change_error_state(pool: &PgPool, id: i32, error: bool) -> Result<(
 }
 
 pub async fn create(pool: &PgPool, csrf_token: String, creator_id: i32) -> Result<(), sqlx::Error> {
+    let auth_type = AuthType::Oauth2(Oath2Data {
+        csrf_token: Some(csrf_token),
+        refresh_token: None,
+    });
+
+    let json = serde_json::to_value(auth_type).unwrap();
+
+    println!("{:?}", json);
+
     sqlx::query!(
         r#"
-    INSERT INTO channels (csrf_token,creator_id) 
+    INSERT INTO channels (auth,creator_id) 
     VALUES ($1,$2)
     "#,
-        csrf_token,
+        json,
         creator_id
     )
     .execute(pool)
@@ -97,18 +108,24 @@ pub async fn create(pool: &PgPool, csrf_token: String, creator_id: i32) -> Resul
 
 pub async fn update_token(
     pool: &PgPool,
-    crsf_token: String,
+    csrf_token: String,
     channel_id: i32,
 ) -> Result<(), sqlx::Error> {
+    let auth_type = AuthType::Oauth2(Oath2Data {
+        csrf_token: Some(csrf_token),
+        refresh_token: None,
+    });
+
+    let json = serde_json::to_value(auth_type).unwrap();
+
     sqlx::query!(
         r#"
     UPDATE channels SET 
-        csrf_token = $1,
-        refresh_token = null,
+        auth = $1,
         updated_at = NOW()
     WHERE id = $2
     "#,
-        crsf_token,
+        json,
         channel_id
     )
     .execute(pool)
@@ -124,13 +141,13 @@ pub async fn find_by_csrf_token(pool: &PgPool, csrf_token: String) -> Result<Cha
             id,
             name,
             creator_id,
-            csrf_token,
             error,
-            refresh_token,
+            platform as "platform: Platform",
+            auth as "auth: sqlx::types::Json<AuthType>",
             created_at as "created_at: chrono::NaiveDateTime",
             updated_at as "updated_at: chrono::NaiveDateTime",
             deleted_at as "deleted_at: chrono::NaiveDateTime"
-        FROM channels WHERE csrf_token = $1
+        FROM channels WHERE auth -> 'data' ->> 'csrf_token' = $1
         "#,
         csrf_token
     )
@@ -141,18 +158,25 @@ pub async fn find_by_csrf_token(pool: &PgPool, csrf_token: String) -> Result<Cha
 }
 
 pub async fn update(pool: &PgPool, dto: UpdateChannelDto) -> Result<(), sqlx::Error> {
+    let auth_type = AuthType::Oauth2(Oath2Data {
+        csrf_token: None,
+        refresh_token: Some(dto.refresh_token),
+    });
+
+    let json = serde_json::to_value(auth_type).unwrap();
+
     sqlx::query!(
         r#"
-    UPDATE channels SET 
-        name = $1,
-        refresh_token = $2,
-        error = false,
-        csrf_token = NULL,
-        updated_at = NOW()
-    WHERE id = $3
+      UPDATE channels
+      SET 
+          name = $1,
+          auth = $2,
+          error = false,
+          updated_at = NOW()
+      WHERE id = $3
     "#,
         dto.name,
-        dto.refresh_token,
+        json,
         dto.id
     )
     .execute(pool)
