@@ -75,7 +75,7 @@ async fn find_by_id(
     return Ok(Json(dto));
 }
 
-#[get("/")]
+#[get("")]
 async fn find_all(
     pool: web::Data<AppPool>,
     pagination: web::Query<Pagination<Video>>,
@@ -144,7 +144,7 @@ pub fn init_routes(config: &mut web::ServiceConfig) {
     let scope = web::scope("/video");
     let scope = scope
         .route(
-            "/",
+            "",
             post().to(create_video::<AwsCloudService, YoutubeClient>),
         )
         .service(find_by_id)

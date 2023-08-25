@@ -5,7 +5,7 @@ use actix_web::{
     dev::ServiceResponse,
     http::header::ContentType,
     test,
-    web::{self, post, put},
+    web::{self},
     App,
 };
 use chrono::NaiveDate;
@@ -18,14 +18,14 @@ use sqlx::PgPool;
 
 use crate::{
     controllers::{
-        channel::{create_youtube_channel, dto::ChannelDTO},
+        channel::dto::ChannelDTO,
         test::mock::youtube_client::{YoutubeClientMock, CSRF_TOKEN},
     },
     utils::test::get_token,
     AppPool, AppYoutubeClient,
 };
 
-use super::{find_all, find_by_id, new_youtube_token};
+use super::create_scope;
 
 #[sqlx::test(migrations = "../migrations")]
 async fn test_create_channel_unauthorized(pool: PgPool) {
@@ -454,19 +454,13 @@ async fn innit_test_app(
         client: youtube_client,
     };
     let web_data = web::Data::new(pool);
+
+    let channel_scope = create_scope();
+
     let app = App::new()
         .app_data(web_data)
         .app_data(web::Data::new(youtube_client))
-        .route(
-            "youtube",
-            post().to(create_youtube_channel::<YoutubeClientMock>),
-        )
-        .route(
-            "youtube/resign/{id}",
-            put().to(new_youtube_token::<YoutubeClientMock>),
-        )
-        .service(find_by_id)
-        .service(find_all);
+        .service(channel_scope);
 
     let test_app = test::init_service(app).await;
 

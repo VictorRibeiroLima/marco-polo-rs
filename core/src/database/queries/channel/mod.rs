@@ -12,6 +12,12 @@ pub struct UpdateChannelDto {
     pub refresh_token: String,
 }
 
+pub struct CreateChannelDto {
+    pub auth: AuthType,
+    pub creator_id: i32,
+    pub platform: Platform,
+}
+
 find_all!(Channel, "channels");
 
 pub async fn find_by_id(pool: &PgPool, id: i32) -> Result<Channel, sqlx::Error> {
@@ -83,23 +89,17 @@ pub async fn change_error_state(pool: &PgPool, id: i32, error: bool) -> Result<(
     Ok(())
 }
 
-pub async fn create(pool: &PgPool, csrf_token: String, creator_id: i32) -> Result<(), sqlx::Error> {
-    let auth_type = AuthType::Oauth2(Oath2Data {
-        csrf_token: Some(csrf_token),
-        refresh_token: None,
-    });
-
-    let json = serde_json::to_value(auth_type).unwrap();
-
-    println!("{:?}", json);
+pub async fn create(pool: &PgPool, dto: CreateChannelDto) -> Result<(), sqlx::Error> {
+    let json = serde_json::to_value(dto.auth).unwrap();
 
     sqlx::query!(
         r#"
-    INSERT INTO channels (auth,creator_id) 
-    VALUES ($1,$2)
+    INSERT INTO channels (auth,creator_id,platform) 
+    VALUES ($1,$2,$3)
     "#,
         json,
-        creator_id
+        dto.creator_id,
+        dto.platform as Platform
     )
     .execute(pool)
     .await?;

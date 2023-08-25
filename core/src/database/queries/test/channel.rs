@@ -1,11 +1,15 @@
 use sqlx::PgPool;
 
 use crate::database::{
-    models::channel::ChannelOrderFields,
+    models::channel::{
+        auth::{data::Oath2Data, AuthType},
+        platform::Platform,
+        ChannelOrderFields,
+    },
     queries::{
         channel::{
             change_error_state, create, find_all, find_all_by_owner, find_by_and_creator,
-            find_by_id,
+            find_by_id, CreateChannelDto,
         },
         pagination::Pagination,
     },
@@ -20,7 +24,19 @@ test_find_all!(Channel, ChannelOrderFields, find_all, "channels");
 #[sqlx::test(migrations = "../migrations", fixtures("user"))]
 async fn test_create(pool: PgPool) {
     let fixture_user_id = 666;
-    let result = create(&pool, CSRF_TOKEN.to_string(), fixture_user_id).await;
+
+    let auth = AuthType::Oauth2(Oath2Data {
+        csrf_token: Some(CSRF_TOKEN.to_string()),
+        refresh_token: None,
+    });
+
+    let dto = CreateChannelDto {
+        auth,
+        creator_id: fixture_user_id,
+        platform: Platform::Youtube,
+    };
+
+    let result = create(&pool, dto).await;
 
     assert!(result.is_ok());
     let record = sqlx::query!(

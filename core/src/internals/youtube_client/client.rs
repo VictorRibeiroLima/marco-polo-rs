@@ -132,8 +132,6 @@ impl super::traits::YoutubeClient for YoutubeClient {
         let channel = &video.channel;
         let video = &video.video;
 
-        //TODO: Make generic
-
         let auth = match &channel.auth.0 {
             AuthType::Oauth2(auth) => auth,
             _ => {

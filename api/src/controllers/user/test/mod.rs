@@ -15,7 +15,10 @@ use sqlx::PgPool;
 use chrono::NaiveDate;
 
 use crate::{
-    controllers::{test::mock::mailer::MailSenderMock, user::dtos::create::CreateUser},
+    controllers::{
+        test::{create_test_app, mock::mailer::MailSenderMock},
+        user::dtos::create::CreateUser,
+    },
     mail::Mailer,
     AppMailer,
 };
@@ -81,7 +84,7 @@ async fn test_create_user_invalid_email(pool: PgPool) {
     let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::post()
-        .uri("/")
+        .uri("/user")
         .insert_header(ContentType::json())
         .set_json(&create_user_dto)
         .to_request();
@@ -104,7 +107,7 @@ async fn test_create_user_invalid_password(pool: PgPool) {
     let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::post()
-        .uri("/")
+        .uri("/user")
         .insert_header(ContentType::json())
         .set_json(&create_user_dto)
         .to_request();
@@ -120,7 +123,7 @@ async fn test_find_by_id_get_unauthorized(pool: PgPool) {
     let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::get()
-        .uri("/666")
+        .uri("/user/666")
         .insert_header(ContentType::json())
         .to_request();
 
@@ -137,7 +140,7 @@ async fn test_find_by_id_get_not_found(pool: PgPool) {
     let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::get()
-        .uri("/665")
+        .uri("/user/665")
         .insert_header(ContentType::json())
         .insert_header(("Authorization", token))
         .to_request();
@@ -155,7 +158,7 @@ async fn test_find_by_id_get_deleted(pool: PgPool) {
     let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::get()
-        .uri("/667")
+        .uri("/user/667")
         .insert_header(ContentType::json())
         .insert_header(("Authorization", token))
         .to_request();
@@ -187,7 +190,7 @@ async fn test_find_by_id_get_ok(pool: PgPool) {
     let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::get()
-        .uri("/666")
+        .uri("/user/666")
         .insert_header(ContentType::json())
         .insert_header(("Authorization", token))
         .to_request();
@@ -206,7 +209,7 @@ async fn test_find_all(pool: PgPool) {
     let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::get()
-        .uri("/")
+        .uri("/user")
         .insert_header(ContentType::json())
         .insert_header(("Authorization", token))
         .to_request();
@@ -224,7 +227,7 @@ async fn test_find_all_unauthorized(pool: PgPool) {
     let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::get()
-        .uri("/")
+        .uri("/user")
         .insert_header(ContentType::json())
         .to_request();
 
@@ -240,7 +243,7 @@ async fn test_find_all_15(pool: PgPool) {
     let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::get()
-        .uri("/?limit=15")
+        .uri("/user?limit=15")
         .insert_header(ContentType::json())
         .insert_header(("Authorization", token))
         .to_request();
@@ -259,7 +262,7 @@ async fn test_find_all_asc(pool: PgPool) {
     let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::get()
-        .uri("/?order=asc")
+        .uri("/user?order=asc")
         .insert_header(ContentType::json())
         .insert_header(("Authorization", token))
         .to_request();
@@ -288,7 +291,7 @@ async fn test_find_all_desc(pool: PgPool) {
     let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::get()
-        .uri("/?order=desc")
+        .uri("/user?order=desc")
         .insert_header(ContentType::json())
         .insert_header(("Authorization", token))
         .to_request();
@@ -317,7 +320,7 @@ async fn test_find_all_error(pool: PgPool) {
     let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::get()
-        .uri("/?order_by=error")
+        .uri("/user?order_by=error")
         .insert_header(ContentType::json())
         .insert_header(("Authorization", token))
         .to_request();
@@ -339,7 +342,7 @@ async fn test_forgot_password(pool: PgPool) {
     };
 
     let request = test::TestRequest::post()
-        .uri("/forgot-password")
+        .uri("/user/forgot-password")
         .insert_header(ContentType::json())
         .set_json(&forgot_password_dto)
         .to_request();
@@ -374,7 +377,7 @@ async fn test_forgot_password_wrong_email(pool: PgPool) {
     };
 
     let request = test::TestRequest::post()
-        .uri("/forgot-password")
+        .uri("/user/forgot-password")
         .insert_header(ContentType::json())
         .set_json(&forgot_password_dto)
         .to_request();
@@ -408,7 +411,7 @@ async fn test_reset_password(pool: PgPool) {
     };
 
     let request = test::TestRequest::put()
-        .uri("/reset-password")
+        .uri("/user/reset-password")
         .insert_header(ContentType::json())
         .set_json(&reset_password_dto)
         .to_request();
@@ -451,7 +454,7 @@ async fn test_reset_password_invalid_password(pool: PgPool) {
     };
 
     let request = test::TestRequest::put()
-        .uri("/reset-password")
+        .uri("/user/reset-password")
         .insert_header(ContentType::json())
         .set_json(&reset_password_dto)
         .to_request();
@@ -501,7 +504,7 @@ async fn test_reset_password_expired_token(pool: PgPool) {
     };
 
     let request = test::TestRequest::put()
-        .uri("/reset-password")
+        .uri("/user/reset-password")
         .insert_header(ContentType::json())
         .set_json(&reset_password_dto)
         .to_request();
@@ -540,18 +543,8 @@ async fn innit_test_app(
         mailer: Arc::new(mailer),
     };
     let web_data = web::Data::new(pool);
-    let app = App::new()
-        .app_data(web_data)
-        .app_data(web::Data::new(mailer))
-        .route(
-            "/forgot-password",
-            post().to(forgot_password::<HandleBarsEngine, MailSenderMock>),
-        )
-        .service(create_user)
-        .service(login)
-        .service(find_all)
-        .service(find_by_id)
-        .service(reset_password);
+    let app = create_test_app();
+    let app = app.app_data(web_data).app_data(web::Data::new(mailer));
 
     let test_app = test::init_service(app).await;
 

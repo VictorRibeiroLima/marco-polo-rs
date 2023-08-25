@@ -281,7 +281,7 @@ async fn test_find_all_admin_offset(pool: PgPool) {
     let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::get()
-        .uri("/?order_by=id&order=asc&limit=5&offset=0")
+        .uri("video/?order_by=id&order=asc&limit=5&offset=0")
         .insert_header(("Authorization", token.clone()))
         .insert_header(ContentType::json())
         .to_request();

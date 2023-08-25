@@ -32,7 +32,7 @@ mod dtos;
 #[cfg(test)]
 mod test;
 
-#[post("/")]
+#[post("")]
 async fn create_user(
     pool: web::Data<AppPool>,
     body: Json<CreateUser>,
@@ -175,7 +175,7 @@ async fn find_by_id(
     return Ok(Json(dto));
 }
 
-#[get("/")]
+#[get("")]
 async fn find_all(
     pool: web::Data<AppPool>,
     pagination: web::Query<Pagination<User>>,
