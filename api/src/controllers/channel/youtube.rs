@@ -16,9 +16,7 @@ use marco_polo_rs_core::{
             channel::{CreateChannelDto, UpdateChannelDto},
         },
     },
-    internals::youtube_client::{
-        client::YoutubeClient, traits::YoutubeClient as YoutubeClientTrait,
-    },
+    internals::youtube_client::traits::YoutubeClient as YoutubeClientTrait,
 };
 
 use crate::{
@@ -128,13 +126,13 @@ async fn oauth_youtube_callback<YC: YoutubeClientTrait>(
     return Ok(HttpResponse::Ok().finish());
 }
 
-pub fn create_scope() -> Scope {
-    let create_youtube_channel = post().to(create_youtube_channel::<YoutubeClient>);
-    let new_youtube_token = put().to(new_youtube_token::<YoutubeClient>);
-    let callback = get().to(oauth_youtube_callback::<YoutubeClient>);
+pub fn create_scope<YC: YoutubeClientTrait + 'static>() -> Scope {
+    let create_youtube_channel = post().to(create_youtube_channel::<YC>);
+    let new_youtube_token = put().to(new_youtube_token::<YC>);
+    let callback = get().to(oauth_youtube_callback::<YC>);
 
     let youtube_scope = web::scope("/youtube")
-        .route("/", create_youtube_channel)
+        .route("", create_youtube_channel)
         .route("resign/{id}", new_youtube_token)
         .route("oauth/callback", callback);
 

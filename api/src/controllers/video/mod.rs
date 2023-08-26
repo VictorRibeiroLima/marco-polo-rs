@@ -1,7 +1,7 @@
 use actix_web::{
     get,
     web::{self, post, Json},
-    HttpResponse, Responder,
+    HttpResponse, Responder, Scope,
 };
 
 use marco_polo_rs_core::{
@@ -140,15 +140,17 @@ async fn find_video_errors(
     return Ok(Json(dto));
 }
 
-pub fn init_routes(config: &mut web::ServiceConfig) {
+fn create_scope<CS: CloudService + 'static, YC: YoutubeClientTrait + 'static>() -> Scope {
     let scope = web::scope("/video");
     let scope = scope
-        .route(
-            "",
-            post().to(create_video::<AwsCloudService, YoutubeClient>),
-        )
+        .route("", post().to(create_video::<CS, YC>))
         .service(find_by_id)
         .service(find_all)
         .service(find_video_errors);
+    return scope;
+}
+
+pub fn init_routes(config: &mut web::ServiceConfig) {
+    let scope = create_scope::<AwsCloudService, YoutubeClient>();
     config.service(scope);
 }

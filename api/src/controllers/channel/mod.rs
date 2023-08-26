@@ -3,9 +3,14 @@ use actix_web::{
     web::{self, Json},
     Responder, Scope,
 };
-use marco_polo_rs_core::database::{
-    models::{channel::Channel, user::UserRole},
-    queries::{self, filter::Filter, pagination::Pagination},
+use marco_polo_rs_core::{
+    database::{
+        models::{channel::Channel, user::UserRole},
+        queries::{self, filter::Filter, pagination::Pagination},
+    },
+    internals::youtube_client::{
+        client::YoutubeClient, traits::YoutubeClient as YoutubeClientTrait,
+    },
 };
 
 mod dto;
@@ -48,7 +53,7 @@ async fn find_all(
         UserRole::Admin => queries::channel::find_all(pool, pagination, filter).await,
         UserRole::User => {
             let user_id = jwt.id;
-            queries::channel::find_all_by_owner(pool, user_id, pagination).await
+            queries::channel::find_all_by_owner(pool, user_id, pagination, filter).await
         }
     }?;
 
@@ -57,8 +62,8 @@ async fn find_all(
     return Ok(Json(dto));
 }
 
-fn create_scope() -> Scope {
-    let youtube_scope = youtube::create_scope();
+fn create_scope<YC: YoutubeClientTrait + 'static>() -> Scope {
+    let youtube_scope = youtube::create_scope::<YC>();
 
     let channel_scope = web::scope("/channel")
         .service(find_by_id)
@@ -69,7 +74,6 @@ fn create_scope() -> Scope {
 }
 
 pub fn init_routes(config: &mut web::ServiceConfig) {
-    let channel_scope = create_scope();
-
+    let channel_scope = create_scope::<YoutubeClient>();
     config.service(channel_scope);
 }

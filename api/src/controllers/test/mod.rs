@@ -1,4 +1,3 @@
-use crate::controllers;
 use actix_web::{
     self,
     dev::{ServiceFactory, ServiceRequest, ServiceResponse},
@@ -17,8 +16,6 @@ pub fn create_test_app() -> App<
         InitError = (),
     >,
 > {
-    let app = App::new()
-        .wrap(NormalizePath::trim())
-        .configure(controllers::init_routes);
+    let app = App::new().wrap(NormalizePath::trim());
     return app;
 }

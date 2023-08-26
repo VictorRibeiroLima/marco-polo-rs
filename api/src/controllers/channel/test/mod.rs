@@ -6,7 +6,6 @@ use actix_web::{
     http::header::ContentType,
     test,
     web::{self},
-    App,
 };
 use chrono::NaiveDate;
 use marco_polo_rs_core::database::models::{
@@ -19,7 +18,10 @@ use sqlx::PgPool;
 use crate::{
     controllers::{
         channel::dto::ChannelDTO,
-        test::mock::youtube_client::{YoutubeClientMock, CSRF_TOKEN},
+        test::{
+            create_test_app,
+            mock::youtube_client::{YoutubeClientMock, CSRF_TOKEN},
+        },
     },
     utils::test::get_token,
     AppPool, AppYoutubeClient,
@@ -29,12 +31,10 @@ use super::create_scope;
 
 #[sqlx::test(migrations = "../migrations")]
 async fn test_create_channel_unauthorized(pool: PgPool) {
-    let youtube_client = YoutubeClientMock::new();
-    let youtube_client = Arc::new(youtube_client);
-    let test_app = innit_test_app(Arc::new(pool), youtube_client).await;
+    let test_app = innit_test_app(Arc::new(pool)).await;
 
     let request = test::TestRequest::post()
-        .uri("/youtube")
+        .uri("/channel/youtube")
         .insert_header(ContentType::json())
         .to_request();
 
@@ -47,15 +47,12 @@ async fn test_create_channel_unauthorized(pool: PgPool) {
 async fn test_create_channel_authorized(pool: PgPool) {
     let pool = Arc::new(pool);
 
-    let youtube_client = YoutubeClientMock::new();
-    let youtube_client = Arc::new(youtube_client);
-
     let token = get_token!(pool.as_ref());
 
-    let test_app = innit_test_app(pool.clone(), youtube_client).await;
+    let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::post()
-        .uri("/youtube")
+        .uri("/channel/youtube")
         .insert_header(ContentType::json())
         .insert_header(("Authorization", token))
         .to_request();
@@ -85,12 +82,9 @@ async fn test_create_channel_authorized(pool: PgPool) {
 async fn test_find_by_id_get_deleted(pool: PgPool) {
     let pool = Arc::new(pool);
 
-    let youtube_client = YoutubeClientMock::new();
-    let youtube_client = Arc::new(youtube_client);
-
     let token = get_token!(pool.as_ref());
 
-    let test_app = innit_test_app(pool.clone(), youtube_client).await;
+    let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::get()
         .uri("/2")
@@ -109,9 +103,6 @@ async fn test_find_by_id_get_deleted(pool: PgPool) {
 async fn test_find_by_id_get_ok(pool: PgPool) {
     let pool = Arc::new(pool);
 
-    let youtube_client = YoutubeClientMock::new();
-    let youtube_client = Arc::new(youtube_client);
-
     let token = get_token!(pool.as_ref());
 
     let date = NaiveDate::from_ymd_opt(2022, 1, 1)
@@ -127,10 +118,10 @@ async fn test_find_by_id_get_ok(pool: PgPool) {
         updated_at: date,
     };
 
-    let test_app = innit_test_app(pool.clone(), youtube_client).await;
+    let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::get()
-        .uri("/1")
+        .uri("/channel/1")
         .insert_header(ContentType::json())
         .insert_header(("Authorization", token))
         .to_request();
@@ -148,12 +139,9 @@ async fn test_find_by_id_get_ok(pool: PgPool) {
 async fn test_find_by_id_get_not_found(pool: PgPool) {
     let pool = Arc::new(pool);
 
-    let youtube_client = YoutubeClientMock::new();
-    let youtube_client = Arc::new(youtube_client);
-
     let token = get_token!(pool.as_ref());
 
-    let test_app = innit_test_app(pool.clone(), youtube_client).await;
+    let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::get()
         .uri("/3")
@@ -172,13 +160,10 @@ async fn test_find_by_id_get_not_found(pool: PgPool) {
 async fn test_find_by_id_get_unauthorized(pool: PgPool) {
     let pool = Arc::new(pool);
 
-    let youtube_client = YoutubeClientMock::new();
-    let youtube_client = Arc::new(youtube_client);
-
-    let test_app = innit_test_app(pool.clone(), youtube_client).await;
+    let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::get()
-        .uri("/1")
+        .uri("/channel/1")
         .insert_header(ContentType::json())
         .to_request();
 
@@ -199,15 +184,12 @@ async fn test_find_all_admin(pool: PgPool) {
         expected_channels_ids.push(i);
     }
 
-    let youtube_client = YoutubeClientMock::new();
-    let youtube_client = Arc::new(youtube_client);
-
     let token = get_token!(pool.as_ref(), admin_id);
 
-    let test_app = innit_test_app(pool.clone(), youtube_client).await;
+    let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::get()
-        .uri("/?order_by=id&order=asc&limit=45")
+        .uri("/channel?order_by=id&order=asc&limit=45")
         .insert_header(("Authorization", token))
         .insert_header(ContentType::json())
         .to_request();
@@ -238,15 +220,12 @@ async fn test_find_all_admin_offset(pool: PgPool) {
         expected_channels_ids_second.push(i);
     }
 
-    let youtube_client = YoutubeClientMock::new();
-    let youtube_client = Arc::new(youtube_client);
-
     let token = get_token!(pool.as_ref(), admin_id);
 
-    let test_app = innit_test_app(pool.clone(), youtube_client).await;
+    let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::get()
-        .uri("/?order_by=id&order=asc&limit=20&offset=0")
+        .uri("/channel?order_by=id&order=asc&limit=20&offset=0")
         .insert_header(("Authorization", token.clone()))
         .insert_header(ContentType::json())
         .to_request();
@@ -259,7 +238,7 @@ async fn test_find_all_admin_offset(pool: PgPool) {
     assert_eq!(actual_channels_ids, expected_channels_ids_first);
 
     let request = test::TestRequest::get()
-        .uri("/?order_by=id&order=asc&limit=20&offset=20")
+        .uri("/channel?order_by=id&order=asc&limit=20&offset=20")
         .insert_header(("Authorization", token))
         .insert_header(ContentType::json())
         .to_request();
@@ -282,15 +261,12 @@ async fn test_find_all_user(pool: PgPool) {
 
     let expected_channels_ids = vec![1, 4, 7, 10, 13, 16, 19, 22, 25, 28];
 
-    let youtube_client = YoutubeClientMock::new();
-    let youtube_client = Arc::new(youtube_client);
-
     let token = get_token!(pool.as_ref(), user_id);
 
-    let test_app = innit_test_app(pool.clone(), youtube_client).await;
+    let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::get()
-        .uri("/?order=asc&order_by=id")
+        .uri("/channel?order=asc&order_by=id")
         .insert_header(("Authorization", token))
         .insert_header(ContentType::json())
         .to_request();
@@ -313,14 +289,11 @@ async fn admin_can_resign_channel(pool: PgPool) {
     let channel_id = 1;
 
     let pool = Arc::new(pool);
-    let youtube_client = YoutubeClientMock::new();
-    let youtube_client = Arc::new(youtube_client);
-
     let token = get_token!(pool.as_ref(), admin_id);
 
-    let test_app = innit_test_app(pool.clone(), youtube_client).await;
+    let test_app = innit_test_app(pool.clone()).await;
 
-    let uri = format!("/youtube/resign/{}", channel_id);
+    let uri = format!("/channel/youtube/resign/{}", channel_id);
 
     let request = test::TestRequest::put()
         .uri(&uri)
@@ -369,14 +342,12 @@ async fn user_can_resign_on_channel(pool: PgPool) {
     let channel_id = 1;
 
     let pool = Arc::new(pool);
-    let youtube_client = YoutubeClientMock::new();
-    let youtube_client = Arc::new(youtube_client);
 
     let token = get_token!(pool.as_ref(), user_id);
 
-    let test_app = innit_test_app(pool.clone(), youtube_client).await;
+    let test_app = innit_test_app(pool.clone()).await;
 
-    let uri = format!("/youtube/resign/{}", channel_id);
+    let uri = format!("/channel/youtube/resign/{}", channel_id);
 
     let request = test::TestRequest::put()
         .uri(&uri)
@@ -425,14 +396,12 @@ async fn user_can_not_resign_on_channel_if_not_owner(pool: PgPool) {
     let channel_id = 1;
 
     let pool = Arc::new(pool);
-    let youtube_client = YoutubeClientMock::new();
-    let youtube_client = Arc::new(youtube_client);
 
     let token = get_token!(pool.as_ref(), user_id);
 
-    let test_app = innit_test_app(pool.clone(), youtube_client).await;
+    let test_app = innit_test_app(pool.clone()).await;
 
-    let uri = format!("/youtube/resign/{}", channel_id);
+    let uri = format!("/channel/youtube/resign/{}", channel_id);
 
     let request = test::TestRequest::put()
         .uri(&uri)
@@ -447,17 +416,22 @@ async fn user_can_not_resign_on_channel_if_not_owner(pool: PgPool) {
 
 async fn innit_test_app(
     pool: Arc<PgPool>,
-    youtube_client: Arc<YoutubeClientMock>,
 ) -> impl actix_web::dev::Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
     let pool = AppPool { pool };
+
+    let youtube_client = YoutubeClientMock::new();
+    let youtube_client = Arc::new(youtube_client);
+
     let youtube_client = AppYoutubeClient {
         client: youtube_client,
     };
     let web_data = web::Data::new(pool);
 
-    let channel_scope = create_scope();
+    let app = create_test_app();
 
-    let app = App::new()
+    let channel_scope = create_scope::<YoutubeClientMock>();
+
+    let app = app
         .app_data(web_data)
         .app_data(web::Data::new(youtube_client))
         .service(channel_scope);

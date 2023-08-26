@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
-use crate::controllers::test::mock::cloud_service::CloudServiceMock;
+use crate::controllers::test::{create_test_app, mock::cloud_service::CloudServiceMock};
 
 use super::*;
-use actix_web::{http::header::ContentType, test, web, App};
+use actix_web::{http::header::ContentType, test, web};
 
 #[actix_web::test]
 async fn test_create_signed_upload_url() {
@@ -15,15 +15,15 @@ async fn test_create_signed_upload_url() {
 
     let app_data = web::Data::new(app_cloud_service);
 
-    let app = App::new().app_data(app_data).route(
-        "/signed-upload-url",
-        web::get().to(signed_upload_url::<CloudServiceMock>),
-    );
+    let app = create_test_app();
+    let scope = create_scope::<CloudServiceMock>();
+
+    let app = app.app_data(app_data).service(scope);
 
     let app = test::init_service(app).await;
 
     let req = test::TestRequest::get()
-        .uri("/signed-upload-url")
+        .uri("/storage/signed-upload-url")
         .insert_header(ContentType::plaintext())
         .to_request();
 

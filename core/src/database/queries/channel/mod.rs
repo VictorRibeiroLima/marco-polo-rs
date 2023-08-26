@@ -4,6 +4,7 @@ use crate::database::models::channel::auth::data::Oath2Data;
 use crate::database::models::channel::auth::AuthType;
 use crate::database::models::channel::{platform::Platform, Channel};
 
+use super::filter::Filter;
 use super::{macros::find_all, pagination::Pagination};
 
 pub struct UpdateChannelDto {
@@ -188,8 +189,15 @@ pub async fn find_all_by_owner(
     pool: &PgPool,
     owner_id: i32,
     pagination: Pagination<Channel>,
+    mut filter: Filter<Channel>,
 ) -> Result<Vec<Channel>, sqlx::Error> {
     let (offset, limit, order, order_by) = pagination.to_tuple();
+
+    filter.options.creator_id = Some(owner_id);
+
+    let (mut where_sql, _) = filter.gen_where_statements(None);
+
+    where_sql.push_str(" AND deleted_at IS NULL");
 
     let sql = format!(
         r#"
@@ -198,7 +206,7 @@ pub async fn find_all_by_owner(
         FROM 
             channels 
         WHERE
-            creator_id = $1 AND deleted_at IS NULL
+            {}
         ORDER BY 
             {} {}
         LIMIT
@@ -206,6 +214,7 @@ pub async fn find_all_by_owner(
         OFFSET 
             $3
         "#,
+        where_sql,
         order_by.name(),
         order.name()
     );

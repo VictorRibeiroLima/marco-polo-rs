@@ -74,8 +74,9 @@ async fn test_not_find_by_id(pool: PgPool) {
 async fn test_find_all_by_owner(pool: PgPool) {
     let owner_id = 1;
     let pagination = Pagination::default();
+    let filter = Default::default();
 
-    let channels = find_all_by_owner(&pool, owner_id, pagination)
+    let channels = find_all_by_owner(&pool, owner_id, pagination, filter)
         .await
         .unwrap();
 
@@ -89,8 +90,9 @@ async fn test_find_all_by_owner(pool: PgPool) {
 async fn test_find_all_by_owner_owner_not_found(pool: PgPool) {
     let owner_id = 0;
     let pagination = Pagination::default();
+    let filter = Default::default();
 
-    let channels = find_all_by_owner(&pool, owner_id, pagination)
+    let channels = find_all_by_owner(&pool, owner_id, pagination, filter)
         .await
         .unwrap();
 

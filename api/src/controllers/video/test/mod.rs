@@ -6,8 +6,7 @@ use actix_web::{
     dev::ServiceResponse,
     http::header::ContentType,
     test,
-    web::{self, post},
-    App,
+    web::{self},
 };
 use marco_polo_rs_core::database::models::{user::UserRole, video::stage::VideoStage};
 use reqwest::StatusCode;
@@ -18,7 +17,10 @@ use uuid::Uuid;
 
 use crate::{
     controllers::{
-        test::mock::{cloud_service::CloudServiceMock, youtube_client::YoutubeClientMock},
+        test::{
+            create_test_app,
+            mock::{cloud_service::CloudServiceMock, youtube_client::YoutubeClientMock},
+        },
         video::dtos::VideoErrorDTO,
     },
     AppCloudService, AppYoutubeClient,
@@ -29,7 +31,7 @@ use crate::controllers::video::dtos::VideoDTO;
 use crate::utils::test::get_token;
 use crate::AppPool;
 
-use super::{create_video, find_all, find_by_id, find_video_errors};
+use super::create_scope;
 
 #[cfg(test)]
 mod create;
@@ -71,7 +73,7 @@ async fn test_find_by_id_get_ok(pool: PgPool) {
     let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::get()
-        .uri("/806b57d2-f221-11ed-a05b-0242ac120003")
+        .uri("/video/806b57d2-f221-11ed-a05b-0242ac120003")
         .insert_header(ContentType::json())
         .insert_header(("Authorization", token))
         .to_request();
@@ -104,7 +106,7 @@ async fn test_find_all_user(pool: PgPool) {
     let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::get()
-        .uri("/?order=asc&order_by=id")
+        .uri("/video?order=asc&order_by=id")
         .insert_header(ContentType::json())
         .insert_header(("Authorization", token))
         .to_request();
@@ -151,7 +153,7 @@ async fn test_find_all_admin(pool: PgPool) {
     let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::get()
-        .uri("/?order_by=id&order=asc&limit=13")
+        .uri("/video?order_by=id&order=asc&limit=13")
         .insert_header(("Authorization", token))
         .insert_header(ContentType::json())
         .to_request();
@@ -176,7 +178,7 @@ async fn test_find_all_5(pool: PgPool) {
     let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::get()
-        .uri("/?limit=5")
+        .uri("/video?limit=5")
         .insert_header(ContentType::json())
         .insert_header(("Authorization", token))
         .to_request();
@@ -199,7 +201,7 @@ async fn test_find_by_id_get_not_found(pool: PgPool) {
     let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::get()
-        .uri("/806b57d2-f221-11ed-a05b-0242ac120004")
+        .uri("/video/806b57d2-f221-11ed-a05b-0242ac120004")
         .insert_header(ContentType::json())
         .insert_header(("Authorization", token))
         .to_request();
@@ -218,7 +220,7 @@ async fn test_find_by_id_get_unauthorized(pool: PgPool) {
     let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::get()
-        .uri("/806b57d2-f221-11ed-a05b-0242ac120003")
+        .uri("/video/806b57d2-f221-11ed-a05b-0242ac120003")
         .insert_header(ContentType::json())
         .to_request();
 
@@ -236,7 +238,7 @@ async fn test_find_by_id_get_deleted(pool: PgPool) {
     let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::get()
-        .uri("/2c20e6d2-7bce-47b7-b02d-7f45fb106df5")
+        .uri("/video/2c20e6d2-7bce-47b7-b02d-7f45fb106df5")
         .insert_header(ContentType::json())
         .insert_header(("Authorization", token))
         .to_request();
@@ -281,7 +283,7 @@ async fn test_find_all_admin_offset(pool: PgPool) {
     let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::get()
-        .uri("video/?order_by=id&order=asc&limit=5&offset=0")
+        .uri("/video?order_by=id&order=asc&limit=5&offset=0")
         .insert_header(("Authorization", token.clone()))
         .insert_header(ContentType::json())
         .to_request();
@@ -294,7 +296,7 @@ async fn test_find_all_admin_offset(pool: PgPool) {
     assert_eq!(actual_videos_ids, expected_videos_ids_first);
 
     let request = test::TestRequest::get()
-        .uri("/?order_by=id&order=asc&limit=6&offset=6")
+        .uri("/video?order_by=id&order=asc&limit=6&offset=6")
         .insert_header(("Authorization", token))
         .insert_header(ContentType::json())
         .to_request();
@@ -318,7 +320,7 @@ async fn test_find_video_errors_no_error(pool: PgPool) {
 
     let video_id = "2c20e6d2-7bce-47b7-b02d-7f45fb106df5";
 
-    let url = format!("/{}/errors", video_id);
+    let url = format!("/video/{}/errors", video_id);
 
     let request = test::TestRequest::get()
         .uri(&url)
@@ -345,7 +347,7 @@ async fn test_find_video_errors_one_error(pool: PgPool) {
 
     let video_id = "2c20e6d2-7bce-47b7-b02d-7f45fb106df5";
 
-    let url = format!("/{}/errors", video_id);
+    let url = format!("/video/{}/errors", video_id);
 
     let request = test::TestRequest::get()
         .uri(&url)
@@ -372,7 +374,7 @@ async fn test_find_video_errors_three_error(pool: PgPool) {
 
     let video_id = "2c20e6d2-7bce-47b7-b02d-7f45fb106df5";
 
-    let url = format!("/{}/errors", video_id);
+    let url = format!("/video/{}/errors", video_id);
 
     let request = test::TestRequest::get()
         .uri(&url)
@@ -399,7 +401,7 @@ async fn test_find_video_errors_three_errors_from_other_user(pool: PgPool) {
 
     let video_id = "2c20e6d2-7bce-47b7-b02d-7f45fb106df5";
 
-    let url = format!("/{}/errors", video_id);
+    let url = format!("/video/{}/errors", video_id);
 
     let request = test::TestRequest::get()
         .uri(&url)
@@ -426,17 +428,15 @@ async fn innit_test_app(
     let app_youtube_client = web::Data::new(AppYoutubeClient {
         client: Arc::new(YoutubeClientMock::new()),
     });
-    let app = App::new()
+
+    let app = create_test_app();
+    let scope = create_scope::<CloudServiceMock, YoutubeClientMock>();
+
+    let app = app
         .app_data(web_data)
         .app_data(app_cloud_service)
         .app_data(app_youtube_client)
-        .service(find_by_id)
-        .service(find_all)
-        .service(find_video_errors)
-        .route(
-            "/",
-            post().to(create_video::<CloudServiceMock, YoutubeClientMock>),
-        );
+        .service(scope);
 
     let test_app = test::init_service(app).await;
 

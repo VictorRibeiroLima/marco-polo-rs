@@ -5,8 +5,7 @@ use actix_web::{
     dev::ServiceResponse,
     http::header::ContentType,
     test,
-    web::{self, post},
-    App,
+    web::{self},
 };
 use marco_polo_rs_core::database::models::user::{User, UserRole};
 use reqwest::StatusCode;
@@ -29,9 +28,9 @@ use crate::controllers::user::dtos::{
     forgot::{ForgotPasswordDto, ResetPasswordDto},
 };
 use crate::utils::test::get_token;
-use crate::{controllers::user::create_user, AppPool};
+use crate::AppPool;
 
-use super::{find_all, find_by_id, forgot_password, login, reset_password};
+use super::create_scope;
 
 #[sqlx::test(migrations = "../migrations")]
 async fn test_create_user_valid_email_and_password(pool: PgPool) {
@@ -47,7 +46,7 @@ async fn test_create_user_valid_email_and_password(pool: PgPool) {
     let test_app = innit_test_app(pool.clone()).await;
 
     let request = test::TestRequest::post()
-        .uri("/")
+        .uri("/user")
         .insert_header(ContentType::json())
         .set_json(&create_user_dto)
         .to_request();
@@ -544,7 +543,11 @@ async fn innit_test_app(
     };
     let web_data = web::Data::new(pool);
     let app = create_test_app();
-    let app = app.app_data(web_data).app_data(web::Data::new(mailer));
+    let scope = create_scope::<HandleBarsEngine, MailSenderMock>();
+    let app = app
+        .app_data(web_data)
+        .app_data(web::Data::new(mailer))
+        .service(scope);
 
     let test_app = test::init_service(app).await;
 
