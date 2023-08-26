@@ -43,7 +43,7 @@ struct AppMailer<ME: MailEngine, MS: MailSender> {
 
 #[get("/")]
 async fn hello() -> impl Responder {
-    let result: AppResult<String> = AppResult::new("hello word".to_string());
+    let result: AppResult<String> = AppResult::new("hello word 2".to_string());
     return Json(result);
 }
 
