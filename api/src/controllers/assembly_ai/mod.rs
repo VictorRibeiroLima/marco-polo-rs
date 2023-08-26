@@ -1,6 +1,7 @@
 use actix_web::{
+    dev::ServiceFactory,
     web::{self, post},
-    HttpResponse, Responder,
+    HttpResponse, Responder, Scope,
 };
 use marco_polo_rs_core::internals::cloud::{aws::AwsCloudService, traits::CloudService};
 
@@ -34,7 +35,15 @@ where
     return Ok(HttpResponse::Ok());
 }
 
-pub fn init_routes(config: &mut web::ServiceConfig) {
+fn create_scope<CS: CloudService + 'static>() -> Scope<
+    impl ServiceFactory<
+        ServiceRequest,
+        Config = (),
+        Response = ServiceResponse,
+        Error = actix_web::Error,
+        InitError = (),
+    >,
+> {
     let scope = web::scope("/assemblyai");
     let scope = scope.wrap(ApiKeyMiddleware);
     let scope = scope.route(
@@ -42,5 +51,10 @@ pub fn init_routes(config: &mut web::ServiceConfig) {
         post().to(webhook::<AwsCloudService>),
     );
 
+    return scope;
+}
+
+pub fn init_routes(config: &mut web::ServiceConfig) {
+    let scope = create_scope::<AwsCloudService>();
     config.service(scope);
 }

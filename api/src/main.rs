@@ -3,6 +3,7 @@ use std::sync::Arc;
 use actix_cors::Cors;
 use actix_web::{
     get,
+    middleware::NormalizePath,
     web::{self, Json, JsonConfig, QueryConfig},
     App, HttpServer, Responder,
 };
@@ -36,8 +37,8 @@ struct AppCloudService<CS: CloudService> {
     client: Arc<CS>,
 }
 
-struct AppMailer<E: MailEngine, S: MailSender> {
-    mailer: Arc<Mailer<E, S>>,
+struct AppMailer<ME: MailEngine, MS: MailSender> {
+    mailer: Arc<Mailer<ME, MS>>,
 }
 
 #[get("/")]
@@ -64,6 +65,7 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
+            .wrap(NormalizePath::trim())
             .wrap(Cors::permissive())
             .app_data(JsonConfig::default().error_handler(|err, _req| {
                 let error = AppError::from(err);

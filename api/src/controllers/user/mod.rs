@@ -1,7 +1,7 @@
 use actix_web::{
     get, post, put,
     web::{self, post, Json},
-    HttpResponse, Responder,
+    HttpResponse, Responder, Scope,
 };
 
 use marco_polo_rs_core::{
@@ -20,7 +20,10 @@ use self::dtos::{
 };
 use crate::{
     controllers::user::dtos::{create::CreateUser, find::UserDTO},
-    mail::{engine::handlebars::HandleBarsEngine, sender::lettre::LettreMailer},
+    mail::{
+        engine::{handlebars::HandleBarsEngine, MailEngine},
+        sender::{lettre::LettreMailer, MailSender},
+    },
     AppMailer, AppPool,
 };
 use crate::{
@@ -32,7 +35,7 @@ mod dtos;
 #[cfg(test)]
 mod test;
 
-#[post("/")]
+#[post("")]
 async fn create_user(
     pool: web::Data<AppPool>,
     body: Json<CreateUser>,
@@ -175,7 +178,7 @@ async fn find_by_id(
     return Ok(Json(dto));
 }
 
-#[get("/")]
+#[get("")]
 async fn find_all(
     pool: web::Data<AppPool>,
     pagination: web::Query<Pagination<User>>,
@@ -192,17 +195,20 @@ async fn find_all(
     return Ok(Json(dtos));
 }
 
-pub fn init_routes(config: &mut web::ServiceConfig) {
+fn create_scope<ME: MailEngine + 'static, MS: MailSender + 'static>() -> Scope {
     let scope = web::scope("/user")
-        .route(
-            "/forgot-password",
-            post().to(forgot_password::<HandleBarsEngine, LettreMailer>),
-        )
+        .route("/forgot-password", post().to(forgot_password::<ME, MS>))
         .service(create_user)
         .service(login)
         .service(find_by_id)
         .service(find_all)
         .service(reset_password);
+
+    return scope;
+}
+
+pub fn init_routes(config: &mut web::ServiceConfig) {
+    let scope = create_scope::<HandleBarsEngine, LettreMailer>();
 
     config.service(scope);
 }

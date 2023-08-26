@@ -49,7 +49,7 @@ async fn test_create_video_ok(pool: PgPool) {
     };
 
     let request = test::TestRequest::post()
-        .uri("/")
+        .uri("/video")
         .insert_header(("Authorization", jwt))
         .insert_header(ContentType::json())
         .set_json(&dto)
@@ -94,7 +94,7 @@ async fn test_create_video_ok_admin(pool: PgPool) {
     };
 
     let request = test::TestRequest::post()
-        .uri("/")
+        .uri("/video")
         .insert_header(("Authorization", jwt))
         .insert_header(ContentType::json())
         .set_json(&dto)
@@ -142,7 +142,7 @@ async fn test_create_video_not_found_when_channel_does_not_belong(pool: PgPool) 
     };
 
     let request = test::TestRequest::post()
-        .uri("/")
+        .uri("/video")
         .insert_header(("Authorization", jwt))
         .insert_header(ContentType::json())
         .set_json(&dto)
@@ -176,7 +176,7 @@ async fn test_create_video_channel_has_error(pool: PgPool) {
     };
 
     let request = test::TestRequest::post()
-        .uri("/")
+        .uri("/video")
         .insert_header(("Authorization", jwt))
         .insert_header(ContentType::json())
         .set_json(&dto)
@@ -217,7 +217,7 @@ async fn test_create_video_channel_does_not_has_refresh_token(pool: PgPool) {
     };
 
     let request = test::TestRequest::post()
-        .uri("/")
+        .uri("/video")
         .insert_header(("Authorization", jwt))
         .insert_header(ContentType::json())
         .set_json(&dto)
@@ -254,7 +254,7 @@ async fn test_create_video_channel_error_when_getting_info(pool: PgPool) {
         .app_data(app_cloud_service)
         .app_data(app_youtube_client)
         .route(
-            "/",
+            "/video",
             post().to(create_video::<CloudServiceMock, YoutubeClientMock>),
         );
 
@@ -274,7 +274,7 @@ async fn test_create_video_channel_error_when_getting_info(pool: PgPool) {
     };
 
     let request = test::TestRequest::post()
-        .uri("/")
+        .uri("/video")
         .insert_header(("Authorization", jwt))
         .insert_header(ContentType::json())
         .set_json(&dto)
@@ -314,7 +314,7 @@ async fn test_returning_id(pool: PgPool) {
     };
 
     let request = test::TestRequest::post()
-        .uri("/")
+        .uri("/video")
         .insert_header(("Authorization", jwt))
         .insert_header(ContentType::json())
         .set_json(&dto)
@@ -361,7 +361,7 @@ async fn test_create_video_bad_request_start_time_end_time(pool: PgPool) {
     };
 
     let request = test::TestRequest::post()
-        .uri("/")
+        .uri("/video")
         .insert_header(("Authorization", jwt))
         .insert_header(ContentType::json())
         .set_json(&dto)
@@ -420,7 +420,7 @@ async fn test_create_multiple_cuts(pool: PgPool) {
     };
 
     let request = test::TestRequest::post()
-        .uri("/")
+        .uri("/video")
         .insert_header(("Authorization", jwt))
         .insert_header(ContentType::json())
         .set_json(&dto)
@@ -478,7 +478,7 @@ async fn test_create_multiple_cuts_not_user_channel_in_between(pool: PgPool) {
     };
 
     let request = test::TestRequest::post()
-        .uri("/")
+        .uri("/video")
         .insert_header(("Authorization", jwt))
         .insert_header(ContentType::json())
         .set_json(&dto)
@@ -537,7 +537,7 @@ async fn test_create_multiple_cuts_wrong_time_values(pool: PgPool) {
     };
 
     let request = test::TestRequest::post()
-        .uri("/")
+        .uri("/video")
         .insert_header(("Authorization", jwt))
         .insert_header(ContentType::json())
         .set_json(&dto)

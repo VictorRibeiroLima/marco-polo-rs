@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n    INSERT INTO channels (auth,creator_id,platform) \n    VALUES ($1,$2,$3)\n    ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Jsonb",
+        "Int4",
+        {
+          "Custom": {
+            "name": "video_platforms",
+            "kind": {
+              "Enum": [
+                "YOUTUBE",
+                "FACEBOOK",
+                "INSTAGRAM",
+                "TIKTOK",
+                "TWITCH",
+                "VIMEO",
+                "DAILYMOTION",
+                "LINKEDIN",
+                "TWITTER",
+                "PINTEREST",
+                "SNAPCHAT",
+                "TIK_TOK",
+                "TUMBLR",
+                "REDDIT",
+                "WHATSAPP",
+                "TELEGRAM",
+                "VK",
+                "OK",
+                "WEIBO",
+                "WECHAT",
+                "LINE",
+                "KAKAOTALK"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "50d36d0f4eeefa581d4a02eb5210613b2b02738d8b4f8acc9fadc40322e26608"
+}

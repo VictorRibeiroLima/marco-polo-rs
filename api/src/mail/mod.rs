@@ -32,9 +32,9 @@ impl From<sender::SenderError> for MailError {
     }
 }
 
-pub struct Mailer<E: MailEngine, S: MailSender> {
-    pub engine: E,
-    pub sender: S,
+pub struct Mailer<ME: MailEngine, MS: MailSender> {
+    pub engine: ME,
+    pub sender: MS,
 }
 
 impl<E: MailEngine, S: MailSender> Mailer<E, S> {
