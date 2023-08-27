@@ -1,5 +1,4 @@
 pub mod channel;
-pub mod many_to_many;
 pub mod original_video;
 pub mod service_provider;
 pub mod traits;

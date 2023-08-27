@@ -7,7 +7,6 @@ const BASE_QUERY: &'static str = r#"SELECT
 v.id, 
 v.title,
 v.description,
-v.url,
 v.language,
 v.user_id,
 v.error,

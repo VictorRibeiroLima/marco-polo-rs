@@ -9,7 +9,6 @@ SELECT
     v.title AS "v.title", 
     v.description AS "v.description", 
     v.user_id AS "v.user_id",
-    v.url AS "v.url", 
     v.language AS "v.language", 
     v.stage AS "v.stage", 
     v.error AS "v.error", 

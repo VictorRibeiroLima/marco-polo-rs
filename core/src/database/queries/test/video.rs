@@ -25,12 +25,9 @@ use crate::database::{
 };
 
 #[sqlx::test(migrations = "../migrations", fixtures("videos"))]
-async fn filtration_test_id_url(pool: sqlx::PgPool) {
+async fn filtration_test_id(pool: sqlx::PgPool) {
     let mut filter: Filter<Video> = Filter::default();
     filter.options.id = Some(uuid::Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap());
-    filter.options.url = Some(Some(String::from(
-        "https://www.youtube.com/watch?v=1234567890",
-    )));
 
     let mut query = String::from("SELECT * FROM videos WHERE ");
 

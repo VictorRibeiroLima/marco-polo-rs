@@ -14,12 +14,7 @@ pub async fn handle(
     youtube_client: &YoutubeClientInUse,
     payload: VideoPayload,
 ) -> Result<(), HandlerError> {
-    let video_with_storage_and_channel = queries::video::find_by_id_with_storage_and_channel(
-        &pool,
-        &payload.video_id,
-        StorageVideoStage::Processed,
-    )
-    .await?;
+    let video = queries::video::with_channel::with_channels(&pool, payload.video_id).await?;
 
     queries::video::change_stage(pool, &payload.video_id, VideoStage::Uploading).await?;
 
