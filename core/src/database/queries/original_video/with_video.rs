@@ -1,6 +1,6 @@
 use sqlx::PgPool;
 
-use crate::database::models::original_video::with::OriginalVideoWithVideos;
+use crate::database::models::{original_video::with::OriginalVideoWithVideos, traits::FromRows};
 
 const BASE_QUERY: &str = r#"
 SELECT 
@@ -8,8 +8,7 @@ SELECT
     v.id AS "v.id", 
     v.title AS "v.title", 
     v.description AS "v.description", 
-    v.user_id AS "v.user_id", 
-    v.channel_id AS "v.channel_id", 
+    v.user_id AS "v.user_id",
     v.url AS "v.url", 
     v.language AS "v.language", 
     v.stage AS "v.stage", 

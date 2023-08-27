@@ -2,8 +2,11 @@
 CREATE TABLE videos_channels (
   video_id uuid NOT NULL,
   channel_id integer NOT NULL,
+  uploaded boolean NOT NULL DEFAULT false,
+  error boolean NOT NULL DEFAULT false,
   created_at timestamp NOT NULL DEFAULT now(),
   updated_at timestamp NOT NULL DEFAULT now(),
+  uploaded_at timestamp,
   PRIMARY KEY (video_id, channel_id)
 );
 

@@ -4,16 +4,13 @@ use sqlx::{PgExecutor, PgPool, QueryBuilder};
 use uuid::Uuid;
 
 use crate::database::models::{
-    video::{
-        stage::VideoStage,
-        with::{VideoWithStorage, VideoWithStorageAndChannel},
-        Video,
-    },
+    video::{stage::VideoStage, with::VideoWithStorage, Video},
     video_storage::StorageVideoStage,
 };
 
 use super::{filter::Filter, macros::find_all, pagination::Pagination, storage};
 
+pub mod with_channel;
 pub mod with_original;
 
 pub struct CreateVideoDto<'a> {
@@ -37,14 +34,13 @@ pub struct CreateErrorsDto<'a> {
 pub async fn create(pool: impl PgExecutor<'_>, dto: CreateVideoDto<'_>) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
-        INSERT INTO videos (id, title, description, user_id, channel_id, language, start_time, original_video_id, tags,end_time)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,$10);
+        INSERT INTO videos (id, title, description, user_id, language, start_time, original_video_id, tags,end_time)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
         "#,
         dto.id,
         dto.title,
         dto.description,
         dto.user_id,
-        dto.channel_id,
         dto.language,
         dto.start_time,
         dto.original_id,
@@ -218,7 +214,6 @@ pub async fn find_by_transcription_id(
             v.url,
             v.language,
             v.user_id,
-            v.channel_id,
             v.error,
             v.original_video_id,
             v.start_time,
@@ -255,7 +250,6 @@ pub async fn find_by_id(pool: &PgPool, id: &Uuid) -> Result<Video, sqlx::Error> 
             v.url,
             v.language,
             v.user_id,
-            v.channel_id,
             v.error,
             v.original_video_id,
             v.start_time,
@@ -331,23 +325,6 @@ pub async fn find_all_by_owner(
     let videos: Vec<Video> = query.fetch_all(pool).await?;
 
     return Ok(videos);
-}
-pub async fn find_by_id_with_storage_and_channel(
-    pool: &PgPool,
-    id: &Uuid,
-    video_stage: StorageVideoStage,
-) -> Result<VideoWithStorageAndChannel, sqlx::Error> {
-    let video_with_storage = find_by_id_with_storage(pool, id, video_stage).await?;
-    let channel =
-        crate::database::queries::channel::find_by_id(pool, video_with_storage.video.channel_id)
-            .await?;
-
-    let video_with_channel = VideoWithStorageAndChannel {
-        video: video_with_storage.video,
-        storage: video_with_storage.storage,
-        channel,
-    };
-    return Ok(video_with_channel);
 }
 
 pub async fn bulk_update_end_time(

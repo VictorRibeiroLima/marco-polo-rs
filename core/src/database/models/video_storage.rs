@@ -1,6 +1,7 @@
+use super::traits::FromRowAlias;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
+use sqlx::{FromRow, Row};
 use uuid::Uuid;
 
 #[derive(Debug, sqlx::Type, Serialize, Deserialize, Clone)]
@@ -65,4 +66,24 @@ pub struct VideosStorage {
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
     pub deleted_at: Option<NaiveDateTime>,
+}
+
+impl FromRowAlias for VideosStorage {
+    fn from_row_alias(row: &sqlx::postgres::PgRow, alias: &str) -> Result<Self, sqlx::Error> {
+        let alias = alias.to_owned() + ".";
+        let video_storage = VideosStorage {
+            id: row.try_get(format!("{}id", alias).as_str())?,
+            video_id: row.try_get(format!("{}video_id", alias).as_str())?,
+            storage_id: row.try_get(format!("{}storage_id", alias).as_str())?,
+            stage: row.try_get(format!("{}stage", alias).as_str())?,
+            format: row.try_get(format!("{}format", alias).as_str())?,
+            video_path: row.try_get(format!("{}video_path", alias).as_str())?,
+            size: row.try_get(format!("{}size", alias).as_str())?,
+            created_at: row.try_get(format!("{}created_at", alias).as_str())?,
+            updated_at: row.try_get(format!("{}updated_at", alias).as_str())?,
+            deleted_at: row.try_get(format!("{}deleted_at", alias).as_str())?,
+        };
+
+        return Ok(video_storage);
+    }
 }
