@@ -66,10 +66,15 @@ async fn find_by_id(
     let pool = &pool.pool;
 
     let video = match jwt.role {
-        UserRole::Admin => queries::video::with_original::find_with_original(pool, &id).await?,
+        UserRole::Admin => {
+            queries::video::with_original::find_with_original_and_video_channels(pool, &id).await?
+        }
         UserRole::User => {
             let user_id = jwt.id;
-            queries::video::with_original::find_by_user_id_with_original(pool, &id, user_id).await?
+            queries::video::with_original::find_by_user_id_with_original_and_video_channels(
+                pool, &id, user_id,
+            )
+            .await?
         }
     };
     let dto: VideoDTO = video.into();

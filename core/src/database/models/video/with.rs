@@ -7,6 +7,7 @@ use crate::database::models::{
     channel::Channel,
     original_video::OriginalVideo,
     traits::{FromRowAlias, FromRows},
+    video_channel::VideoChannel,
     video_storage::VideosStorage,
 };
 
@@ -58,6 +59,36 @@ impl FromRows for VideoWithChannels {
                 })
                 .channels
                 .push(channel)
+        }
+
+        return Ok(video_map.into_values().collect());
+    }
+}
+
+pub struct VideoWithOriginalAndVideoChannels {
+    pub video: Video,
+    pub original: OriginalVideo,
+    pub video_channels: Vec<VideoChannel>,
+}
+
+impl FromRows for VideoWithOriginalAndVideoChannels {
+    fn from_rows(rows: &Vec<PgRow>) -> Result<Vec<Self>, sqlx::Error> {
+        let mut video_map: HashMap<Uuid, VideoWithOriginalAndVideoChannels> = HashMap::new();
+        for row in rows {
+            let video = Video::from_row(row)?;
+            let id = video.id;
+            let original = OriginalVideo::from_row_alias(row, "ov")?;
+            let video_channel = VideoChannel::from_row_alias(row, "vc")?;
+
+            video_map
+                .entry(id)
+                .or_insert(VideoWithOriginalAndVideoChannels {
+                    video,
+                    original,
+                    video_channels: Vec::new(),
+                })
+                .video_channels
+                .push(video_channel)
         }
 
         return Ok(video_map.into_values().collect());

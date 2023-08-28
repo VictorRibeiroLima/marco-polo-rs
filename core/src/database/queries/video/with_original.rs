@@ -3,13 +3,18 @@ use uuid::Uuid;
 
 use crate::database::{
     models::{
+        self,
         original_video::OriginalVideo,
-        video::{with::VideoWithOriginal, Video},
+        traits::FromRows,
+        video::{
+            with::{VideoWithOriginal, VideoWithOriginalAndVideoChannels},
+            Video,
+        },
     },
     queries::{filter::Filter, pagination::Pagination},
 };
 
-const BASE_QUERY: &'static str = r#"SELECT 
+const BASE_SELECT: &'static str = r#"SELECT 
 v.id, 
 v.title,
 v.description,
@@ -30,6 +35,10 @@ ov.id as "ov.id",
 ov.duration as "ov.duration",
 ov.created_at as "ov.created_at",
 ov.updated_at as "ov.updated_at"
+"#;
+
+const BASE_FROM: &'static str = r#"
+
 FROM 
 videos v
 INNER JOIN 
@@ -39,9 +48,43 @@ pub async fn find_with_original(
     pool: &PgPool,
     id: &Uuid,
 ) -> Result<VideoWithOriginal, sqlx::Error> {
-    let query = format!("{} WHERE v.id = $1 AND v.deleted_at IS NULL", BASE_QUERY);
+    let query = format!(
+        "{} {} WHERE v.id = $1 AND v.deleted_at IS NULL",
+        BASE_SELECT, BASE_FROM
+    );
 
     let video = sqlx::query_as(&query).bind(id).fetch_one(pool).await?;
+
+    return Ok(video);
+}
+
+//TODO: test
+pub async fn find_with_original_and_video_channels(
+    pool: &PgPool,
+    id: &Uuid,
+) -> Result<VideoWithOriginalAndVideoChannels, sqlx::Error> {
+    let select = format!("{},{}", BASE_SELECT, models::video_channel::ALIAS_COLUMNS);
+
+    let from = format!(
+        r#"{} 
+        INNER JOIN 
+            videos_channels vc ON vc.video_id = v.id"#,
+        BASE_FROM
+    );
+
+    let query = format!(
+        "{} {} WHERE v.id = $1 AND v.deleted_at IS NULL",
+        select, from
+    );
+
+    let video = sqlx::query(&query).bind(id).fetch_all(pool).await?;
+
+    let videos = VideoWithOriginalAndVideoChannels::from_rows(&video)?;
+
+    let video = match videos.into_iter().next() {
+        Some(video) => video,
+        None => return Err(sqlx::Error::RowNotFound),
+    };
 
     return Ok(video);
 }
@@ -52,8 +95,8 @@ pub async fn find_by_user_id_with_original(
     user_id: i32,
 ) -> Result<VideoWithOriginal, sqlx::Error> {
     let query = format!(
-        "{} WHERE v.id = $1 AND user_id = $2 AND v.deleted_at IS NULL",
-        BASE_QUERY
+        "{} {} WHERE v.id = $1 AND v.user_id = $2 AND v.deleted_at IS NULL",
+        BASE_SELECT, BASE_FROM
     );
 
     let video = sqlx::query_as(&query)
@@ -61,6 +104,42 @@ pub async fn find_by_user_id_with_original(
         .bind(user_id)
         .fetch_one(pool)
         .await?;
+
+    return Ok(video);
+}
+
+//TODO: test
+pub async fn find_by_user_id_with_original_and_video_channels(
+    pool: &PgPool,
+    id: &Uuid,
+    user_id: i32,
+) -> Result<VideoWithOriginalAndVideoChannels, sqlx::Error> {
+    let select = format!("{},{}", BASE_SELECT, models::video_channel::ALIAS_COLUMNS);
+
+    let from = format!(
+        r#"{} 
+        INNER JOIN 
+            videos_channels vc ON vc.video_id = v.id"#,
+        BASE_FROM
+    );
+
+    let query = format!(
+        "{} {} WHERE v.id = $1 AND v.user_id = $2 AND v.deleted_at IS NULL",
+        select, from
+    );
+
+    let video = sqlx::query(&query)
+        .bind(id)
+        .bind(user_id)
+        .fetch_all(pool)
+        .await?;
+
+    let videos = VideoWithOriginalAndVideoChannels::from_rows(&video)?;
+
+    let video = match videos.into_iter().next() {
+        Some(video) => video,
+        None => return Err(sqlx::Error::RowNotFound),
+    };
 
     return Ok(video);
 }
@@ -89,7 +168,7 @@ pub async fn find_all_with_original(
         query_where = "".to_string();
     }
 
-    let mut sql = format!("{} ", BASE_QUERY);
+    let mut sql = format!("{} {}", BASE_SELECT, BASE_FROM);
 
     if query_where != "" {
         sql = format!("{} WHERE {}", sql, query_where);
@@ -127,7 +206,7 @@ pub async fn find_all_with_original_by_ids(
     pool: &PgPool,
     ids: Vec<Uuid>,
 ) -> Result<Vec<VideoWithOriginal>, sqlx::Error> {
-    let query = format!("{} WHERE v.id = ANY($1)", BASE_QUERY);
+    let query = format!("{} {} WHERE v.id = ANY($1)", BASE_SELECT, BASE_FROM);
 
     let rows = sqlx::query(&query).bind(&ids[..]).fetch_all(pool).await?;
 

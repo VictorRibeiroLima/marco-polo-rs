@@ -1,7 +1,7 @@
 pub mod create;
 use chrono::NaiveDateTime;
 use marco_polo_rs_core::database::models::{
-    video::{stage::VideoStage, with::VideoWithOriginal},
+    video::{stage::VideoStage, with::VideoWithOriginalAndVideoChannels},
     video_error::VideoError,
 };
 use serde::{Deserialize, Serialize};
@@ -13,8 +13,8 @@ pub struct VideoDTO {
     pub title: String,
     pub description: String,
     pub user_id: i32,
-    pub channel_id: i32,
-    pub url: Option<String>,
+    pub channel_ids: Vec<i32>,
+    pub urls: Vec<String>,
     pub language: String,
     pub stage: VideoStage,
     pub error: bool,
@@ -28,23 +28,37 @@ pub struct VideoDTO {
     pub uploaded_at: Option<NaiveDateTime>,
 }
 
-impl From<VideoWithOriginal> for VideoDTO {
-    fn from(value: VideoWithOriginal) -> Self {
+impl From<VideoWithOriginalAndVideoChannels> for VideoDTO {
+    fn from(value: VideoWithOriginalAndVideoChannels) -> Self {
         let original = value.original;
         let video = value.video;
+        let video_channels = value.video_channels;
 
         let tags = match video.tags {
             Some(tags) => Some(tags.split(";").map(|s| s.to_string()).collect()),
             None => None,
         };
 
+        let (urls, channel_ids) =
+            video_channels
+                .iter()
+                .fold((Vec::new(), Vec::new()), |mut acc, vc| {
+                    match vc.url {
+                        Some(url) => acc.0.push(url),
+                        None => {}
+                    };
+
+                    acc.1.push(vc.channel_id);
+                    acc
+                });
+
         return Self {
             id: video.id,
             title: video.title,
             description: video.description,
             user_id: video.user_id,
-            channel_id: video.channel_id,
-            url: video.url,
+            channel_ids,
+            urls,
             language: video.language,
             created_at: video.created_at,
             updated_at: video.updated_at,

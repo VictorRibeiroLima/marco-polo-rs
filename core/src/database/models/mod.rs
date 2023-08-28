@@ -4,6 +4,7 @@ pub mod service_provider;
 pub mod traits;
 pub mod user;
 pub mod video;
+pub mod video_channel;
 pub mod video_error;
 pub mod video_storage;
 pub mod video_subtitling;
