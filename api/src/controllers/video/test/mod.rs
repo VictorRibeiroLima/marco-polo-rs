@@ -19,7 +19,7 @@ use crate::{
     controllers::{
         test::{
             create_test_app,
-            mock::{cloud_service::CloudServiceMock, youtube_client::YoutubeClientMock},
+            mock::{cloud_service::CloudServiceMock, video_platform::youtube::YoutubeClientMock},
         },
         video::dtos::VideoErrorDTO,
     },

@@ -4,10 +4,16 @@ ALTER TABLE
 ADD
   COLUMN channel_id INTEGER REFERENCES channels(id);
 
+ALTER TABLE
+  videos
+ADD
+  COLUMN url VARCHAR(255);
+
 UPDATE
   videos
 SET
-  channel_id = videos_channels.channel_id
+  channel_id = videos_channels.channel_id,
+  url = videos_channels.url
 FROM
   videos_channels
 WHERE

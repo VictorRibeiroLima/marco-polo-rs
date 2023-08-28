@@ -4,6 +4,7 @@ CREATE TABLE videos_channels (
   channel_id integer NOT NULL,
   uploaded boolean NOT NULL DEFAULT false,
   error boolean NOT NULL DEFAULT false,
+  url varchar(255),
   created_at timestamp NOT NULL DEFAULT now(),
   updated_at timestamp NOT NULL DEFAULT now(),
   uploaded_at timestamp,

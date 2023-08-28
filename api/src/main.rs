@@ -13,7 +13,7 @@ use marco_polo_rs_core::{
     env,
     internals::{
         cloud::{default_cloud_service, traits::CloudService},
-        youtube_client::{client, traits::YoutubeClient},
+        video_platform::youtube::{client, traits::YoutubeClient},
     },
 };
 use models::{error::AppError, result::AppResult};

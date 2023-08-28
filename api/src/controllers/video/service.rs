@@ -11,7 +11,7 @@ use marco_polo_rs_core::{
             models::payload::{PayloadType, VideoDownloadPayload},
             traits::QueueClient,
         },
-        youtube_client::traits::YoutubeClient as YoutubeClientTrait,
+        video_platform::youtube::traits::YoutubeClient as YoutubeClientTrait,
     },
 };
 use sqlx::PgPool;

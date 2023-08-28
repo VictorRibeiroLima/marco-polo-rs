@@ -182,22 +182,6 @@ pub async fn create_errors(pool: &PgPool, dto: CreateErrorsDto<'_>) -> Result<i6
     Ok(count)
 }
 
-pub async fn set_url(pool: &PgPool, video_id: &Uuid, url: String) -> Result<(), sqlx::Error> {
-    sqlx::query!(
-        r#"
-        UPDATE videos
-        SET url = $1, stage = 'DONE', uploaded_at = NOW(), error = false
-        WHERE id = $2
-        "#,
-        url,
-        video_id,
-    )
-    .execute(pool)
-    .await?;
-
-    Ok(())
-}
-
 find_all!(Video, "videos");
 
 pub async fn find_by_transcription_id(

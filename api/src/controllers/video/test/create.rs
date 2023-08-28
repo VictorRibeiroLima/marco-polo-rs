@@ -13,7 +13,7 @@ use actix_web::{
 
 use crate::{
     controllers::{
-        test::mock::{cloud_service::CloudServiceMock, youtube_client::YoutubeClientMock},
+        test::mock::{cloud_service::CloudServiceMock, video_platform::youtube::YoutubeClientMock},
         video::dtos::{
             create::{Create, Cut},
             VideoDTO,

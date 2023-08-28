@@ -1,7 +1,9 @@
 use google_youtube3::api::Video;
 use marco_polo_rs_core::{
-    database::models::video::with::VideoWithStorageAndChannel,
-    internals::youtube_client::{channel_info::ChannelInfo, traits::YoutubeClient},
+    internals::video_platform::{
+        youtube::{channel_info::ChannelInfo, traits::YoutubeClient},
+        UploadParams, VideoPlatformClient,
+    },
     SyncError,
 };
 
@@ -17,6 +19,17 @@ impl YoutubeClientMock {
 
     pub fn with_error() -> Self {
         return Self { error: true };
+    }
+}
+
+#[async_trait::async_trait]
+impl VideoPlatformClient for YoutubeClientMock {
+    type VideoResult = Video;
+    async fn upload_video<'a>(&self, _: UploadParams<'a>) -> Result<Self::VideoResult, SyncError> {
+        if self.error {
+            return Err("error".into());
+        }
+        return Ok(Default::default());
     }
 }
 
@@ -41,12 +54,5 @@ impl YoutubeClient for YoutubeClientMock {
             return Err("error".into());
         }
         return Ok(ChannelInfo::default());
-    }
-
-    async fn upload_video(&self, _: &VideoWithStorageAndChannel) -> Result<Video, SyncError> {
-        if self.error {
-            return Err("error".into());
-        }
-        return Ok(Default::default());
     }
 }
