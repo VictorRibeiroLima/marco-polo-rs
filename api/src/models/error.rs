@@ -6,6 +6,7 @@ use actix_web::{
     HttpResponse,
 };
 
+use marco_polo_rs_core::internals::video_platform::errors::HeathCheckError;
 use serde::{Deserialize, Serialize};
 
 use crate::mail::MailError;
@@ -15,7 +16,7 @@ pub struct AppErrorResponse {
     pub errors: Vec<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum AppErrorType {
     BadRequest,
     InternalServerError,
@@ -77,6 +78,7 @@ impl fmt::Display for AppError {
         write!(f, "{:?}", self)
     }
 }
+
 impl ResponseError for AppError {
     fn status_code(&self) -> StatusCode {
         match self.error_type {
@@ -95,6 +97,23 @@ impl ResponseError for AppError {
             .map(String::from)
             .collect::<Vec<String>>();
         HttpResponse::build(self.status_code()).json(AppErrorResponse { errors })
+    }
+}
+
+impl From<Vec<AppError>> for AppError {
+    fn from(value: Vec<AppError>) -> Self {
+        let mut errors = vec![];
+
+        // We are using BadRequest as a umbrella error type
+        let mut error_type = AppErrorType::BadRequest;
+        for error in value {
+            // If any error is InternalServerError, we should return it
+            if error.error_type == AppErrorType::InternalServerError {
+                error_type = AppErrorType::InternalServerError;
+            }
+            errors.push(error.message);
+        }
+        return Self::new(AppErrorType::BadRequest, errors.join("\n"));
     }
 }
 
@@ -163,5 +182,18 @@ impl From<QueryPayloadError> for AppError {
 impl From<MailError> for AppError {
     fn from(value: MailError) -> Self {
         return Self::new(AppErrorType::InternalServerError, value.to_string());
+    }
+}
+
+impl From<HeathCheckError<'_>> for AppError {
+    fn from(value: HeathCheckError) -> Self {
+        match value {
+            HeathCheckError::ChannelWrongAuthType(_) => {
+                return Self::new(AppErrorType::InternalServerError, value.to_string());
+            }
+            _ => {
+                return Self::new(AppErrorType::BadRequest, value.to_string());
+            }
+        }
     }
 }

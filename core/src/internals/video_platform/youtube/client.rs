@@ -1,4 +1,5 @@
-use crate::database::models::channel::auth::AuthType;
+use crate::database::models::channel::{auth::AuthType, Channel};
+use crate::internals::video_platform::errors::HeathCheckError;
 use crate::internals::video_platform::{UploadParams, VideoPlatformClient};
 use crate::util::fs::create_temp_dir;
 use async_trait::async_trait;
@@ -13,6 +14,7 @@ use std::io::Read;
 
 use crate::SyncError;
 
+use super::traits::YoutubeClient as YoutubeClientTrait;
 use super::{
     channel_info::ChannelInfo, client_secret::ClientSecret, upload_delegator::UploadDelegator,
 };
@@ -66,7 +68,7 @@ impl YoutubeClient {
     }
 }
 
-#[async_trait::async_trait]
+#[async_trait]
 impl VideoPlatformClient for YoutubeClient {
     type VideoResult = Video;
     async fn upload_video<'a>(&self, video: UploadParams<'a>) -> Result<Video, SyncError> {
@@ -158,10 +160,37 @@ impl VideoPlatformClient for YoutubeClient {
 
         return Ok(video_response);
     }
+
+    async fn check_channel_health<'a>(
+        &self,
+        channel: &'a Channel,
+    ) -> Result<(), HeathCheckError<'a>> {
+        if channel.error {
+            return Err(HeathCheckError::ChannelHasDbError(channel));
+        };
+
+        let auth_type = match &channel.auth.0 {
+            AuthType::Oauth2(auth) => auth,
+            _ => return Err(HeathCheckError::ChannelWrongAuthType(channel)),
+        };
+
+        let refresh_token = match &auth_type.refresh_token {
+            Some(refresh_token) => refresh_token,
+            None => return Err(HeathCheckError::ChannelNotConnected(channel)),
+        };
+
+        let result = self.get_channel_info(refresh_token.clone()).await;
+
+        if result.is_err() {
+            return Err(HeathCheckError::ChannelNotAccessible(channel));
+        }
+
+        return Ok(());
+    }
 }
 
 #[async_trait]
-impl super::traits::YoutubeClient for YoutubeClient {
+impl YoutubeClientTrait for YoutubeClient {
     fn generate_url(&self) -> (String, String) {
         let (auth_url, csrf_token) = self
             .oauth2_client

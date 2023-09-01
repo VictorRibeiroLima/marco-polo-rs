@@ -1,6 +1,8 @@
 use google_youtube3::api::Video;
 use marco_polo_rs_core::{
+    database::models::channel::Channel,
     internals::video_platform::{
+        errors::HeathCheckError,
         youtube::{channel_info::ChannelInfo, traits::YoutubeClient},
         UploadParams, VideoPlatformClient,
     },
@@ -30,6 +32,16 @@ impl VideoPlatformClient for YoutubeClientMock {
             return Err("error".into());
         }
         return Ok(Default::default());
+    }
+
+    async fn check_channel_health<'a>(
+        &self,
+        channel: &'a Channel,
+    ) -> Result<(), HeathCheckError<'a>> {
+        if self.error {
+            return Err(HeathCheckError::ChannelNotEligible(channel));
+        }
+        return Ok(());
     }
 }
 

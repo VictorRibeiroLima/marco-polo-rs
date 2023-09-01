@@ -39,7 +39,7 @@ pub struct Create {
 pub struct Cut {
     pub title: String,
     pub description: String,
-    pub channel_id: i32,
+    pub channel_ids: Vec<i32>,
     #[validate(custom(
         function = "validate_time",
         message = "Invalid Time Format (HH:MM:SS)\n"
