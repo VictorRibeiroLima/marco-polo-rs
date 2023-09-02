@@ -113,7 +113,7 @@ impl From<Vec<AppError>> for AppError {
             }
             errors.push(error.message);
         }
-        return Self::new(AppErrorType::BadRequest, errors.join("\n"));
+        return Self::new(error_type, errors.join("\n"));
     }
 }
 

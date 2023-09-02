@@ -41,7 +41,7 @@ impl From<VideoWithOriginalAndVideoChannels> for VideoDTO {
 
         let (urls, channel_ids) =
             video_channels
-                .iter()
+                .into_iter()
                 .fold((Vec::new(), Vec::new()), |mut acc, vc| {
                     match vc.url {
                         Some(url) => acc.0.push(url),

@@ -49,7 +49,9 @@ async fn create_video<CS: CloudService, YC: YoutubeClientTrait>(
 
     let ids = service::create_video(pool, body, queue_client, youtube_client, jwt).await?;
 
-    let videos = queries::video::with_original::find_all_with_original_by_ids(pool, ids).await?;
+    let videos =
+        queries::video::with_original::find_all_by_ids_with_original_and_channels(pool, ids)
+            .await?;
 
     let dto: Vec<VideoDTO> = videos.into_iter().map(|c| c.into()).collect();
 
@@ -99,7 +101,7 @@ async fn find_all(
 
     let videos = match jwt.role {
         UserRole::Admin => {
-            queries::video::with_original::find_all_with_original(
+            queries::video::with_original::find_all_with_original_and_channels(
                 pool,
                 pagination,
                 video_filter,
@@ -110,7 +112,7 @@ async fn find_all(
         UserRole::User => {
             let user_id = jwt.id;
             video_filter.options.user_id = Some(user_id);
-            queries::video::with_original::find_all_with_original(
+            queries::video::with_original::find_all_with_original_and_channels(
                 pool,
                 pagination,
                 video_filter,

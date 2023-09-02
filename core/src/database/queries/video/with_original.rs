@@ -202,6 +202,71 @@ pub async fn find_all_with_original(
     return Ok(videos);
 }
 
+//TODO: test
+pub async fn find_all_with_original_and_channels(
+    pool: &PgPool,
+    pagination: Pagination<Video>,
+    video_filter: Filter<Video>,
+    original_video_filter: Filter<OriginalVideo>,
+) -> Result<Vec<VideoWithOriginalAndVideoChannels>, sqlx::Error> {
+    let (offset, limit, order, order_by) = pagination.to_tuple();
+
+    let (video_where, video_param_count) = video_filter.gen_where_statements_with_alias("v", None);
+
+    let (original_video_where, _) =
+        original_video_filter.gen_where_statements_with_alias("ov", Some(video_param_count));
+
+    let select = format!("{},{}", BASE_SELECT, models::video_channel::ALIAS_COLUMNS);
+
+    let from = format!(
+        r#"{} 
+        INNER JOIN 
+            videos_channels vc ON vc.video_id = v.id"#,
+        BASE_FROM
+    );
+
+    let mut sql = format!("{} {}", select, from);
+
+    let query_where: String;
+    if video_where != "" && original_video_where != "" {
+        query_where = format!("{} AND {}", video_where, original_video_where);
+    } else if video_where != "" {
+        query_where = video_where;
+    } else if original_video_where != "" {
+        query_where = original_video_where;
+    } else {
+        query_where = "".to_string();
+    }
+
+    if query_where != "" {
+        sql = format!("{} WHERE {}", sql, query_where);
+    }
+
+    sql = format!(
+        r#"{} ORDER BY 
+          v.{} {}
+      LIMIT
+          {}
+      OFFSET 
+          {}"#,
+        sql,
+        order_by.name(),
+        order.name(),
+        limit,
+        offset
+    );
+
+    let mut query = sqlx::query(&sql);
+    query = video_filter.apply_raw(query);
+    query = original_video_filter.apply_raw(query);
+
+    let rows: Vec<PgRow> = query.fetch_all(pool).await?;
+
+    let videos = VideoWithOriginalAndVideoChannels::from_rows(&rows)?;
+
+    return Ok(videos);
+}
+
 pub async fn find_all_with_original_by_ids(
     pool: &PgPool,
     ids: Vec<Uuid>,
@@ -215,5 +280,29 @@ pub async fn find_all_with_original_by_ids(
         let video: VideoWithOriginal = VideoWithOriginal::from_row(&row)?;
         videos.push(video);
     }
+    return Ok(videos);
+}
+
+pub async fn find_all_by_ids_with_original_and_channels(
+    pool: &PgPool,
+    ids: Vec<Uuid>,
+) -> Result<Vec<VideoWithOriginalAndVideoChannels>, sqlx::Error> {
+    let select = format!("{},{}", BASE_SELECT, models::video_channel::ALIAS_COLUMNS);
+
+    let from = format!(
+        r#"{} 
+        INNER JOIN 
+            videos_channels vc ON vc.video_id = v.id"#,
+        BASE_FROM
+    );
+
+    let mut sql = format!("{} {}", select, from);
+
+    sql = format!("{} WHERE v.id = ANY($1)", sql);
+
+    let rows: Vec<PgRow> = sqlx::query(&sql).bind(&ids[..]).fetch_all(pool).await?;
+
+    let videos = VideoWithOriginalAndVideoChannels::from_rows(&rows)?;
+
     return Ok(videos);
 }
