@@ -68,7 +68,7 @@ async fn youtube_upload(
 
     let mut trx = pool.begin().await?;
 
-    queries::video_channel::set_url(&mut *trx, video_id, channel_id, video_url).await?;
+    queries::video_channel::set_url(&mut *trx, video_id, channel_id, &video_url).await?;
     queries::video::change_stage(&mut *trx, &video_id, VideoStage::Done).await?;
 
     trx.commit().await?;
