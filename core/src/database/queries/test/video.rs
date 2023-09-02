@@ -204,12 +204,14 @@ async fn test_offset(pool: sqlx::PgPool) {
 async fn test_create_video(pool: PgPool) {
     let id = uuid::Uuid::new_v4();
 
+    let channel_ids = vec![666];
+
     let dto = CreateVideoDto {
         id,
         title: "Test",
         description: "Test",
         user_id: 666,
-        channel_id: 666,
+        channel_ids: &channel_ids,
         language: "en",
         end_time: None,
         original_id: 666,
@@ -235,13 +237,15 @@ async fn test_create_video(pool: PgPool) {
 async fn test_create_video_with_tags(pool: PgPool) {
     let id = uuid::Uuid::new_v4();
 
+    let channel_ids = vec![666];
+
     let dto = CreateVideoDto {
         id: id,
         title: "Test",
         description: "Test",
         user_id: 666,
         end_time: None,
-        channel_id: 666,
+        channel_ids: &channel_ids,
         language: "en",
         original_id: 666,
         start_time: "00:00:00",
@@ -262,6 +266,7 @@ async fn test_create_video_with_tags(pool: PgPool) {
 #[sqlx::test(migrations = "../migrations")]
 async fn test_create_fail_if_foreign_key(pool: PgPool) {
     let id = uuid::Uuid::new_v4();
+    let channel_ids = vec![666];
 
     let dto = CreateVideoDto {
         id,
@@ -269,7 +274,7 @@ async fn test_create_fail_if_foreign_key(pool: PgPool) {
         description: "Test",
         user_id: 666,
         end_time: None,
-        channel_id: 666,
+        channel_ids: &channel_ids,
         language: "en",
         original_id: 666,
         start_time: "00:00:00",
@@ -455,6 +460,7 @@ async fn test_find_all_with_original_no_filter(pool: PgPool) {
 )]
 async fn test_create_many(pool: PgPool) {
     let mut dtos = vec![];
+    let channel_ids = vec![666];
     for _ in 0..10 {
         let id = uuid::Uuid::new_v4();
 
@@ -463,7 +469,7 @@ async fn test_create_many(pool: PgPool) {
             title: "Test",
             description: "Test",
             user_id: 666,
-            channel_id: 666,
+            channel_ids: &channel_ids,
             language: "en",
             end_time: None,
             original_id: 666,

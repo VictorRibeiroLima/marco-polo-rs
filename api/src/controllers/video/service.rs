@@ -112,6 +112,7 @@ async fn create_videos(
         None => "en",
     };
     let mut trx = pool.begin().await?;
+
     let original_video_id = queries::original_video::create(&mut *trx, &body.video_url).await?;
 
     let dtos = create_video_dtos(&body, original_video_id, user_id, &language).await;
@@ -141,21 +142,17 @@ async fn create_video_dtos<'a>(
 ) -> Vec<CreateVideoDto<'a>> {
     let mut dtos = vec![];
     for cut in &body.cuts {
-        for i in 0..cut.channel_ids.len() {
-            let dto = create_video_dto(cut, original_video_id, user_id, language, i).await;
-            dtos.push(dto);
-        }
+        let dto = create_video_dto(cut, original_video_id, user_id, language).await;
+        dtos.push(dto);
     }
     return dtos;
 }
 
-//TODO: this is really ugly, refactor later
 async fn create_video_dto<'a>(
     cut: &'a Cut,
     original_video_id: i32,
     user_id: i32,
     language: &'a str,
-    i: usize,
 ) -> CreateVideoDto<'a> {
     let video_id = uuid::Uuid::new_v4();
 
@@ -183,7 +180,7 @@ async fn create_video_dto<'a>(
         title: &cut.title,
         end_time,
         description: &cut.description,
-        channel_id: cut.channel_ids[i],
+        channel_ids: &cut.channel_ids,
         language: &language,
         original_id: original_video_id,
         tags,

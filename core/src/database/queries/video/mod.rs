@@ -1,6 +1,8 @@
+use std::ops::DerefMut;
+
 use chrono::NaiveDateTime;
 
-use sqlx::{PgExecutor, PgPool, QueryBuilder};
+use sqlx::{Acquire, PgExecutor, PgPool, Postgres, QueryBuilder, Row};
 use uuid::Uuid;
 
 use crate::database::models::{
@@ -18,7 +20,7 @@ pub struct CreateVideoDto<'a> {
     pub title: &'a str,
     pub description: &'a str,
     pub user_id: i32,
-    pub channel_id: i32,
+    pub channel_ids: &'a [i32],
     pub language: &'a str,
     pub tags: Option<String>,
     pub start_time: &'a str,
@@ -31,11 +33,15 @@ pub struct CreateErrorsDto<'a> {
     pub error: &'a str,
 }
 
-pub async fn create(pool: impl PgExecutor<'_>, dto: CreateVideoDto<'_>) -> Result<(), sqlx::Error> {
-    sqlx::query!(
+pub async fn create(
+    pool: impl PgExecutor<'_> + Acquire<'_, Database = Postgres>,
+    dto: CreateVideoDto<'_>,
+) -> Result<(), sqlx::Error> {
+    let mut trx = pool.begin().await?;
+    let id = sqlx::query!(
         r#"
         INSERT INTO videos (id, title, description, user_id, language, start_time, original_video_id, tags,end_time)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id;
         "#,
         dto.id,
         dto.title,
@@ -47,18 +53,32 @@ pub async fn create(pool: impl PgExecutor<'_>, dto: CreateVideoDto<'_>) -> Resul
         dto.tags,
         dto.end_time,
     )
-    .execute(pool)
+    .fetch_one(&mut *trx)
     .await?;
+
+    let mut query_builder =
+        QueryBuilder::new("INSERT INTO videos_channels (video_id, channel_id) ");
+
+    query_builder.push_values(dto.channel_ids, |mut builder, channel_id| {
+        builder.push_bind(id.id).push_bind(channel_id);
+    });
+
+    let insert_query = query_builder.build();
+
+    insert_query.execute(&mut *trx).await?;
+
+    trx.commit().await?;
 
     Ok(())
 }
 
 pub async fn create_many(
-    pool: impl PgExecutor<'_>,
+    pool: impl PgExecutor<'_> + Acquire<'_, Database = Postgres>,
     dtos: Vec<CreateVideoDto<'_>>,
 ) -> Result<(), sqlx::Error> {
+    let mut trx = pool.begin().await?;
     let mut query_builder = QueryBuilder::new(
-        "INSERT INTO videos (id, title, description, user_id, channel_id, language, start_time, original_video_id, tags,end_time) ",
+        "INSERT INTO videos (id, title, description, user_id, language, start_time, original_video_id, tags,end_time) ",
     );
 
     query_builder.push_values(&dtos, |mut builder, dto| {
@@ -67,7 +87,6 @@ pub async fn create_many(
             .push_bind(dto.title)
             .push_bind(dto.description)
             .push_bind(dto.user_id)
-            .push_bind(dto.channel_id)
             .push_bind(dto.language)
             .push_bind(dto.start_time)
             .push_bind(dto.original_id)
@@ -75,8 +94,38 @@ pub async fn create_many(
             .push_bind(dto.end_time);
     });
 
+    query_builder.push(" RETURNING id");
+
     let insert_query = query_builder.build();
-    insert_query.execute(pool).await?;
+
+    //postgres should return the ids in the same order as the dtos
+    let ids = insert_query.fetch_all(trx.deref_mut()).await?;
+
+    //So we can zip them together
+    let mut video_channels_ids: Vec<(Uuid, i32)> = vec![];
+
+    for (dto, id) in dtos.into_iter().zip(ids.into_iter()) {
+        for channel_id in dto.channel_ids {
+            let id = id.try_get::<Uuid, _>("id")?;
+            video_channels_ids.push((id, *channel_id));
+        }
+    }
+
+    let mut query_builder =
+        QueryBuilder::new("INSERT INTO videos_channels (video_id, channel_id) ");
+
+    query_builder.push_values(
+        &video_channels_ids,
+        |mut builder, (video_id, channel_id)| {
+            builder.push_bind(video_id).push_bind(channel_id);
+        },
+    );
+
+    let insert_query = query_builder.build();
+
+    insert_query.execute(trx.deref_mut()).await?;
+
+    trx.commit().await?;
 
     Ok(())
 }
