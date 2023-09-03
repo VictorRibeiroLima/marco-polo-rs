@@ -6,6 +6,8 @@ use uuid::Uuid;
 
 use self::stage::VideoStage;
 
+use super::traits::FromRowAlias;
+
 pub mod stage;
 
 pub mod with;
@@ -30,8 +32,8 @@ pub struct Video {
     pub uploaded_at: Option<NaiveDateTime>,
 }
 
-impl Video {
-    pub fn from_row_alias(row: &PgRow, alias: &str) -> Result<Self, sqlx::Error> {
+impl FromRowAlias for Video {
+    fn from_row_alias(row: &PgRow, alias: &str) -> Result<Self, sqlx::Error> {
         let alias = alias.to_owned() + ".";
         let video = Video {
             id: row.try_get(format!("{}id", alias).as_str())?,
