@@ -186,7 +186,7 @@ pub async fn create_errors(pool: &PgPool, dto: CreateErrorsDto<'_>) -> Result<i6
     Ok(count)
 }
 
-pub async fn set_url(pool: &PgPool, video_id: &Uuid, url: String) -> Result<(), sqlx::Error> {
+pub async fn set_url(pool: &PgPool, video_id: Uuid, url: &str) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
         UPDATE videos

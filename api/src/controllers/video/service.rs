@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use futures::future::join_all;
 use marco_polo_rs_core::{
     database::{
-        models::{channel::auth::AuthType, user::UserRole},
+        models::{channel::platform::Platform, user::UserRole},
         queries::{self, video::CreateVideoDto},
     },
     internals::{
@@ -11,13 +11,16 @@ use marco_polo_rs_core::{
             models::payload::{PayloadType, VideoDownloadPayload},
             traits::QueueClient,
         },
-        youtube_client::traits::YoutubeClient as YoutubeClientTrait,
+        video_platform::youtube::traits::YoutubeClient as YoutubeClientTrait,
     },
 };
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::{middleware::jwt_token::TokenClaims, models::error::AppError};
+use crate::{
+    middleware::jwt_token::TokenClaims,
+    models::error::{AppError, AppErrorType},
+};
 
 use super::dtos::create::{Create, Cut};
 
@@ -32,7 +35,9 @@ pub async fn create_video<QC: QueueClient, YC: YoutubeClientTrait>(
     let user_id = jwt.id;
 
     for cut in &body.cuts {
-        channel_ids.insert(cut.channel_id);
+        for channel_id in &cut.channel_ids {
+            channel_ids.insert(*channel_id);
+        }
     }
 
     check_channels_heath(pool, youtube_client, channel_ids, jwt).await?;
@@ -45,7 +50,7 @@ async fn check_channels_heath(
     youtube_client: &impl YoutubeClientTrait,
     channels: HashSet<i32>,
     jwt: TokenClaims,
-) -> Result<(), AppError> {
+) -> Result<(), Vec<AppError>> {
     let mut futures = vec![];
     for channel_id in channels {
         let future = check_channel_heath(pool, youtube_client, channel_id, &jwt);
@@ -53,15 +58,20 @@ async fn check_channels_heath(
     }
     let results = join_all(futures).await;
 
-    for result in results {
-        match result {
-            Ok(_) => {}
-            Err(err) => return Err(err),
-        }
-    }
-    return Ok(());
-}
+    let errs = results
+        .into_iter()
+        .filter_map(|result| match result {
+            Ok(_) => None,
+            Err(err) => Some(err),
+        })
+        .collect::<Vec<AppError>>();
 
+    if errs.is_empty() {
+        return Ok(());
+    }
+
+    return Err(errs);
+}
 async fn check_channel_heath(
     pool: &PgPool,
     youtube_client: &impl YoutubeClientTrait,
@@ -76,41 +86,19 @@ async fn check_channel_heath(
         }
     };
 
-    if channel.error {
-        return Err(AppError::bad_request(
-            "Channel has errors. Please contact admins".to_string(),
-        ));
-    };
-
-    //TODO: make generic
-    let auth_type = match channel.auth.0 {
-        AuthType::Oauth2(auth) => auth,
+    match channel.platform {
+        Platform::Youtube => {
+            youtube_client.check_channel_health(&channel).await?;
+        }
         _ => {
-            return Err(AppError::bad_request(
-                "Youtube channel not linked".to_string(),
+            return Err(AppError::new(
+                AppErrorType::InternalServerError,
+                "Not Implemented".into(),
             ))
         }
-    };
-
-    let refresh_token = match auth_type.refresh_token {
-        Some(refresh_token) => refresh_token,
-        None => {
-            return Err(AppError::bad_request(
-                "Youtube channel not linked".to_string(),
-            ))
-        }
-    };
-
-    let result = youtube_client.get_channel_info(refresh_token).await;
-
-    if result.is_err() {
-        queries::channel::change_error_state(pool, channel_id, true).await?;
-        return Err(AppError::bad_request(
-            "Channel has errors. Please contact admins".to_string(),
-        ));
     }
 
-    Ok(())
+    return Ok(());
 }
 
 async fn create_videos(
@@ -124,6 +112,7 @@ async fn create_videos(
         None => "en",
     };
     let mut trx = pool.begin().await?;
+
     let original_video_id = queries::original_video::create(&mut *trx, &body.video_url).await?;
 
     let dtos = create_video_dtos(&body, original_video_id, user_id, &language).await;
@@ -191,7 +180,7 @@ async fn create_video_dto<'a>(
         title: &cut.title,
         end_time,
         description: &cut.description,
-        channel_id: cut.channel_id,
+        channel_ids: &cut.channel_ids,
         language: &language,
         original_id: original_video_id,
         tags,

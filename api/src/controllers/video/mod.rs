@@ -11,7 +11,9 @@ use marco_polo_rs_core::{
     },
     internals::{
         cloud::{aws::AwsCloudService, traits::CloudService},
-        youtube_client::{client::YoutubeClient, traits::YoutubeClient as YoutubeClientTrait},
+        video_platform::youtube::{
+            client::YoutubeClient, traits::YoutubeClient as YoutubeClientTrait,
+        },
     },
 };
 

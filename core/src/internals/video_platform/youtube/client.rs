@@ -1,5 +1,6 @@
-use crate::database::models::channel::auth::AuthType;
-use crate::database::models::video::with::VideoWithStorageAndChannel;
+use crate::database::models::channel::{auth::AuthType, Channel};
+use crate::internals::video_platform::errors::HeathCheckError;
+use crate::internals::video_platform::{UploadParams, VideoPlatformClient};
 use crate::util::fs::create_temp_dir;
 use async_trait::async_trait;
 use google_youtube3::api::{Video, VideoSnippet, VideoStatus};
@@ -11,11 +12,12 @@ use oauth2::{AuthorizationCode, CsrfToken, RefreshToken, Scope, TokenResponse};
 use std::fs::File;
 use std::io::Read;
 
-use crate::internals::youtube_client::client_secret::ClientSecret;
 use crate::SyncError;
 
-use super::channel_info::ChannelInfo;
-use super::upload_delegator::UploadDelegator;
+use super::traits::YoutubeClient as YoutubeClientTrait;
+use super::{
+    channel_info::ChannelInfo, client_secret::ClientSecret, upload_delegator::UploadDelegator,
+};
 
 pub struct YoutubeClient {
     oauth2_client: oauth2::basic::BasicClient,
@@ -67,70 +69,14 @@ impl YoutubeClient {
 }
 
 #[async_trait]
-impl super::traits::YoutubeClient for YoutubeClient {
-    fn generate_url(&self) -> (String, String) {
-        let (auth_url, csrf_token) = self
-            .oauth2_client
-            .authorize_url(CsrfToken::new_random)
-            .add_extra_param("access_type", "offline")
-            .add_extra_param("approval_prompt", "force")
-            .add_scope(Scope::new(
-                "https://www.googleapis.com/auth/youtube".to_string(),
-            ))
-            .add_scope(Scope::new(
-                "https://www.googleapis.com/auth/youtube.readonly".to_string(),
-            ))
-            .url();
-
-        return (auth_url.to_string(), csrf_token.secret().to_string());
-    }
-
-    async fn get_refresh_token(&self, code: String) -> Result<String, SyncError> {
-        let token = self
-            .oauth2_client
-            .exchange_code(AuthorizationCode::new(code))
-            .add_extra_param("access_type", "offline")
-            .request_async(oauth2::reqwest::async_http_client)
-            .await?;
-
-        let token = match token.refresh_token() {
-            Some(token) => token,
-            None => {
-                return Err("no refresh token".into());
-            }
-        };
-
-        return Ok(token.secret().to_string());
-    }
-
-    async fn get_channel_info(&self, refresh_token: String) -> Result<ChannelInfo, SyncError> {
-        let token = self.get_token(refresh_token).await?;
-        let url =
-            "https://www.googleapis.com/youtube/v3/channels?part=snippet,contentDetails&mine=true";
-
-        let client = reqwest::Client::new();
-        let response = client.get(url).bearer_auth(token).send().await?;
-
-        if !response.status().is_success() {
-            let error = format!(
-                "request to {} error with status: {}",
-                url,
-                response.status()
-            );
-            return Err(error.into());
-        }
-
-        let response = response.json().await?;
-
-        return Ok(response);
-    }
-
-    async fn upload_video(&self, video: &VideoWithStorageAndChannel) -> Result<Video, SyncError> {
+impl VideoPlatformClient for YoutubeClient {
+    type VideoResult = Video;
+    async fn upload_video<'a>(&self, video: UploadParams<'a>) -> Result<Video, SyncError> {
         let chunk_size: u64 = 5 * 1024 * 1024; // 5MB
 
-        let storage = &video.storage;
-        let channel = &video.channel;
-        let video = &video.video;
+        let storage = video.storage;
+        let channel = video.channel;
+        let video = video.video;
 
         let auth = match &channel.auth.0 {
             AuthType::Oauth2(auth) => auth,
@@ -213,5 +159,92 @@ impl super::traits::YoutubeClient for YoutubeClient {
         }
 
         return Ok(video_response);
+    }
+
+    async fn check_channel_health<'a>(
+        &self,
+        channel: &'a Channel,
+    ) -> Result<(), HeathCheckError<'a>> {
+        if channel.error {
+            return Err(HeathCheckError::ChannelHasDbError(channel));
+        };
+
+        let auth_type = match &channel.auth.0 {
+            AuthType::Oauth2(auth) => auth,
+            _ => return Err(HeathCheckError::ChannelWrongAuthType(channel)),
+        };
+
+        let refresh_token = match &auth_type.refresh_token {
+            Some(refresh_token) => refresh_token,
+            None => return Err(HeathCheckError::ChannelNotConnected(channel)),
+        };
+
+        let result = self.get_channel_info(refresh_token.clone()).await;
+
+        if result.is_err() {
+            return Err(HeathCheckError::ChannelNotAccessible(channel));
+        }
+
+        return Ok(());
+    }
+}
+
+#[async_trait]
+impl YoutubeClientTrait for YoutubeClient {
+    fn generate_url(&self) -> (String, String) {
+        let (auth_url, csrf_token) = self
+            .oauth2_client
+            .authorize_url(CsrfToken::new_random)
+            .add_extra_param("access_type", "offline")
+            .add_extra_param("approval_prompt", "force")
+            .add_scope(Scope::new(
+                "https://www.googleapis.com/auth/youtube".to_string(),
+            ))
+            .add_scope(Scope::new(
+                "https://www.googleapis.com/auth/youtube.readonly".to_string(),
+            ))
+            .url();
+
+        return (auth_url.to_string(), csrf_token.secret().to_string());
+    }
+
+    async fn get_refresh_token(&self, code: String) -> Result<String, SyncError> {
+        let token = self
+            .oauth2_client
+            .exchange_code(AuthorizationCode::new(code))
+            .add_extra_param("access_type", "offline")
+            .request_async(oauth2::reqwest::async_http_client)
+            .await?;
+
+        let token = match token.refresh_token() {
+            Some(token) => token,
+            None => {
+                return Err("no refresh token".into());
+            }
+        };
+
+        return Ok(token.secret().to_string());
+    }
+
+    async fn get_channel_info(&self, refresh_token: String) -> Result<ChannelInfo, SyncError> {
+        let token = self.get_token(refresh_token).await?;
+        let url =
+            "https://www.googleapis.com/youtube/v3/channels?part=snippet,contentDetails&mine=true";
+
+        let client = reqwest::Client::new();
+        let response = client.get(url).bearer_auth(token).send().await?;
+
+        if !response.status().is_success() {
+            let error = format!(
+                "request to {} error with status: {}",
+                url,
+                response.status()
+            );
+            return Err(error.into());
+        }
+
+        let response = response.json().await?;
+
+        return Ok(response);
     }
 }

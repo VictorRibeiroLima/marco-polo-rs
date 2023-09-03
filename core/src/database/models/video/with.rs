@@ -1,7 +1,8 @@
 use sqlx::{postgres::PgRow, FromRow};
 
 use crate::database::models::{
-    channel::Channel, original_video::OriginalVideo, video_storage::VideosStorage,
+    channel::Channel, original_video::OriginalVideo, traits::FromRowAlias,
+    video_storage::VideosStorage,
 };
 
 use super::Video;

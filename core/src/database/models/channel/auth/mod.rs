@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde_json::Value;
 
 use self::data::Oath2Data;
@@ -9,6 +11,15 @@ pub mod data;
 pub enum AuthType {
     Oauth2(Oath2Data),
     Invalid,
+}
+
+impl Display for AuthType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AuthType::Oauth2(_) => write!(f, "OAUTH2"),
+            AuthType::Invalid => write!(f, "INVALID"),
+        }
+    }
 }
 
 impl<'de> Deserialize<'de> for AuthType {

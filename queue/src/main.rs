@@ -12,7 +12,7 @@ use marco_polo_rs_core::{
         subtitler::local::LocalClient,
         transcriber::assembly_ai::AssemblyAiClient,
         translator::google_v2::GoogleTranslateV2Client,
-        youtube_client::client::YoutubeClient,
+        video_platform::youtube::client::YoutubeClient,
         yt_downloader::yt_dl::YtDl,
     },
 };

@@ -1,6 +1,6 @@
 use sqlx::PgPool;
 
-use crate::database::models::original_video::with::OriginalVideoWithVideos;
+use crate::database::models::{original_video::with::OriginalVideoWithVideos, traits::FromRows};
 
 const BASE_QUERY: &str = r#"
 SELECT 
