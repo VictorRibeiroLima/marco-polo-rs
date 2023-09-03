@@ -16,7 +16,7 @@ use marco_polo_rs_core::{
             channel::{CreateChannelDto, UpdateChannelDto},
         },
     },
-    internals::youtube_client::traits::YoutubeClient as YoutubeClientTrait,
+    internals::video_platform::youtube::traits::YoutubeClient as YoutubeClientTrait,
 };
 
 use crate::{

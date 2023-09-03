@@ -20,7 +20,7 @@ use crate::{
         channel::dto::ChannelDTO,
         test::{
             create_test_app,
-            mock::youtube_client::{YoutubeClientMock, CSRF_TOKEN},
+            mock::video_platform::youtube::{YoutubeClientMock, CSRF_TOKEN},
         },
     },
     utils::test::get_token,

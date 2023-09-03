@@ -8,7 +8,7 @@ use marco_polo_rs_core::{
         models::{channel::Channel, user::UserRole},
         queries::{self, filter::Filter, pagination::Pagination},
     },
-    internals::youtube_client::{
+    internals::video_platform::youtube::{
         client::YoutubeClient, traits::YoutubeClient as YoutubeClientTrait,
     },
 };
