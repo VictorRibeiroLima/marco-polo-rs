@@ -2,7 +2,10 @@ use std::collections::HashMap;
 
 use sqlx::{postgres::PgRow, FromRow};
 
-use crate::database::models::{traits::FromRows, video::Video};
+use crate::database::models::{
+    traits::{FromRowAlias, FromRows},
+    video::Video,
+};
 
 use super::OriginalVideo;
 
