@@ -101,7 +101,7 @@ async fn find_all(
 
     let videos = match jwt.role {
         UserRole::Admin => {
-            queries::video::with_original::find_all_with_original_and_channels(
+            queries::video::with_original::find_all_with_original_and_video_channels(
                 pool,
                 pagination,
                 video_filter,
@@ -112,7 +112,7 @@ async fn find_all(
         UserRole::User => {
             let user_id = jwt.id;
             video_filter.options.user_id = Some(user_id);
-            queries::video::with_original::find_all_with_original_and_channels(
+            queries::video::with_original::find_all_with_original_and_video_channels(
                 pool,
                 pagination,
                 video_filter,

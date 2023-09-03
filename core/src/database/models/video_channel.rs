@@ -13,7 +13,7 @@ pub const ALIAS_COLUMNS: &'static str = r#"
     vc.created_at as "vc.created_at",
     vc.updated_at as "vc.updated_at",
     vc.uploaded_at as "vc.uploaded_at",
-    vc.url as "vc.url
+    vc.url as "vc.url"
 "#;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]

@@ -65,6 +65,7 @@ impl FromRows for VideoWithChannels {
     }
 }
 
+#[derive(Debug)]
 pub struct VideoWithOriginalAndVideoChannels {
     pub video: Video,
     pub original: OriginalVideo,

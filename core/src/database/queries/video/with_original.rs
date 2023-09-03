@@ -58,7 +58,6 @@ pub async fn find_with_original(
     return Ok(video);
 }
 
-//TODO: test
 pub async fn find_with_original_and_video_channels(
     pool: &PgPool,
     id: &Uuid,
@@ -66,7 +65,7 @@ pub async fn find_with_original_and_video_channels(
     let select = format!("{},{}", BASE_SELECT, models::video_channel::ALIAS_COLUMNS);
 
     let from = format!(
-        r#"{} 
+        r#"{}
         INNER JOIN 
             videos_channels vc ON vc.video_id = v.id"#,
         BASE_FROM
@@ -108,7 +107,6 @@ pub async fn find_by_user_id_with_original(
     return Ok(video);
 }
 
-//TODO: test
 pub async fn find_by_user_id_with_original_and_video_channels(
     pool: &PgPool,
     id: &Uuid,
@@ -203,7 +201,7 @@ pub async fn find_all_with_original(
 }
 
 //TODO: test
-pub async fn find_all_with_original_and_channels(
+pub async fn find_all_with_original_and_video_channels(
     pool: &PgPool,
     pagination: Pagination<Video>,
     video_filter: Filter<Video>,

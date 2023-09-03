@@ -17,7 +17,9 @@ use crate::database::{
             create, create_errors, create_many, find_all, find_by_id, find_by_id_with_storage,
             find_by_transcription_id,
             with_original::{
-                find_all_with_original, find_by_user_id_with_original, find_with_original,
+                find_all_with_original, find_all_with_original_and_video_channels,
+                find_by_user_id_with_original, find_by_user_id_with_original_and_video_channels,
+                find_with_original, find_with_original_and_video_channels,
             },
             CreateErrorsDto, CreateVideoDto,
         },
@@ -441,9 +443,10 @@ async fn test_find_with_original(pool: PgPool) {
     assert_eq!(video.video.id, id);
 }
 
-#[sqlx::test(migrations = "../migrations", fixtures("video"))]
+#[sqlx::test(migrations = "../migrations", fixtures("videos"))]
 async fn test_find_all_with_original_no_filter(pool: PgPool) {
-    let pagination: Pagination<Video> = Default::default();
+    let mut pagination: Pagination<Video> = Default::default();
+    pagination.limit = Some(20);
     let video_filter: Filter<Video> = Default::default();
     let original_filter: Filter<OriginalVideo> = Default::default();
 
@@ -451,7 +454,64 @@ async fn test_find_all_with_original_no_filter(pool: PgPool) {
     let list = result.unwrap();
     let list_len = list.len();
 
+    assert_eq!(list_len, 20)
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("videos"))]
+async fn test_find_all_with_original_video_filter(pool: PgPool) {
+    let pagination: Pagination<Video> = Default::default();
+    let mut video_filter: Filter<Video> = Default::default();
+    let original_filter: Filter<OriginalVideo> = Default::default();
+
+    video_filter.options.deleted_at = Some(None);
+
+    let result = find_all_with_original(&pool, pagination, video_filter, original_filter).await;
+    let list = result.unwrap();
+    let list_len = list.len();
+
+    assert_eq!(list_len, 10)
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("videos"))]
+async fn test_find_all_with_original_original_video_filter(pool: PgPool) {
+    let pagination: Pagination<Video> = Default::default();
+    let video_filter: Filter<Video> = Default::default();
+    let mut original_filter: Filter<OriginalVideo> = Default::default();
+
+    original_filter.options.url = Some("https://www.youtube.com/watch?v=1234567891".into());
+
+    let result = find_all_with_original(&pool, pagination, video_filter, original_filter).await;
+    let list = result.unwrap();
+    let list_len = list.len();
+
     assert_eq!(list_len, 1)
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("videos"))]
+async fn test_find_all_with_original_both_filters(pool: PgPool) {
+    let mut pagination: Pagination<Video> = Default::default();
+    pagination.limit = Some(20);
+    let mut video_filter: Filter<Video> = Default::default();
+    let mut original_filter: Filter<OriginalVideo> = Default::default();
+
+    video_filter.options.deleted_at = Some(None);
+
+    original_filter.options.url = Some("https://www.youtube.com/watch?v=1234567890".into());
+
+    let result = find_all_with_original(&pool, pagination, video_filter, original_filter).await;
+    let list = result.unwrap();
+    let list_len = list.len();
+
+    assert_eq!(list_len, 10);
+
+    for video in list {
+        assert_eq!(
+            video.original.url,
+            "https://www.youtube.com/watch?v=1234567890"
+        );
+
+        assert!(video.video.deleted_at.is_none());
+    }
 }
 
 #[sqlx::test(
@@ -512,4 +572,104 @@ async fn test_find_by_user_id_with_original_not_found_other_user(pool: PgPool) {
     let result = find_by_user_id_with_original(&pool, &video_id, user_id).await;
 
     assert!(result.is_err());
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("video"))]
+async fn test_find_with_original_and_video_channels(pool: PgPool) {
+    let id = Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
+    let video = find_with_original_and_video_channels(&pool, &id)
+        .await
+        .unwrap();
+
+    assert_eq!(video.video.id, id);
+    assert_eq!(video.original.id, 666);
+    assert_eq!(video.video_channels.len(), 2);
+    assert_eq!(video.video_channels[0].video_id, id);
+    assert_eq!(video.video_channels[0].channel_id, 666);
+    assert_eq!(video.video_channels[1].video_id, id);
+    assert_eq!(video.video_channels[1].channel_id, 667);
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("video"))]
+async fn test_find_with_original_and_video_channels_not_found(pool: PgPool) {
+    let id = Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120095").unwrap();
+    let video = find_with_original_and_video_channels(&pool, &id).await;
+
+    assert!(video.is_err());
+
+    let err = video.unwrap_err();
+
+    match err {
+        sqlx::Error::RowNotFound => {}
+        _ => panic!("Expected RowNotFound error"),
+    }
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("video"))]
+async fn test_find_by_user_id_with_original_and_video_channels(pool: PgPool) {
+    let user_id = 6666;
+    let video_id = Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
+
+    let result = find_by_user_id_with_original_and_video_channels(&pool, &video_id, user_id)
+        .await
+        .unwrap();
+
+    assert_eq!(result.video.id, video_id);
+    assert_eq!(result.video.user_id, user_id);
+    assert_eq!(result.original.id, 666);
+    assert_eq!(result.video_channels.len(), 2);
+    assert_eq!(result.video_channels[0].video_id, video_id);
+    assert_eq!(result.video_channels[0].channel_id, 666);
+    assert_eq!(result.video_channels[1].video_id, video_id);
+    assert_eq!(result.video_channels[1].channel_id, 667);
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("video", "user"))]
+async fn test_find_by_user_id_with_original_and_video_channels_not_found_other_user(pool: PgPool) {
+    let user_id = 666;
+    let video_id = Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120096").unwrap();
+
+    let result = find_by_user_id_with_original_and_video_channels(&pool, &video_id, user_id).await;
+
+    assert!(result.is_err());
+
+    let err = result.unwrap_err();
+
+    match err {
+        sqlx::Error::RowNotFound => {}
+        _ => panic!("Expected RowNotFound error"),
+    }
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("video"))]
+async fn test_find_by_user_id_with_original_and_video_channels_not_found_video(pool: PgPool) {
+    let user_id = 6666;
+    let video_id = Uuid::from_str("806b5a48-f221-11ed-a05b-0242ac120095").unwrap();
+
+    let result = find_by_user_id_with_original_and_video_channels(&pool, &video_id, user_id).await;
+
+    assert!(result.is_err());
+
+    let err = result.unwrap_err();
+
+    match err {
+        sqlx::Error::RowNotFound => {}
+        _ => panic!("Expected RowNotFound error"),
+    }
+}
+
+#[sqlx::test(migrations = "../migrations", fixtures("videos"))]
+async fn test_find_all_with_original_and_video_channels_no_filter(pool: PgPool) {
+    let mut pagination: Pagination<Video> = Default::default();
+    pagination.limit = Some(40);
+    let video_filter: Filter<Video> = Default::default();
+    let original_filter: Filter<OriginalVideo> = Default::default();
+
+    let result =
+        find_all_with_original_and_video_channels(&pool, pagination, video_filter, original_filter)
+            .await;
+    let list = result.unwrap();
+    let list_len = list.len();
+
+    assert_eq!(list_len, 20)
 }
