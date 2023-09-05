@@ -198,30 +198,11 @@ fn parse_ffmpeg_output_duration(output: &str) -> Result<String, io::Error> {
 }
 
 fn reduce_start_time(start_time: &str) -> Result<String, FfmpegError> {
-    let time = Time::from_str(start_time)?;
+    let mut time = Time::from_str(start_time)?;
 
-    let mut hours = time.hours;
-    let mut minutes = time.minutes;
-    let mut seconds = time.seconds;
+    time.remove_seconds(SECONDS_TO_REDUCE);
 
-    if hours < 0 && minutes < 0 && seconds - SECONDS_TO_REDUCE <= 0 {
-        return Ok("00:00:00".to_string());
-    }
-
-    seconds -= SECONDS_TO_REDUCE;
-    if seconds < 0 {
-        seconds += 60;
-        minutes -= 1;
-    }
-
-    if minutes < 0 {
-        minutes += 60;
-        hours -= 1;
-    }
-
-    let final_start_time = format!("{:02}:{:02}:{:02}", hours, minutes, seconds);
-
-    return Ok(final_start_time);
+    return Ok(time.to_string());
 }
 
 fn call_cut_command(
@@ -273,64 +254,6 @@ mod test {
         let duration = parse_ffmpeg_output_duration(output).unwrap();
 
         assert_eq!(duration, "00:00:00.04");
-    }
-
-    #[test]
-    fn test_time_comparison() {
-        let time1 = Time {
-            hours: 0,
-            minutes: 0,
-            seconds: 0,
-        };
-
-        let time2 = Time {
-            hours: 0,
-            minutes: 0,
-            seconds: 1,
-        };
-
-        let time3 = Time {
-            hours: 0,
-            minutes: 1,
-            seconds: 0,
-        };
-
-        let time4 = Time {
-            hours: 1,
-            minutes: 0,
-            seconds: 0,
-        };
-
-        let time5 = Time {
-            hours: 1,
-            minutes: 0,
-            seconds: 59,
-        };
-
-        let time6 = Time {
-            hours: 1,
-            minutes: 1,
-            seconds: 0,
-        };
-
-        assert!(time1 < time2);
-
-        assert!(time1 < time3);
-        assert!(time2 < time3);
-        assert!(time1 < time4);
-        assert!(time2 < time4);
-        assert!(time3 < time4);
-
-        assert!(time1 < time5);
-        assert!(time2 < time5);
-        assert!(time3 < time5);
-        assert!(time4 < time5);
-
-        assert!(time1 < time6);
-        assert!(time2 < time6);
-        assert!(time3 < time6);
-        assert!(time4 < time6);
-        assert!(time5 < time6);
     }
 
     /* local test
