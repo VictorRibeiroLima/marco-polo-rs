@@ -9,6 +9,23 @@ pub struct Time {
     pub seconds: i8,
 }
 
+impl serde::Serialize for Time {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for Time {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let time = String::deserialize(deserializer)?;
+
+        match Time::from_str(&time) {
+            Ok(time) => Ok(time),
+            Err(e) => Err(serde::de::Error::custom(e.to_string())),
+        }
+    }
+}
+
 impl Time {
     pub fn remove_seconds(&mut self, seconds: i8) {
         self.seconds -= seconds;
@@ -51,7 +68,7 @@ impl FromStr for Time {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut parts = s.split(":");
 
-        let hours = match parts
+        let mut hours = match parts
             .next()
             .ok_or_else(|| FfmpegError::ParseError("Failed to parse hours".to_string()))?
             .parse::<i8>()
@@ -60,7 +77,7 @@ impl FromStr for Time {
             Err(_) => Err(FfmpegError::ParseError("Failed to parse hours".to_string())),
         }?;
 
-        let minutes = match parts
+        let mut minutes = match parts
             .next()
             .ok_or_else(|| FfmpegError::ParseError("Failed to parse minutes".to_string()))?
             .parse::<i8>()
@@ -71,7 +88,7 @@ impl FromStr for Time {
             )),
         }?;
 
-        let seconds = match parts
+        let mut seconds = match parts
             .next()
             .ok_or_else(|| FfmpegError::ParseError("Failed to parse seconds".to_string()))?
             .parse::<i8>()
@@ -81,6 +98,33 @@ impl FromStr for Time {
                 "Failed to parse seconds".to_string(),
             )),
         }?;
+
+        // We need to check minutes 2 times to make sure we don't overflow.
+        //"seconds" will not overflow because we never add to it. so any value greater than i8::MAX will error before we get here.
+        if minutes > 60 {
+            hours = hours
+                .checked_add(minutes / 60)
+                .ok_or(FfmpegError::ParseError(
+                    "Hours cannot be greater than 127".to_string(),
+                ))?;
+            minutes %= 60;
+        }
+
+        if seconds > 60 {
+            minutes += seconds / 60;
+            seconds %= 60;
+        }
+
+        // second time checking minutes to make sure we didn't overflow.
+        if minutes > 60 {
+            println!("minutes: {}", minutes);
+            hours = hours
+                .checked_add(minutes / 60)
+                .ok_or(FfmpegError::ParseError(
+                    "Hours cannot be greater than 127".to_string(),
+                ))?;
+            minutes %= 60;
+        }
 
         Ok(Time {
             hours,
@@ -251,5 +295,100 @@ mod test {
         assert_eq!(time4, Time::from_str("00:59:59").unwrap());
         assert_eq!(time5, Time::from_str("01:00:58").unwrap());
         assert_eq!(time6, Time::from_str("01:00:59").unwrap());
+    }
+
+    #[test]
+    fn test_from_str() {
+        assert_eq!(
+            Time::from_str("00:00:00").unwrap(),
+            Time {
+                hours: 0,
+                minutes: 0,
+                seconds: 0
+            }
+        );
+
+        assert_eq!(
+            Time::from_str("00:00:01").unwrap(),
+            Time {
+                hours: 0,
+                minutes: 0,
+                seconds: 1
+            }
+        );
+
+        assert_eq!(
+            Time::from_str("00:01:00").unwrap(),
+            Time {
+                hours: 0,
+                minutes: 1,
+                seconds: 0
+            }
+        );
+
+        assert_eq!(
+            Time::from_str("01:00:00").unwrap(),
+            Time {
+                hours: 1,
+                minutes: 0,
+                seconds: 0
+            }
+        );
+
+        assert_eq!(
+            Time::from_str("01:00:59").unwrap(),
+            Time {
+                hours: 1,
+                minutes: 0,
+                seconds: 59
+            }
+        );
+
+        assert_eq!(
+            Time::from_str("01:01:00").unwrap(),
+            Time {
+                hours: 1,
+                minutes: 1,
+                seconds: 0
+            }
+        );
+
+        assert_eq!(
+            Time::from_str("01:01:01").unwrap(),
+            Time {
+                hours: 1,
+                minutes: 1,
+                seconds: 1
+            }
+        );
+
+        assert_eq!(
+            Time::from_str("00:00:127").unwrap(),
+            Time {
+                hours: 0,
+                minutes: 2,
+                seconds: 7
+            }
+        );
+
+        assert_eq!(
+            Time::from_str("00:127:127").unwrap(),
+            Time {
+                hours: 2,
+                minutes: 9,
+                seconds: 7
+            }
+        );
+
+        assert_eq!(
+            Time::from_str("125:127:127").unwrap(),
+            Time {
+                hours: 127,
+                minutes: 9,
+                seconds: 7
+            }
+        );
+
+        Time::from_str("127:127:127").unwrap_err();
     }
 }
