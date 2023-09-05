@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use marco_polo_rs_core::SyncError;
+use marco_polo_rs_core::{util::ffmpeg::error::FfmpegError, SyncError};
 
 #[derive(Debug)]
 pub enum HandlerError {
@@ -32,5 +32,11 @@ impl From<sqlx::Error> for HandlerError {
 impl From<std::io::Error> for HandlerError {
     fn from(error: std::io::Error) -> Self {
         HandlerError::Retrievable(SyncError::from(error))
+    }
+}
+
+impl From<FfmpegError> for HandlerError {
+    fn from(error: FfmpegError) -> Self {
+        HandlerError::Final(SyncError::from(error))
     }
 }
