@@ -1,8 +1,10 @@
-use std::{io, process::Command};
+use std::process::Command;
 
 use serde::{Deserialize, Serialize};
 
 use crate::util::ffmpeg::SECONDS_TO_REDUCE;
+
+use super::error::FfmpegError;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -67,7 +69,7 @@ pub struct Frame {
     pub color_transfer: Option<String>,
 }
 
-pub fn get_nearest_keyframe_in_seconds(output_file: &str) -> Result<String, io::Error> {
+pub fn get_nearest_keyframe_in_seconds(output_file: &str) -> Result<String, FfmpegError> {
     let output = Command::new("ffprobe")
         .arg("-select_streams")
         .arg("v:0")
@@ -87,10 +89,9 @@ pub fn get_nearest_keyframe_in_seconds(output_file: &str) -> Result<String, io::
             "get_nearest_keyframe_in_seconds failed. Error message: {}",
             String::from_utf8_lossy(&output.stderr)
         );
-        return Err(io::Error::new(
-            io::ErrorKind::Other,
-            "Failed to get video keyframes",
-        ));
+        return Err(FfmpegError::ProbeError(String::from(
+            "Failed to get nearest keyframe in seconds",
+        )));
     }
 
     let output = String::from_utf8_lossy(&output.stdout);

@@ -1,12 +1,18 @@
 use std::io::{self, Read};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
+use std::str::FromStr;
 
 use crate::SyncError;
 
+use self::error::FfmpegError;
+use self::time::Time;
+
 use super::fs::create_temp_dir;
 
+pub mod error;
 pub mod ffprobe;
+pub mod time;
 
 const SECONDS_TO_REDUCE: i8 = 5;
 
@@ -126,7 +132,7 @@ pub fn cut_video(
     video_path: &PathBuf,
     start_time: &str,
     end_time: &str,
-) -> Result<String, io::Error> {
+) -> Result<String, FfmpegError> {
     let temp_output_id = uuid::Uuid::new_v4();
     let temp_dir = create_temp_dir()?;
     let temp_output_file = format!("{}/{}.mkv", temp_dir.to_str().unwrap(), temp_output_id);
@@ -148,7 +154,8 @@ pub fn cut_video(
             return Err(std::io::Error::new(
                 std::io::ErrorKind::Other,
                 "Failed to get nearest keyframe in seconds",
-            ));
+            )
+            .into());
         }
     };
 
@@ -170,10 +177,7 @@ pub fn cut_video(
         Err(err) => {
             eprintln!("Failed to cut video: {}", err);
             std::fs::remove_file(&temp_output_file)?;
-            Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "Failed to cut video",
-            ))
+            Err(err)
         }
     }
 }
@@ -193,22 +197,12 @@ fn parse_ffmpeg_output_duration(output: &str) -> Result<String, io::Error> {
     Ok(duration.to_string())
 }
 
-fn reduce_start_time(start_time: &str) -> Result<String, io::Error> {
-    let times = start_time.split(":").collect::<Vec<&str>>();
-    if times.len() != 3 {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            "Start time is not in HH:MM:SS format",
-        ));
-    }
+fn reduce_start_time(start_time: &str) -> Result<String, FfmpegError> {
+    let time = Time::from_str(start_time)?;
 
-    if start_time == "00:00:00" {
-        return Ok(start_time.to_string());
-    }
-
-    let mut hours = to_i8(times[0])?;
-    let mut minutes = to_i8(times[1])?;
-    let mut seconds = to_i8(times[2])?;
+    let mut hours = time.hours;
+    let mut minutes = time.minutes;
+    let mut seconds = time.seconds;
 
     if hours < 0 && minutes < 0 && seconds - SECONDS_TO_REDUCE <= 0 {
         return Ok("00:00:00".to_string());
@@ -235,7 +229,7 @@ fn call_cut_command(
     start_time: &str,
     end_time: Option<&str>,
     output_file: &str,
-) -> Result<(), io::Error> {
+) -> Result<(), FfmpegError> {
     let mut command = Command::new("ffmpeg");
 
     command
@@ -262,20 +256,10 @@ fn call_cut_command(
             "Video cut failed. Error message: {}",
             String::from_utf8_lossy(&output.stderr)
         );
-        return Err(io::Error::new(io::ErrorKind::Other, "Failed to cut video"));
+        return Err(FfmpegError::CutError);
     }
 
     return Ok(());
-}
-
-fn to_i8(string: &str) -> Result<i8, io::Error> {
-    match string.parse::<i8>() {
-        Ok(i) => Ok(i),
-        Err(_) => Err(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            "Start time is not in HH:MM:SS format",
-        )),
-    }
 }
 
 #[cfg(test)]
@@ -289,6 +273,64 @@ mod test {
         let duration = parse_ffmpeg_output_duration(output).unwrap();
 
         assert_eq!(duration, "00:00:00.04");
+    }
+
+    #[test]
+    fn test_time_comparison() {
+        let time1 = Time {
+            hours: 0,
+            minutes: 0,
+            seconds: 0,
+        };
+
+        let time2 = Time {
+            hours: 0,
+            minutes: 0,
+            seconds: 1,
+        };
+
+        let time3 = Time {
+            hours: 0,
+            minutes: 1,
+            seconds: 0,
+        };
+
+        let time4 = Time {
+            hours: 1,
+            minutes: 0,
+            seconds: 0,
+        };
+
+        let time5 = Time {
+            hours: 1,
+            minutes: 0,
+            seconds: 59,
+        };
+
+        let time6 = Time {
+            hours: 1,
+            minutes: 1,
+            seconds: 0,
+        };
+
+        assert!(time1 < time2);
+
+        assert!(time1 < time3);
+        assert!(time2 < time3);
+        assert!(time1 < time4);
+        assert!(time2 < time4);
+        assert!(time3 < time4);
+
+        assert!(time1 < time5);
+        assert!(time2 < time5);
+        assert!(time3 < time5);
+        assert!(time4 < time5);
+
+        assert!(time1 < time6);
+        assert!(time2 < time6);
+        assert!(time3 < time6);
+        assert!(time4 < time6);
+        assert!(time5 < time6);
     }
 
     /* local test
